@@ -1,0 +1,5 @@
+# mise configuration for consistent toolchain management
+# https://mise.jdx.dev/
+
+[tools]
+go = "1.25"
