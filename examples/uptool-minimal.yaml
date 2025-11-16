@@ -1,0 +1,26 @@
+# Minimal uptool configuration
+# This is the simplest possible configuration - enables all integrations with default settings
+
+version: 1
+
+integrations:
+  - id: npm
+    enabled: true
+
+  - id: helm
+    enabled: true
+
+  - id: terraform
+    enabled: true
+
+  - id: tflint
+    enabled: true
+
+  - id: precommit
+    enabled: true
+
+  - id: asdf
+    enabled: true
+
+  - id: mise
+    enabled: true

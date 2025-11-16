@@ -1,0 +1,96 @@
+# golangci-lint configuration (v2 format)
+# See https://golangci-lint.run/docs/configuration/
+
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+  go: "1.25"
+
+linters:
+  default: none  # Explicitly enable linters below
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Official Go vet tool
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Advanced Go linter
+    - unused        # Check for unused code
+    - revive        # Fast, configurable, extensible linter
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Find unused function parameters
+    - bodyclose     # Check HTTP response bodies are closed
+    - gosec         # Security-focused linter
+    - nilerr        # Find code returning nil when err is not nil
+    - misspell      # Find misspelled English words
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    govet:
+      enable-all: true
+      settings:
+        shadow:
+          strict: false  # Can be noisy
+
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+        - name: unexported-return
+          disabled: false
+        - name: package-comments
+          disabled: true  # Can be enabled later for better docs
+
+    gosec:
+      excludes:
+        - G104  # Audit errors not checked (handled by errcheck)
+        - G204  # Subprocess launched with variable (needed for git, pre-commit, etc)
+
+  exclusions:
+    generated: lax  # How to handle generated code
+    warn-unused: false
+
+    rules:
+      # Exclude some linters from test files
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+
+# Code formatters (gofmt and goimports)
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    gofmt:
+      simplify: true
+
+    goimports:
+      local-prefixes:
+        - github.com/santosr2/uptool
+
+issues:
+  max-issues-per-linter: 0  # Unlimited
+  max-same-issues: 0         # Unlimited
+  uniq-by-line: true
+
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+      colors: true
+
+  sort-order:
+    - linter
+    - file
+
+  show-stats: false

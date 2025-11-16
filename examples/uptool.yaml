@@ -1,0 +1,131 @@
+# Complete uptool configuration example
+# Demonstrates all available options and configurations
+
+version: 1
+
+integrations:
+  # npm - JavaScript/TypeScript package manager
+  - id: npm
+    enabled: true
+    match:
+      files:
+        - "package.json"
+        - "*/package.json"
+    policy:
+      enabled: true
+      update: minor         # none | patch | minor | major
+      allow_prerelease: false
+      pin: false           # Don't pin to exact versions
+      cadence: weekly      # How often to check for updates
+
+  # Helm - Kubernetes package manager
+  - id: helm
+    enabled: true
+    match:
+      files:
+        - "Chart.yaml"
+        - "charts/*/Chart.yaml"
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      pin: true            # Pin chart versions in production
+      cadence: monthly
+
+  # Terraform - Infrastructure as Code
+  - id: terraform
+    enabled: true
+    match:
+      files:
+        - "*.tf"
+        - "**/*.tf"
+    policy:
+      enabled: true
+      update: patch        # Conservative for infrastructure
+      allow_prerelease: false
+      pin: true
+      cadence: monthly
+
+  # TFLint - Terraform linter plugins
+  - id: tflint
+    enabled: true
+    match:
+      files:
+        - ".tflint.hcl"
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      pin: true
+      cadence: monthly
+
+  # pre-commit - Git hook manager
+  - id: precommit
+    enabled: true
+    match:
+      files:
+        - ".pre-commit-config.yaml"
+    policy:
+      enabled: true
+      update: major        # Aggressive for development tools
+      allow_prerelease: false
+      pin: false
+      cadence: weekly
+
+  # asdf - Runtime version manager
+  - id: asdf
+    enabled: true
+    match:
+      files:
+        - ".tool-versions"
+    policy:
+      enabled: true
+      update: patch        # Conservative for runtime versions
+      allow_prerelease: false
+      pin: true
+      cadence: monthly
+
+  # mise - Modern runtime version manager
+  - id: mise
+    enabled: true
+    match:
+      files:
+        - "mise.toml"
+        - ".mise.toml"
+    policy:
+      enabled: true
+      update: patch        # Conservative for runtime versions
+      allow_prerelease: false
+      pin: true
+      cadence: monthly
+
+# Optional: Organization-level policy settings
+org_policy:
+  # Require sign-off from specific teams/users for production changes
+  require_signoff_from:
+    - "platform-team@company.com"
+    - "security-team@company.com"
+
+  # Artifact signing verification (future feature)
+  signing:
+    cosign_verify: false
+
+  # Auto-merge settings for GitHub Actions
+  auto_merge:
+    enabled: false       # Require manual review
+    guards:
+      - "ci-green"       # All CI checks must pass
+      - "codeowners-approve"  # CODEOWNERS must approve
+
+# Optional: Notification settings (future feature)
+notifications:
+  slack:
+    enabled: false
+    webhook_url: ""
+    channels:
+      - "#platform-updates"
+
+  email:
+    enabled: false
+    recipients:
+      - "platform-team@company.com"

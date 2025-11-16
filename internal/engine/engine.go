@@ -1,3 +1,6 @@
+// Package engine provides the core orchestration layer for uptool.
+// It manages integration registration, manifest scanning, update planning, and update application.
+// The Engine coordinates concurrent operations across multiple integrations while handling errors and logging.
 package engine
 
 import (
@@ -51,8 +54,9 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 	sem := make(chan struct{}, e.concurrency)
 
 	for name, integration := range integrations {
-		wg.Go(func() {
-			n, integ := name, integration
+		wg.Add(1)
+		go func(n string, integ Integration) {
+			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
@@ -68,7 +72,7 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 
 			manifests = append(manifests, found...)
 			e.logger.Info("scan complete", "integration", n, "found", len(found))
-		})
+		}(name, integration)
 	}
 
 	wg.Wait()
@@ -98,8 +102,9 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 	sem := make(chan struct{}, e.concurrency)
 
 	for _, manifest := range manifests {
-		wg.Go(func() {
-			m := manifest
+		wg.Add(1)
+		go func(m *Manifest) {
+			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
@@ -125,7 +130,7 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 				plans = append(plans, plan)
 				e.logger.Info("plan created", "manifest", m.Path, "updates", len(plan.Updates))
 			}
-		})
+		}(manifest)
 	}
 
 	wg.Wait()
@@ -162,8 +167,9 @@ func (e *Engine) Update(ctx context.Context, plans []*UpdatePlan, dryRun bool) (
 	sem := make(chan struct{}, e.concurrency)
 
 	for _, plan := range plans {
-		wg.Go(func() {
-			p := plan
+		wg.Add(1)
+		go func(p *UpdatePlan) {
+			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
@@ -187,7 +193,7 @@ func (e *Engine) Update(ctx context.Context, plans []*UpdatePlan, dryRun bool) (
 
 			results = append(results, result)
 			e.logger.Info("apply complete", "manifest", p.Manifest.Path, "applied", result.Applied)
-		})
+		}(plan)
 	}
 
 	wg.Wait()

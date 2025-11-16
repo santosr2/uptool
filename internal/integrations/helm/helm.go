@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"github.com/santosr2/uptool/internal/registry"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,13 +26,18 @@ const integrationName = "helm"
 
 // Integration implements helm chart updates.
 type Integration struct {
-	helmClient *registry.HelmClient
+	ds datasource.Datasource
 }
 
 // New creates a new helm integration.
 func New() *Integration {
+	ds, err := datasource.Get("helm")
+	if err != nil {
+		// Fallback to creating a new instance if not registered
+		ds = datasource.NewHelmDatasource()
+	}
 	return &Integration{
-		helmClient: registry.NewHelmClient(),
+		ds: ds,
 	}
 }
 
@@ -123,7 +128,7 @@ func (i *Integration) extractDependencies(chart *Chart) []engine.Dependency {
 
 	for _, dep := range chart.Dependencies {
 		// Skip OCI repositories for now
-		if registry.IsOCIRepository(dep.Repository) {
+		if strings.HasPrefix(dep.Repository, "oci://") {
 			continue
 		}
 
@@ -149,7 +154,9 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 
 	for _, dep := range manifest.Dependencies {
 		// Get latest version from chart repository
-		latest, err := i.helmClient.GetLatestChartVersion(ctx, dep.Registry, dep.Name)
+		// Datasource expects format: "repository_url|chart_name"
+		pkg := fmt.Sprintf("%s|%s", dep.Registry, dep.Name)
+		latest, err := i.ds.GetLatestVersion(ctx, pkg)
 		if err != nil {
 			// Skip charts we can't query
 			continue

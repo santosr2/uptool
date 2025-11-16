@@ -1,0 +1,18 @@
+# Example asdf .tool-versions file showing runtime version management with uptool
+# See https://asdf-vm.com for more information
+
+# Development languages
+go 1.23.0
+nodejs 20.10.0
+python 3.11.0
+ruby 3.2.0
+
+# Infrastructure tools
+terraform 1.5.0
+kubectl 1.28.0
+
+# Additional tools
+helm 3.12.0
+golangci-lint 1.54.0
+jq 1.7.0
+yq 4.35.0

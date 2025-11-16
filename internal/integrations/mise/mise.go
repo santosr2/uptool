@@ -133,18 +133,36 @@ func (i *Integration) parseMiseToml(manifest *engine.Manifest, content []byte) (
 }
 
 // Plan generates an update plan for mise tools.
-// TODO: Implement version resolution by querying tool-specific registries
+//
+// Note: mise integration is experimental. Version resolution is not implemented because
+// each tool (mise.toml can contain nodejs, python, ruby, terraform, etc.) has its own
+// registry and update mechanism. This would require datasources for every possible runtime.
+//
+// Recommended approach: Use native mise commands:
+//   - mise upgrade                 # Upgrade all tools to latest versions
+//   - mise outdated                # Show outdated tools
+//   - mise use <tool>@latest       # Pin to latest version
+//
+// Future enhancement: Could implement version checking via tool-specific datasources
+// (npm registry, python.org, ruby gems, etc.) or by calling mise native commands.
 func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
-	// Version resolution not yet implemented
-	// Would need to query each tool's registry (nodejs, python, ruby, etc.)
 	return &engine.UpdatePlan{
 		Manifest: manifest,
 		Updates:  []engine.Update{},
-		Strategy: "custom_rewrite",
+		Strategy: "native_command", // mise has native update commands
 	}, nil
 }
 
 // Apply applies updates to mise manifest files.
+//
+// Note: Apply is not implemented for mise. Use native mise commands instead:
+//   - mise upgrade                 # Upgrade all tools to latest
+//   - mise use <tool>@latest       # Pin specific tool to latest
+//
+// To manually update versions in mise.toml or .mise.toml:
+//   1. Check available versions: mise ls-remote <tool>
+//   2. Edit mise.toml with desired versions
+//   3. Install: mise install
 func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engine.ApplyResult, error) {
 	if len(plan.Updates) == 0 {
 		return &engine.ApplyResult{
@@ -154,12 +172,14 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 		}, nil
 	}
 
-	// TODO: Implement file rewriting for mise.toml and .mise.toml
 	return &engine.ApplyResult{
 		Manifest: plan.Manifest,
 		Applied:  0,
 		Failed:   len(plan.Updates),
-		Errors:   []string{"mise integration is experimental - apply not yet implemented"},
+		Errors: []string{
+			"mise integration is experimental - automatic apply not supported",
+			"Use native mise commands: 'mise upgrade' or 'mise use <tool>@latest'",
+		},
 	}, nil
 }
 

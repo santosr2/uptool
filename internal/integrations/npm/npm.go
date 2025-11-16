@@ -12,9 +12,9 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"github.com/santosr2/uptool/internal/registry"
 )
 
 func init() {
@@ -25,13 +25,18 @@ func init() {
 
 // Integration implements npm package.json updates.
 type Integration struct {
-	client *registry.NPMClient
+	ds datasource.Datasource
 }
 
 // New creates a new npm integration.
 func New() *Integration {
+	ds, err := datasource.Get("npm")
+	if err != nil {
+		// Fallback to creating a new instance if not registered
+		ds = datasource.NewNPMDatasource()
+	}
 	return &Integration{
-		client: registry.NewNPMClient(),
+		ds: ds,
 	}
 }
 
@@ -169,7 +174,7 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 		}
 
 		// Get the latest version
-		latest, err := i.client.GetLatestVersion(ctx, dep.Name)
+		latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
 		if err != nil {
 			// Skip packages that can't be resolved
 			continue

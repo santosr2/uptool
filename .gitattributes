@@ -1,0 +1,73 @@
+# Git attributes for uptool
+# https://git-scm.com/docs/gitattributes
+
+# Auto detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Explicitly declare text files
+*.go text
+*.md text
+*.yaml text
+*.yml text
+*.toml text
+*.json text
+*.sh text
+*.bash text
+*.hcl text
+*.tf text
+
+# Go source files
+*.go diff=golang
+
+# Scripts should always have LF line endings (even on Windows)
+*.sh eol=lf
+*.bash eol=lf
+Makefile eol=lf
+
+# Documentation
+*.md text
+*.txt text
+LICENSE text
+AUTHORS text
+CHANGELOG text
+
+# Binary files
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.o binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.tgz binary
+*.bz2 binary
+
+# Go specific
+go.sum text
+go.mod text
+
+# Exclude files from Git archive exports
+.github export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.editorconfig export-ignore
+.golangci.yml export-ignore
+.pre-commit-config.yaml export-ignore
+Makefile export-ignore
+
+# Mark generated files
+# Prevents diffs on auto-generated files
+docs/api/** linguist-generated=true
+coverage.html linguist-generated=true

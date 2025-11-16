@@ -1,0 +1,36 @@
+# Example mise configuration (map format) showing advanced runtime version management
+# See https://mise.jdx.dev for more information
+
+[tools]
+# Map format with additional options
+go = { version = "1.23", path = ".go-version" }
+node = { version = "20", prefix = "v" }
+python = { version = "3.11", virtualenv = ".venv" }
+ruby = { version = "3.2" }
+
+# Infrastructure tools
+terraform = { version = "1.5.0" }
+kubectl = { version = "1.28" }
+
+# Development tools
+golangci-lint = { version = "2.6" }
+helm = { version = "3.12" }
+
+[env]
+# Environment variables
+GOPATH = "{{config_root}}/go"
+NODE_ENV = "development"
+PATH = [
+  "{{config_root}}/go/bin",
+  "{{config_root}}/.venv/bin",
+  "$PATH"
+]
+
+[settings]
+# mise settings
+experimental = false
+legacy_version_file = true
+legacy_version_file_disable_tools = ["python"]
+
+[plugins]
+# Custom plugin configurations can go here

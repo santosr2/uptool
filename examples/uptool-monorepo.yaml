@@ -1,0 +1,82 @@
+# Monorepo uptool configuration
+# Demonstrates path matching for multiple services and projects
+
+version: 1
+
+integrations:
+  # Frontend service (React/TypeScript)
+  - id: npm
+    enabled: true
+    match:
+      files:
+        - "frontend/package.json"
+        - "frontend/apps/*/package.json"
+        - "frontend/packages/*/package.json"
+    policy:
+      update: minor
+      allow_prerelease: false
+
+  # Backend services (Go)
+  - id: mise
+    enabled: true
+    match:
+      files:
+        - "backend/mise.toml"
+        - "backend/services/*/mise.toml"
+    policy:
+      update: patch  # Conservative for backend runtime versions
+
+  # Infrastructure (Terraform)
+  - id: terraform
+    enabled: true
+    match:
+      files:
+        - "infrastructure/**/*.tf"
+        - "terraform/environments/**/*.tf"
+    policy:
+      update: patch  # Very conservative for infrastructure
+      allow_prerelease: false
+      pin: true
+
+  # Infrastructure linting
+  - id: tflint
+    enabled: true
+    match:
+      files:
+        - "infrastructure/.tflint.hcl"
+        - "terraform/.tflint.hcl"
+    policy:
+      update: minor
+
+  # Kubernetes charts
+  - id: helm
+    enabled: true
+    match:
+      files:
+        - "charts/*/Chart.yaml"
+        - "k8s/charts/*/Chart.yaml"
+    policy:
+      update: minor
+      allow_prerelease: false
+
+  # Pre-commit hooks (repository-wide)
+  - id: precommit
+    enabled: true
+    policy:
+      update: major  # Aggressive for development tools
+
+  # Development tools (repository-wide)
+  - id: asdf
+    enabled: true
+    match:
+      files:
+        - ".tool-versions"
+    policy:
+      update: patch
+
+# Organization-level policy
+org_policy:
+  # Require approval for major updates in production paths
+  require_signoff_from:
+    - "platform-team"
+    - "security-team"
