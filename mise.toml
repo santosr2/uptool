@@ -24,7 +24,9 @@ pre-commit = "4.4"
 yamllint = "1.37"
 
 # Documentation
-"pipx:mkdocs-material" = "9.5"
+# Note: mkdocs-material doesn't work well with mise, install manually in workflows
+# https://github.com/astral-sh/uv/issues/14142
+# "pipx:mkdocs-material" = "9.5"
 "go:github.com/princjef/gomarkdoc/cmd/gomarkdoc" = "latest"
 
 # Security scanning
@@ -41,3 +43,4 @@ node = "22"
 
 # Package managers
 pipx = "1.8"
+uv = "latest"
