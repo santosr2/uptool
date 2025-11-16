@@ -1,5 +1,32 @@
 # mise configuration for consistent toolchain management
 # https://mise.jdx.dev/
+#
+# This file defines all tools used across development and CI/CD.
+# All workflows should use mise to install these tools for consistency.
 
 [tools]
+# Core language
 go = "1.25"
+
+# Go tooling
+golangci-lint = "2.6"
+
+# Release & changelog
+"cargo:git-cliff" = "2.10"
+"pipx:bump-my-version" = "1.2"
+
+# Workflow validation
+actionlint = "1.7"
+
+# Code quality
+pre-commit = "4.4"
+yamllint = "1.37"
+
+# Node.js (for commitlint)
+node = "22"
+pipx = "1.8"
+
+# Note: Some tools not available in mise are installed via other methods:
+# - cosign: via sigstore/cosign-installer action
+# - syft: via anchore/sbom-action
+# - slsa-verifier: via official SLSA workflows
