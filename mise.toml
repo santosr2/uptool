@@ -51,7 +51,7 @@ uv = "latest"
 # Environment variables for development
 [env]
 # Go configuration
-CGO_ENABLED = "0"
+CGO_ENABLED = "1"
 # GOOS = "{{ os }}"
 # GOARCH = "{{ arch }}"
 

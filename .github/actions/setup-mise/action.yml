@@ -15,6 +15,28 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Generate cache key
+      id: cache-key
+      shell: bash
+      run: |
+        # Generate cache key based on OS, architecture, and mise.toml hash
+        MISE_TOML_HASH=$(sha256sum mise.toml | cut -d' ' -f1)
+        CACHE_KEY="mise-${{ runner.os }}-${{ runner.arch }}-${MISE_TOML_HASH}"
+        echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
+        echo "Cache key: ${CACHE_KEY}"
+
+    - name: Cache mise tools
+      uses: actions/cache@v4
+      if: inputs.cache == 'true'
+      with:
+        path: |
+          ~/.local/share/mise
+          ~/.local/state/mise
+          ~/.cache/mise
+        key: ${{ steps.cache-key.outputs.key }}
+        restore-keys: |
+          mise-${{ runner.os }}-${{ runner.arch }}-
+
     - name: Install mise
       uses: jdx/mise-action@f8dfbcc150159126838e44b882bf34bd98fd90f3 # v2.1.4
       with:
@@ -25,8 +47,5 @@ runs:
     - name: Verify mise installation
       shell: bash
       run: |
-        echo "## 🔧 mise Tools Installed" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "Verifying mise installation..."
         mise list
-        echo '```' >> $GITHUB_STEP_SUMMARY
