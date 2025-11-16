@@ -188,6 +188,47 @@ func (c *HelmClient) FindBestChartVersion(ctx context.Context, repository, chart
 	return best.Original(), nil
 }
 
+// GetChartVersionDetails returns all available versions with metadata for a chart from a repository.
+func (c *HelmClient) GetChartVersionDetails(ctx context.Context, repository, chartName string) ([]ChartIndexEntry, error) {
+	// Fetch index.yaml from repository
+	indexURL := strings.TrimSuffix(repository, "/") + "/index.yaml"
+
+	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/x-yaml")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch chart index: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
+	}
+
+	var index ChartIndex
+	if err := yaml.Unmarshal(body, &index); err != nil {
+		return nil, fmt.Errorf("parse index.yaml: %w", err)
+	}
+
+	// Find chart entries
+	entries, ok := index.Entries[chartName]
+	if !ok {
+		return nil, fmt.Errorf("chart not found in repository: %s", chartName)
+	}
+
+	return entries, nil
+}
+
 // GetChartVersions returns all available versions for a chart.
 func (c *HelmClient) GetChartVersions(ctx context.Context, repository, chartName string) ([]string, error) {
 	// Fetch index.yaml from repository

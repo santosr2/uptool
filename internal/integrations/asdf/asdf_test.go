@@ -420,8 +420,8 @@ func TestPlan(t *testing.T) {
 				t.Errorf("Plan() returned %d updates, expected 0 (not yet implemented)", len(plan.Updates))
 			}
 
-			if plan.Strategy != "custom_rewrite" {
-				t.Errorf("Plan().Strategy = %q, want %q", plan.Strategy, "custom_rewrite")
+			if plan.Strategy != "native_command" {
+				t.Errorf("Plan().Strategy = %q, want %q", plan.Strategy, "native_command")
 			}
 
 			if plan.Manifest != manifest {
@@ -474,7 +474,7 @@ func TestApply(t *testing.T) {
 			plan := &engine.UpdatePlan{
 				Manifest: manifest,
 				Updates:  tt.updates,
-				Strategy: "custom_rewrite",
+				Strategy: "native_command",
 			}
 
 			result, err := integration.Apply(context.Background(), plan)

@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"github.com/santosr2/uptool/internal/registry"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -30,14 +30,18 @@ const integrationName = "tflint"
 
 // Integration implements tflint configuration updates.
 type Integration struct {
-	ghClient *registry.GitHubClient
+	ds datasource.Datasource
 }
 
 // New creates a new tflint integration.
 func New() *Integration {
-	token := os.Getenv("GITHUB_TOKEN")
+	ds, err := datasource.Get("github-releases")
+	if err != nil {
+		// Fallback to creating a new instance if not registered
+		ds = datasource.NewGitHubDatasource()
+	}
 	return &Integration{
-		ghClient: registry.NewGitHubClient(token),
+		ds: ds,
 	}
 }
 
@@ -155,14 +159,22 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 			continue
 		}
 
-		// Parse GitHub URL
-		owner, repo, err := registry.ParseGitHubURL(plugin.Source)
-		if err != nil {
+		// Parse GitHub URL to extract owner/repo
+		source := plugin.Source
+		source = strings.TrimPrefix(source, "https://")
+		source = strings.TrimPrefix(source, "http://")
+		source = strings.TrimPrefix(source, "github.com/")
+		source = strings.TrimSuffix(source, ".git")
+
+		// Validate format (should be owner/repo)
+		parts := strings.Split(source, "/")
+		if len(parts) < 2 {
 			continue
 		}
+		pkg := parts[0] + "/" + parts[1]
 
-		// Get latest version
-		latest, err := i.ghClient.GetLatestRelease(ctx, owner, repo)
+		// Get latest version using datasource
+		latest, err := i.ds.GetLatestVersion(ctx, pkg)
 		if err != nil {
 			continue
 		}

@@ -130,18 +130,36 @@ func (i *Integration) parseToolVersions(manifest *engine.Manifest, content []byt
 }
 
 // Plan generates an update plan for asdf tools.
-// TODO: Implement version resolution by querying tool-specific registries
+//
+// Note: asdf integration is experimental. Version resolution is not implemented because
+// each tool (.tool-versions can contain nodejs, python, ruby, terraform, etc.) has its own
+// registry and update mechanism. This would require datasources for every possible runtime.
+//
+// Recommended approach: Use native asdf commands:
+//   - asdf plugin update --all     # Update plugin versions
+//   - asdf latest --all            # Show latest versions
+//   - asdf install <tool> latest   # Install latest version
+//
+// Future enhancement: Could implement version checking via tool-specific datasources
+// (npm registry, python.org, ruby gems, etc.) or by calling asdf native commands.
 func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
-	// Version resolution not yet implemented
-	// Would need to query each tool's registry (nodejs, python, ruby, etc.)
 	return &engine.UpdatePlan{
 		Manifest: manifest,
 		Updates:  []engine.Update{},
-		Strategy: "custom_rewrite",
+		Strategy: "native_command", // asdf has native update commands
 	}, nil
 }
 
 // Apply applies updates to asdf manifest files.
+//
+// Note: Apply is not implemented for asdf. Use native asdf commands instead:
+//   - asdf plugin update --all     # Update all plugins
+//   - asdf install <tool> latest   # Install latest version of a tool
+//
+// To manually update versions in .tool-versions:
+//   1. Check available versions: asdf list all <tool>
+//   2. Edit .tool-versions with desired versions
+//   3. Install: asdf install
 func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engine.ApplyResult, error) {
 	if len(plan.Updates) == 0 {
 		return &engine.ApplyResult{
@@ -151,12 +169,14 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 		}, nil
 	}
 
-	// TODO: Implement file rewriting for .tool-versions
 	return &engine.ApplyResult{
 		Manifest: plan.Manifest,
 		Applied:  0,
 		Failed:   len(plan.Updates),
-		Errors:   []string{"asdf integration is experimental - apply not yet implemented"},
+		Errors: []string{
+			"asdf integration is experimental - automatic apply not supported",
+			"Use native asdf commands: 'asdf plugin update --all' and 'asdf install <tool> latest'",
+		},
 	}, nil
 }
 

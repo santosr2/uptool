@@ -1,0 +1,31 @@
+# Example mise configuration (string format) showing runtime version management with uptool
+# See https://mise.jdx.dev for more information
+
+[tools]
+# Development languages
+go = "1.23"
+node = "20"
+python = "3.11"
+ruby = "3.2"
+
+# Infrastructure tools
+terraform = "1.5.0"
+kubectl = "1.28"
+
+# Build and testing tools
+golangci-lint = "1.54"
+helm = "3.12"
+
+# Utilities
+jq = "1.7"
+yq = "4.35"
+
+[env]
+# Environment variables
+GOPATH = "{{config_root}}/go"
+PATH = ["{{config_root}}/go/bin", "$PATH"]
+
+[settings]
+# mise settings
+experimental = false
+legacy_version_file = true

@@ -2,9 +2,18 @@
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/santosr2/uptool)](https://go.dev/)
 [![License](https://img.shields.io/github/license/santosr2/uptool)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/santosr2/uptool?include_prereleases)](https://github.com/santosr2/uptool/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/santosr2/uptool)](https://goreportcard.com/report/github.com/santosr2/uptool)
-[![CI Status](https://github.com/santosr2/uptool/workflows/CI/badge.svg)](https://github.com/santosr2/uptool/actions)
+
+[![CI Status](https://github.com/santosr2/uptool/workflows/CI/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/santosr2/uptool/workflows/CodeQL/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/santosr2/uptool/badge)](https://scorecard.dev/viewer/?uri=github.com/santosr2/uptool)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9999/badge)](https://www.bestpractices.dev/projects/9999)
 [![codecov](https://codecov.io/gh/santosr2/uptool/branch/main/graph/badge.svg)](https://codecov.io/gh/santosr2/uptool)
+
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Security Policy](https://img.shields.io/badge/security-policy-blue)](SECURITY.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 **Universal, Manifest-First Dependency Updater**
 

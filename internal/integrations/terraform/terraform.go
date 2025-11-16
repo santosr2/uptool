@@ -14,9 +14,9 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"github.com/santosr2/uptool/internal/registry"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -30,13 +30,18 @@ const integrationName = "terraform"
 
 // Integration implements terraform configuration updates.
 type Integration struct {
-	tfClient *registry.TerraformClient
+	ds datasource.Datasource
 }
 
 // New creates a new terraform integration.
 func New() *Integration {
+	ds, err := datasource.Get("terraform")
+	if err != nil {
+		// Fallback to creating a new instance if not registered
+		ds = datasource.NewTerraformDatasource()
+	}
 	return &Integration{
-		tfClient: registry.NewTerraformClient(),
+		ds: ds,
 	}
 }
 
@@ -184,12 +189,7 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 	for _, dep := range manifest.Dependencies {
 		if dep.Type == "provider" {
 			// Get latest provider version
-			constraint := dep.CurrentVersion
-			if constraint == "" {
-				constraint = ">= 0.0.0"
-			}
-
-			latest, err := i.tfClient.FindBestProviderVersion(ctx, dep.Name, constraint)
+			latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
 			if err != nil {
 				continue
 			}
@@ -213,7 +213,7 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 			}
 		} else if dep.Type == "module" {
 			// Get latest module version
-			latest, err := i.tfClient.GetLatestModuleVersion(ctx, dep.Name)
+			latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
 			if err != nil {
 				continue
 			}

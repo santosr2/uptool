@@ -204,6 +204,58 @@ func (c *TerraformClient) GetLatestModuleVersion(ctx context.Context, source str
 	return latest.Original(), nil
 }
 
+// GetModuleVersions returns all available versions for a module.
+// source format: "namespace/name/provider" (e.g., "terraform-aws-modules/vpc/aws")
+func (c *TerraformClient) GetModuleVersions(ctx context.Context, source string) ([]ModuleVersion, error) {
+	parts := strings.Split(source, "/")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("invalid module source format: %s", source)
+	}
+
+	namespace := parts[0]
+	name := parts[1]
+	provider := parts[2]
+
+	url := fmt.Sprintf("%s/v1/modules/%s/%s/%s/versions", c.baseURL, namespace, name, provider)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch module versions: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("module not found: %s", source)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response: %w", err)
+	}
+
+	var moduleVersions ModuleVersions
+	if err := json.Unmarshal(body, &moduleVersions); err != nil {
+		return nil, fmt.Errorf("parse response: %w", err)
+	}
+
+	if len(moduleVersions.Modules) == 0 {
+		return nil, fmt.Errorf("no modules found: %s", source)
+	}
+
+	return moduleVersions.Modules[0].Versions, nil
+}
+
 // FindBestProviderVersion finds the best provider version matching a constraint.
 func (c *TerraformClient) FindBestProviderVersion(ctx context.Context, source, constraint string) (string, error) {
 	parts := strings.Split(source, "/")
