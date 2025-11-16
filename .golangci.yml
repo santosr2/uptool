@@ -12,19 +12,42 @@ run:
 linters:
   default: none  # Explicitly enable linters below
   enable:
+    # Base linters (fast, essential)
     - errcheck      # Check for unchecked errors
     - gosimple      # Simplify code
     - govet         # Official Go vet tool
     - ineffassign   # Detect ineffectual assignments
     - staticcheck   # Advanced Go linter
     - unused        # Check for unused code
+
+    # Style & best practices
     - revive        # Fast, configurable, extensible linter
     - unconvert     # Remove unnecessary type conversions
     - unparam       # Find unused function parameters
+    - misspell      # Find misspelled English words
+
+    # Complexity & code quality
+    - gocyclo       # Cyclomatic complexity
+    - gocognit      # Cognitive complexity
+    - dupl          # Duplicate code detection
+    - goconst       # Repeated strings that could be constants
+    - gocritic      # Comprehensive Go source code linter
+
+    # Security
     - bodyclose     # Check HTTP response bodies are closed
     - gosec         # Security-focused linter
+
+    # Error handling
     - nilerr        # Find code returning nil when err is not nil
-    - misspell      # Find misspelled English words
+    - errname       # Check error type naming conventions
+
+    # Performance
+    - prealloc      # Find slice declarations that could be preallocated
+
+    # Formatting
+    - gofmt         # Check gofmt compliance
+    - goimports     # Check goimports compliance
+    - gofumpt       # Stricter gofmt
 
   settings:
     errcheck:
@@ -51,30 +74,44 @@ linters:
         - G104  # Audit errors not checked (handled by errcheck)
         - G204  # Subprocess launched with variable (needed for git, pre-commit, etc)
 
-  exclusions:
-    generated: lax  # How to handle generated code
-    warn-unused: false
+    gocyclo:
+      min-complexity: 15  # Warn on functions with complexity > 15
 
-    rules:
-      # Exclude some linters from test files
-      - path: _test\.go
-        linters:
-          - errcheck
-          - gosec
+    gocognit:
+      min-complexity: 20  # Cognitive complexity threshold
 
-# Code formatters (gofmt and goimports)
+    dupl:
+      threshold: 100  # Minimum token sequence for duplicate detection
+
+    goconst:
+      min-len: 3  # Minimum length of string constant
+      min-occurrences: 3  # Minimum number of occurrences
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - experimental
+      disabled-checks:
+        - paramTypeCombine  # Can be too aggressive
+        - unnamedResult     # Allow unnamed returns in some cases
+
+    prealloc:
+      simple: true  # Only check simple loops
+      range-loops: true  # Check range loops
+      for-loops: false  # Don't check for loops (can be noisy)
+
 formatters:
   enable:
+    - gofumpt
     - gofmt
     - goimports
 
   settings:
-    gofmt:
-      simplify: true
-
-    goimports:
-      local-prefixes:
-        - github.com/santosr2/uptool
+    gofumpt:
+      extra-rules: true  # Enable extra formatting rules
+      module-path: github.com/santosr2/uptool  # Module path for import grouping
 
 issues:
   max-issues-per-linter: 0  # Unlimited

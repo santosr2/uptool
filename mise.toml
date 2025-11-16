@@ -44,3 +44,25 @@ node = "22"
 # Package managers
 pipx = "1.8"
 uv = "latest"
+
+# Development tools
+"go:github.com/air-verse/air" = "1.63.1"
+
+# Environment variables for development
+[env]
+# Go configuration
+CGO_ENABLED = "0"
+# GOOS = "{{ os }}"
+# GOARCH = "{{ arch }}"
+
+# uptool configuration
+UPTOOL_LOG_LEVEL = "info"
+UPTOOL_CONFIG = "{{ config_root }}/uptool.yaml"
+
+# Development flags
+UPTOOL_DEV_MODE = "true"
+UPTOOL_DEBUG = "false"
+
+# Build information
+# UPTOOL_BUILD_USER = "{{ env.USER | env.USERNAME }}"
+# UPTOOL_BUILD_HOST = "{{ env.HOSTNAME }}"
