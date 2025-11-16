@@ -1,0 +1,187 @@
+# MkDocs configuration for uptool documentation
+# See https://www.mkdocs.org/ and https://squidfunk.github.io/mkdocs-material/
+
+site_name: uptool
+site_description: Universal, Manifest-First Dependency Updater
+site_author: santosr2
+site_url: https://santosr2.github.io/uptool
+repo_name: santosr2/uptool
+repo_url: https://github.com/santosr2/uptool
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 santosr2
+
+# Theme configuration
+theme:
+  name: material
+  language: en
+
+  # Color palette with dark mode toggle
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Font configuration
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  # Logo and favicon
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/wrench-cog
+
+  # Theme features
+  features:
+    # Navigation
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - navigation.indexes
+
+    # Search
+    - search.suggest
+    - search.highlight
+    - search.share
+
+    # Content
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+
+    # Table of Contents
+    - toc.follow
+    - toc.integrate
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+
+# Extensions
+markdown_extensions:
+  # Python Markdown extensions
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - tables
+
+  # PyMdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra CSS and JavaScript
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+
+# Social links and extras
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/santosr2/uptool
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/santosr2
+
+  version:
+    provider: mike
+    default: latest
+
+# Navigation structure
+nav:
+  - Home: index.md
+
+  - Getting Started:
+    - Overview: README.md
+    - Installation: installation.md
+    - Quick Start: quickstart.md
+
+  - User Guide:
+    - Configuration: configuration.md
+    - Environments: environments.md
+    - Manifests: manifests.md
+    - GitHub Action Usage: action-usage.md
+    - Versioning: versioning.md
+
+  - Integrations:
+    - Overview: integrations/README.md
+    - npm: integrations/npm.md
+    - Helm: integrations/helm.md
+    - Terraform: integrations/terraform.md
+    - TFLint: integrations/tflint.md
+    - pre-commit: integrations/precommit.md
+    - asdf: integrations/asdf.md
+    - mise: integrations/mise.md
+
+  - Development:
+    - Contributing: CONTRIBUTING.md
+    - Plugin Development: plugin-development.md
+    - Patch Release Workflow: patch-release-workflow.md
+    - Architecture: ARCHITECTURE.md
+
+  - Reference:
+    - API Documentation: api/README.md
+    - CLI Commands: cli/commands.md
+
+  - About:
+    - Changelog: CHANGELOG.md
+    - Security Policy: SECURITY.md
+    - Governance: GOVERNANCE.md
+    - Code of Conduct: CODE_OF_CONDUCT.md
+    - License: LICENSE.md
