@@ -1,0 +1,32 @@
+name: 'Setup mise'
+description: 'Install mise and sync tools from mise.toml'
+author: 'santosr2'
+
+inputs:
+  install:
+    description: 'Automatically install tools from mise.toml'
+    required: false
+    default: 'true'
+  cache:
+    description: 'Enable caching of mise tools'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install mise
+      uses: jdx/mise-action@f8dfbcc150159126838e44b882bf34bd98fd90f3 # v2.1.4
+      with:
+        install: ${{ inputs.install }}
+        cache: ${{ inputs.cache }}
+        experimental: true
+
+    - name: Verify mise installation
+      shell: bash
+      run: |
+        echo "## 🔧 mise Tools Installed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        mise list
+        echo '```' >> $GITHUB_STEP_SUMMARY
