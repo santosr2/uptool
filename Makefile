@@ -1,5 +1,6 @@
 .PHONY: help build test lint fmt clean install run-scan run-plan run-update \
-        version version-show version-bump-patch version-bump-minor version-bump-major
+        version version-show version-bump-patch version-bump-minor version-bump-major \
+        complexity
 
 # Default target
 help:
@@ -10,6 +11,7 @@ help:
 	@echo "  install      Install uptool to \$$GOPATH/bin"
 	@echo "  test         Run all tests"
 	@echo "  lint         Run golangci-lint"
+	@echo "  complexity   Check cyclomatic complexity with gocyclo"
 	@echo "  fmt          Format code with gofmt"
 	@echo "  clean        Remove build artifacts"
 	@echo "  run-scan     Run uptool scan on this repository"
@@ -70,8 +72,19 @@ vet:
 	go vet ./...
 	@echo "✓ Vet passed"
 
+# Check cyclomatic complexity
+complexity:
+	@echo "Checking cyclomatic complexity..."
+	@if command -v gocyclo >/dev/null 2>&1; then \
+		gocyclo -over 15 .; \
+		echo "✓ Complexity check passed"; \
+	else \
+		echo "⚠ gocyclo not installed. Install with:"; \
+		echo "  mise install  # or go install github.com/fzipp/gocyclo/cmd/gocyclo@latest"; \
+	fi
+
 # Run all checks
-check: fmt vet lint test
+check: fmt vet complexity lint test
 	@echo "✓ All checks passed"
 
 # Clean build artifacts
