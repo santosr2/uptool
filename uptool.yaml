@@ -1,0 +1,71 @@
+# uptool configuration for this repository
+# See https://github.com/santosr2/uptool for documentation
+
+version: 1
+
+integrations:
+  # Pre-commit hooks updater
+  - id: precommit
+    enabled: true
+    match:
+      files:
+        - ".pre-commit-config.yaml"
+    policy:
+      enabled: true
+      update: minor  # none | patch | minor | major
+      allow_prerelease: false
+      pin: true
+      cadence: weekly
+
+  # TFLint plugin updater
+  - id: tflint
+    enabled: true
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      pin: true
+
+  # Terraform modules and providers updater
+  - id: terraform
+    enabled: true
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      pin: true
+
+  # Mise tool version updater
+  - id: mise
+    enabled: true
+    policy:
+      enabled: true
+      update: patch  # Conservative: only patch updates for runtime tools
+      allow_prerelease: false
+      pin: true
+
+  # Helm chart updater
+  - id: helm
+    enabled: true
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      pin: true
+
+# Optional: Organization-level policy settings
+org_policy:
+  # Require sign-off from specific teams/users
+  # require_signoff_from:
+  #   - "platform-team@company.com"
+
+  # Artifact signing verification
+  # signing:
+  #   cosign_verify: false
+
+  # Auto-merge settings for GitHub Actions
+  # auto_merge:
+  #   enabled: true
+  #   guards:
+  #     - "ci-green"
+  #     - "codeowners-approve"

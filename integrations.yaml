@@ -1,0 +1,144 @@
+# Uptool Integrations Registry
+# This file contains metadata about all supported integrations.
+# It is used for documentation, feature flags, and default configurations.
+
+version: "1.0"
+
+integrations:
+  asdf:
+    displayName: "asdf"
+    description: ".tool-versions runtime version manager"
+    filePatterns:
+      - ".tool-versions"
+    datasources: []
+    experimental: true
+    disabled: false
+    url: "https://asdf-vm.com"
+    category: "runtime-manager"
+
+  helm:
+    displayName: "Helm"
+    description: "Kubernetes Helm charts (Chart.yaml)"
+    filePatterns:
+      - "Chart.yaml"
+      - "*/Chart.yaml"
+    datasources:
+      - helm-registry
+    experimental: false
+    disabled: false
+    url: "https://helm.sh"
+    category: "kubernetes"
+
+  mise:
+    displayName: "mise"
+    description: "mise.toml runtime version manager"
+    filePatterns:
+      - "mise.toml"
+      - ".mise.toml"
+    datasources: []
+    experimental: true
+    disabled: false
+    url: "https://mise.jdx.dev"
+    category: "runtime-manager"
+
+  npm:
+    displayName: "npm"
+    description: "JavaScript/TypeScript package manager (package.json)"
+    filePatterns:
+      - "package.json"
+      - "*/package.json"
+    datasources:
+      - npm-registry
+    experimental: false
+    disabled: false
+    url: "https://www.npmjs.com"
+    category: "package-manager"
+
+  precommit:
+    displayName: "pre-commit"
+    description: "Pre-commit hooks configuration (.pre-commit-config.yaml)"
+    filePatterns:
+      - ".pre-commit-config.yaml"
+    datasources:
+      - github-releases
+    experimental: false
+    disabled: false
+    url: "https://pre-commit.com"
+    category: "git-hooks"
+
+  terraform:
+    displayName: "Terraform"
+    description: "Terraform modules and providers (*.tf)"
+    filePatterns:
+      - "*.tf"
+      - "**/*.tf"
+    datasources:
+      - terraform-registry
+    experimental: false
+    disabled: false
+    url: "https://www.terraform.io"
+    category: "infrastructure"
+
+  tflint:
+    displayName: "TFLint"
+    description: "TFLint plugin configuration (.tflint.hcl)"
+    filePatterns:
+      - ".tflint.hcl"
+    datasources:
+      - github-releases
+    experimental: false
+    disabled: false
+    url: "https://github.com/terraform-linters/tflint"
+    category: "linting"
+
+# Datasource definitions
+datasources:
+  npm-registry:
+    name: "npm Registry"
+    url: "https://registry.npmjs.org"
+    type: "http-json"
+    description: "Official npm package registry"
+
+  helm-registry:
+    name: "Helm Chart Repositories"
+    url: "https://artifacthub.io"
+    type: "http-json"
+    description: "Helm chart repositories (Artifact Hub, custom repos)"
+
+  terraform-registry:
+    name: "Terraform Registry"
+    url: "https://registry.terraform.io"
+    type: "http-json"
+    description: "Official Terraform module and provider registry"
+
+  github-releases:
+    name: "GitHub Releases"
+    url: "https://api.github.com"
+    type: "http-json"
+    description: "GitHub repository releases API"
+
+# Categories for grouping integrations
+categories:
+  runtime-manager:
+    name: "Runtime Version Managers"
+    description: "Tools that manage runtime versions (asdf, mise, etc.)"
+
+  package-manager:
+    name: "Package Managers"
+    description: "Language-specific package managers (npm, pip, cargo, etc.)"
+
+  kubernetes:
+    name: "Kubernetes Tools"
+    description: "Kubernetes and Helm related tools"
+
+  infrastructure:
+    name: "Infrastructure as Code"
+    description: "Terraform, Pulumi, and other IaC tools"
+
+  git-hooks:
+    name: "Git Hooks"
+    description: "Pre-commit and other git hook managers"
+
+  linting:
+    name: "Linters and Static Analysis"
+    description: "Code quality and linting tools"
