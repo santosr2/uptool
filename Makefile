@@ -76,11 +76,15 @@ vet:
 complexity:
 	@echo "Checking cyclomatic complexity..."
 	@if command -v gocyclo >/dev/null 2>&1; then \
-		gocyclo -over 15 .; \
-		echo "✓ Complexity check passed"; \
+		if gocyclo -over 15 . 2>&1; then \
+			echo "✓ No functions exceed complexity threshold of 15"; \
+		else \
+			echo "⚠ Warning: Some functions have high complexity (see above)"; \
+		fi; \
 	else \
 		echo "⚠ gocyclo not installed. Install with:"; \
 		echo "  mise install  # or go install github.com/fzipp/gocyclo/cmd/gocyclo@latest"; \
+		exit 1; \
 	fi
 
 # Run all checks

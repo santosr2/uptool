@@ -44,11 +44,6 @@ linters:
     # Performance
     - prealloc      # Find slice declarations that could be preallocated
 
-    # Formatting
-    - gofmt         # Check gofmt compliance
-    - goimports     # Check goimports compliance
-    - gofumpt       # Stricter gofmt
-
   settings:
     errcheck:
       check-type-assertions: true
@@ -104,9 +99,9 @@ linters:
 
 formatters:
   enable:
-    - gofumpt
-    - gofmt
-    - goimports
+    - gofumpt   # Check gofmt compliance
+    - gofmt     # Check goimports compliance
+    - goimports # Stricter gofmt
 
   settings:
     gofumpt:

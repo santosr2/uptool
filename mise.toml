@@ -22,6 +22,7 @@ actionlint = "1.7"
 # Code quality
 pre-commit = "4.4"
 yamllint = "1.37"
+hadolint = "latest"
 
 # Documentation
 # Note: mkdocs-material doesn't work well with mise, install manually in workflows

@@ -39,5 +39,8 @@ scan.json
 plan.json
 update.log
 
+# Environment files
+.env
+
 # OS-specific
 Thumbs.db
