@@ -78,7 +78,7 @@ This ensures your **declared dependencies** stay current, not just resolved vers
 
 - [ ] Python (`pyproject.toml`, `requirements.txt`, `Pipfile`)
 - [ ] Go modules (`go.mod`)
-- [ ] Docker (`Dockerfile`, `docker-compose.yml`)
+- [ ] Docker (`Dockerfile`, `compose.yml`, `docker-compose.yml`)
 - [ ] GitHub Actions (workflow `.yml` files)
 - [ ] Generic version matcher (custom YAML/TOML/JSON/HCL patterns)
 

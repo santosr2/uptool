@@ -1,0 +1,255 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - 'CHANGELOG.md'
+      - '.github/workflows/docs-deploy.yml'
+      - '**.go'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - '.github/workflows/docs-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+
+concurrency:
+  group: "pages-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Install MkDocs Material
+        run: |
+          pip install --user mkdocs-material==9.5.*
+
+      - name: Setup Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: Generate API documentation
+        run: |
+          mkdir -p docs/api
+          gomarkdoc --output docs/api/README.md ./...
+
+      - name: Build CLI documentation
+        run: |
+          mkdir -p dist
+          go build -o dist/uptool ./cmd/uptool
+
+          # Generate command documentation
+          mkdir -p docs/cli
+          ./dist/uptool --help > docs/cli/commands.md || echo "# CLI Commands" > docs/cli/commands.md
+
+      - name: Build MkDocs site
+        run: |
+          # Build the MkDocs site
+          mkdocs build --strict
+
+          # Verify build output
+          echo "✅ MkDocs site built successfully" >> $GITHUB_STEP_SUMMARY
+          echo "**Pages generated:** $(find site -name '*.html' | wc -l)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Pages artifact
+        id: upload
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: site
+
+      - name: Documentation build summary
+        run: |
+          echo "## 📚 Documentation Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Ref**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**MkDocs Site**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Material theme with search and navigation" >> $GITHUB_STEP_SUMMARY
+          echo "- Generated API documentation" >> $GITHUB_STEP_SUMMARY
+          echo "- CLI reference" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Sample pages:**" >> $GITHUB_STEP_SUMMARY
+          find site -type f -name "*.html" | head -10 | sed 's|site/||' >> $GITHUB_STEP_SUMMARY
+
+  deploy-production:
+    name: Deploy to GitHub Pages (Production)
+    needs: build-docs
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Documentation Deployed to Production" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 **URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "🌍 **Environment:** github-pages" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Documentation is now live!" >> $GITHUB_STEP_SUMMARY
+
+  preview-comment:
+    name: Preview Deployment Comment
+    needs: build-docs
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment on PR with preview info
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const body = `## 📚 Documentation Preview
+
+            The documentation has been built successfully for this PR.
+
+            ### Preview Deployment
+
+            ⚠️ **Note**: Preview deployments to separate URLs are not currently configured.
+            To enable preview deployments, set up a preview environment in your repository settings.
+
+            ### What's Included
+
+            - ✅ API Documentation
+            - ✅ CLI Reference
+            - ✅ User Guides
+            - ✅ Updated README/CONTRIBUTING
+
+            ### Manual Preview
+
+            To preview the documentation locally:
+
+            \`\`\`bash
+            # Check out this PR
+            gh pr checkout ${{ github.event.pull_request.number }}
+
+            # Build and serve docs
+            make docs-serve
+            \`\`\`
+
+            ---
+
+            <sub>🤖 Documentation will be automatically deployed to production when this PR is merged.</sub>
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Documentation Preview')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check for broken markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@d53a906aa6b22b8979d33bc86170567e619495ec # v1.0.15
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+        continue-on-error: true
+
+      - name: Validate README
+        run: |
+          echo "## 📋 Documentation Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check README exists
+          if [ ! -f README.md ]; then
+            echo "❌ README.md not found" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Check minimum length
+          README_LINES=$(wc -l < README.md)
+          if [ $README_LINES -lt 20 ]; then
+            echo "⚠️ README.md seems too short ($README_LINES lines)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ README.md exists ($README_LINES lines)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Check for essential sections
+          SECTIONS=("Installation" "Usage" "Features")
+          for section in "${SECTIONS[@]}"; do
+            if grep -qi "$section" README.md; then
+              echo "✅ Section found: $section" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ Section missing: $section" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Check documentation completeness
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Documentation Files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List all markdown files
+          if [ -d docs ]; then
+            find docs -name "*.md" -type f | while read -r file; do
+              echo "- 📄 $file" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "⚠️ docs/ directory not found" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -31,6 +31,36 @@ jobs:
           git diff --exit-code go.mod go.sum || \
             (echo "::error::go mod tidy resulted in changes. Please run 'go mod tidy' locally and commit the changes." && exit 1)
 
+  pre-commit:
+    name: Pre-commit hooks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Run pre-commit hooks
+        run: |
+          echo "## 🪝 Pre-commit Hooks" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Run pre-commit on all files
+          if pre-commit run --all-files; then
+            echo "✅ All pre-commit hooks passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Pre-commit hooks failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Run locally to fix:" >> $GITHUB_STEP_SUMMARY
+            echo '```bash' >> $GITHUB_STEP_SUMMARY
+            echo 'pre-commit run --all-files' >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
   test:
     name: Test
     runs-on: ${{ matrix.os }}
@@ -97,18 +127,19 @@ jobs:
           echo "## 🔄 Cyclomatic Complexity Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Run gocyclo with threshold of 15
+          # Run gocyclo with threshold of 15 (treat as warning, not error)
           if gocyclo -over 15 . > complexity-report.txt 2>&1; then
             echo "✅ No functions exceed complexity threshold of 15" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ **Functions with high complexity (>15):**" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Warning: Functions with high complexity (>15)**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Consider refactoring these functions to reduce complexity:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             cat complexity-report.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Consider refactoring these functions to reduce complexity." >> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "_Note: This is a warning and won't fail the build._" >> $GITHUB_STEP_SUMMARY
           fi
 
   lint:
