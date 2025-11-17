@@ -1,0 +1,13 @@
+# Documentation dependencies for MkDocs
+# Install with: pip install -r docs/requirements.txt
+
+# Core MkDocs with Material theme
+mkdocs>=1.6.0,<2.0.0
+mkdocs-material>=9.5.0,<10.0.0
+
+# Plugins
+mkdocs-git-revision-date-localized-plugin>=1.2.0
+
+# Optional but recommended for full feature support
+# These provide enhanced markdown rendering and features
+pymdown-extensions>=10.0.0
