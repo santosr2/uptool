@@ -14,7 +14,6 @@ linters:
   enable:
     # Base linters (fast, essential)
     - errcheck      # Check for unchecked errors
-    - gosimple      # Simplify code
     - govet         # Official Go vet tool
     - ineffassign   # Detect ineffectual assignments
     - staticcheck   # Advanced Go linter
@@ -117,8 +116,6 @@ output:
   formats:
     text:
       path: stdout
-      print-linter-name: true
-      print-issued-lines: true
       colors: true
 
   sort-order:
