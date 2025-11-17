@@ -2,7 +2,7 @@ name: Documentation
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'docs/**'
       - 'README.md'
@@ -11,7 +11,7 @@ on:
       - '.github/workflows/docs-deploy.yml'
       - '**.go'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'docs/**'
       - 'README.md'
@@ -44,9 +44,9 @@ jobs:
       - name: Setup mise
         uses: ./.github/actions/setup-mise
 
-      - name: Install MkDocs Material
+      - name: Install MkDocs and plugins
         run: |
-          pip install --user mkdocs-material==9.5.*
+          pip install --user -r docs/requirements.txt
 
       - name: Setup Pages
         if: github.event_name != 'pull_request'
