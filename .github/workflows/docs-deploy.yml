@@ -54,6 +54,15 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
+      - name: Copy root-level documentation files
+        run: |
+          # Copy root documentation files to docs/ for MkDocs
+          cp CONTRIBUTING.md docs/CONTRIBUTING.md
+          cp CHANGELOG.md docs/CHANGELOG.md
+          cp SECURITY.md docs/SECURITY.md
+          cp GOVERNANCE.md docs/GOVERNANCE.md
+          cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
+
       - name: Generate API documentation
         run: |
           mkdir -p docs/api
