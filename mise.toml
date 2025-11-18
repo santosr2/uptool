@@ -233,6 +233,12 @@ description = "Build MkDocs site"
 depends = ["docs-install"]
 run = """
 echo "Building MkDocs site..."
+# Copy root documentation files to docs/ for MkDocs
+cp CONTRIBUTING.md docs/CONTRIBUTING.md
+cp CHANGELOG.md docs/CHANGELOG.md
+cp SECURITY.md docs/SECURITY.md
+cp GOVERNANCE.md docs/GOVERNANCE.md
+cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
 # Generate API docs
 mkdir -p docs/api
 if command -v gomarkdoc >/dev/null 2>&1; then
@@ -260,6 +266,13 @@ echo "✓ MkDocs site built in site/"
 description = "Serve documentation locally (http://127.0.0.1:8000)"
 depends = ["docs-install"]
 run = """
+echo "Preparing documentation files..."
+# Copy root documentation files to docs/ for MkDocs
+cp CONTRIBUTING.md docs/CONTRIBUTING.md
+cp CHANGELOG.md docs/CHANGELOG.md
+cp SECURITY.md docs/SECURITY.md
+cp GOVERNANCE.md docs/GOVERNANCE.md
+cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
 echo "Starting MkDocs development server..."
 echo "📚 Documentation will be available at http://127.0.0.1:8000"
 echo "Press Ctrl+C to stop the server"
@@ -273,6 +286,11 @@ echo "Cleaning documentation artifacts..."
 rm -rf site/
 rm -rf docs/api/
 rm -f docs/cli/commands.md
+rm -f docs/CONTRIBUTING.md
+rm -f docs/CHANGELOG.md
+rm -f docs/SECURITY.md
+rm -f docs/GOVERNANCE.md
+rm -f docs/CODE_OF_CONDUCT.md
 echo "✓ Documentation cleaned"
 """
 
