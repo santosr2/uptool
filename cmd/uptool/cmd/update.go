@@ -49,8 +49,8 @@ func init() {
 	updateCmd.Flags().StringVar(&updateExclude, "exclude", "", "comma-separated integrations to exclude")
 
 	// Add shell completion for flags
-	updateCmd.RegisterFlagCompletionFunc("only", completeIntegrations)
-	updateCmd.RegisterFlagCompletionFunc("exclude", completeIntegrations)
+	_ = updateCmd.RegisterFlagCompletionFunc("only", completeIntegrations)
+	_ = updateCmd.RegisterFlagCompletionFunc("exclude", completeIntegrations)
 }
 
 func runUpdate(cmd *cobra.Command, args []string) error {

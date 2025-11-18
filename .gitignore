@@ -22,15 +22,24 @@ vendor/
 
 # IDE and editor files
 .idea/
-.vscode/
+# VS Code - ignore local settings, keep shared config
+.vscode/*.local.json
+.vscode/.history/
+# Vim
 *.swp
 *.swo
 *~
+# macOS
 .DS_Store
 
 # Build artifacts
 dist/
 build/
+
+# Documentation build artifacts
+site/
+docs/api/
+docs/cli/commands.md
 
 # Temporary files
 *.log
@@ -44,3 +53,8 @@ update.log
 
 # OS-specific
 Thumbs.db
+
+# Testdata
+.terraform/
+.terraform.lock.hcl
+node_modules/

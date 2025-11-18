@@ -157,13 +157,14 @@ Ready to get started? Choose your path:
 
 ## Project Status
 
-!!! info "Development Status"
-    uptool is under active development. The current focus is on:
+> [!INFO]
+> "Development Status"
+> uptool is under active development. The current focus is on:
 
-    - ✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, asdf, mise)
-    - 🚧 Expanding test coverage (target: >70%)
-    - 🚧 Adding Python ecosystem support
-    - 📝 Improving documentation and examples
+- ✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, asdf, mise)
+- 🚧 Expanding test coverage (target: >70%)
+- 🚧 Adding Python ecosystem support
+- 📝 Improving documentation and examples
 
 ---
 

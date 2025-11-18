@@ -11,6 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
+}
+
 var completionCmd = &cobra.Command{
 	Use:   "completion [bash|zsh|fish|powershell]",
 	Short: "Generate shell completion scripts",
@@ -93,12 +106,17 @@ func runCompletionInstall(cmd *cobra.Command, args []string) error {
 
 	// Create parent directory if needed
 	dir := filepath.Dir(installPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 
 	// Generate completion to file
-	file, err := os.Create(installPath)
+	// Validate path for security
+	if err := validateFilePath(installPath); err != nil {
+		return fmt.Errorf("invalid install path: %w", err)
+	}
+
+	file, err := os.Create(installPath) // #nosec G304 - path is validated above
 	if err != nil {
 		return fmt.Errorf("create file %s: %w\nTry running with sudo or install manually", installPath, err)
 	}
@@ -171,7 +189,11 @@ func detectParentShell(pid int) string {
 		return ""
 	}
 
-	cmd := exec.Command("ps", "-p", fmt.Sprint(pid), "-o", "comm=")
+	// Validate PID to prevent command injection
+	if pid <= 0 || pid > 2147483647 { // Valid PID range
+		return ""
+	}
+	cmd := exec.Command("ps", "-p", fmt.Sprint(pid), "-o", "comm=") // #nosec G204 - PID is validated to be a positive integer
 	output, err := cmd.Output()
 	if err != nil {
 		return ""
@@ -192,7 +214,7 @@ func detectParentShell(pid int) string {
 }
 
 // getCompletionPath returns the appropriate installation path for each shell
-func getCompletionPath(shell string) (path string, instructions string, err error) {
+func getCompletionPath(shell string) (path, instructions string, err error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", "", fmt.Errorf("get home directory: %w", err)
@@ -206,7 +228,7 @@ func getCompletionPath(shell string) (path string, instructions string, err erro
 			if brewPrefix := getBrewPrefix(); brewPrefix != "" {
 				path = filepath.Join(brewPrefix, "etc", "bash_completion.d", "uptool")
 				instructions = "Restart your terminal or run: source ~/.bash_profile"
-				return
+				return path, instructions, err
 			}
 		}
 		// Linux or macOS without brew - use user location
@@ -258,4 +280,3 @@ func getBrewPrefix() string {
 	}
 	return strings.TrimSpace(string(output))
 }
-

@@ -23,6 +23,7 @@ The Helm integration updates chart dependency versions in `Chart.yaml`:
 ## Example
 
 **Before** (`Chart.yaml`):
+
 ```yaml
 apiVersion: v2
 name: my-application
@@ -40,6 +41,7 @@ dependencies:
 ```
 
 **After** (uptool update):
+
 ```yaml
 apiVersion: v2
 name: my-application
@@ -59,6 +61,7 @@ dependencies:
 ## Chart Metadata
 
 uptool **does NOT** update:
+
 - Chart `version` (your application version)
 - Chart `appVersion` (application version packaged)
 - Chart metadata fields
@@ -74,7 +77,8 @@ uptool scan --only=helm
 ```
 
 Output:
-```
+
+```text
 Type                 Path                            Dependencies
 ------------------------------------------------------------------------
 helm                 charts/myapp/Chart.yaml         3
@@ -91,7 +95,8 @@ uptool plan --only=helm
 ```
 
 Output:
-```
+
+```text
 charts/myapp/Chart.yaml (helm):
 Chart            Current         Target          Impact
 --------------------------------------------------------
@@ -135,6 +140,7 @@ dependencies:
 ```
 
 uptool queries the repository's `index.yaml`:
+
 ```bash
 curl https://charts.bitnami.com/bitnami/index.yaml
 ```
@@ -182,6 +188,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates (12.0.0 → 12.0.1)
 - `minor` - Patch + minor updates (12.0.0 → 12.1.0)
@@ -217,7 +224,7 @@ helm repo add myrepo https://charts.company.internal \
 
 uptool respects Helm's repository configuration in `~/.config/helm/repositories.yaml`.
 
-### OCI Registries
+### Helm Registries
 
 For OCI registries, authenticate with Helm:
 
@@ -245,7 +252,7 @@ done
 
 Common structure:
 
-```
+```tree
 my-monorepo/
 ├── charts/
 │   ├── frontend/
@@ -282,11 +289,13 @@ Each `Chart.yaml` is scanned and updated independently.
 **Problem**: "Failed to fetch chart from repository"
 
 **Causes**:
+
 1. Repository URL incorrect in `Chart.yaml`
 2. Repository not added to Helm
 3. Network connectivity issues
 
 **Solutions**:
+
 ```bash
 # List configured repositories
 helm repo list
@@ -306,10 +315,12 @@ helm search repo postgresql
 **Problem**: "403 Forbidden" or "401 Unauthorized"
 
 **Causes**:
+
 1. Private repository requires authentication
 2. Credentials expired or incorrect
 
 **Solutions**:
+
 ```bash
 # Re-add repository with credentials
 helm repo remove myrepo
@@ -326,6 +337,7 @@ helm search repo myrepo/
 **Problem**: After updating, `helm install` fails with dependency errors
 
 **Solution**:
+
 ```bash
 # Delete Chart.lock and rebuild
 rm Chart.lock
@@ -340,10 +352,12 @@ helm dependency build .
 **Problem**: uptool wants to update to version that doesn't exist
 
 **Causes**:
+
 1. Repository index is stale
 2. Chart was removed from repository
 
 **Solutions**:
+
 ```bash
 # Update repository indexes
 helm repo update
@@ -357,6 +371,7 @@ helm search repo postgresql --versions
 ## Best Practices
 
 1. **Always regenerate Chart.lock**:
+
    ```bash
    uptool update --only=helm
    helm dependency update charts/myapp
@@ -365,6 +380,7 @@ helm search repo postgresql --versions
    ```
 
 2. **Test charts after updating**:
+
    ```bash
    helm lint charts/myapp
    helm template charts/myapp
@@ -372,12 +388,14 @@ helm search repo postgresql --versions
    ```
 
 3. **Review major version updates**:
+
    ```bash
    # Check release notes for breaking changes
    helm show readme bitnami/postgresql --version 18.1.8
    ```
 
 4. **Use separate PRs for major updates**:
+
    ```bash
    # Minor/patch updates together
    uptool update --only=helm  # (with policy: minor)
@@ -387,11 +405,13 @@ helm search repo postgresql --versions
    ```
 
 5. **Keep repository indexes fresh**:
+
    ```bash
    helm repo update
    ```
 
 6. **Pin critical dependencies**:
+
    ```yaml
    dependencies:
      - name: critical-database
@@ -403,10 +423,12 @@ helm search repo postgresql --versions
 uptool works with Helm v3.x chart repositories.
 
 **Helm v2** (deprecated):
+
 - Not officially supported
 - May work if repository format is compatible
 
 **Helm v3**:
+
 - ✅ Fully supported
 - Works with `Chart.yaml` v2 (apiVersion: v2)
 

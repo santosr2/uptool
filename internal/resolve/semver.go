@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+
 	"github.com/santosr2/uptool/internal/engine"
 )
 

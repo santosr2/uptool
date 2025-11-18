@@ -23,6 +23,9 @@ actionlint = "1.7"
 pre-commit = "4.4"
 yamllint = "1.37"
 hadolint = "latest"
+# Need to install manually due to mise issue with modules
+# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.6.2
+# "go:github.com/golangci/golangci-lint" = "2.6.2"
 
 # Documentation
 # Note: mkdocs-material doesn't work well with mise, install manually in workflows
@@ -31,6 +34,7 @@ hadolint = "latest"
 "go:github.com/princjef/gomarkdoc/cmd/gomarkdoc" = "latest"
 
 # Security scanning
+"go:github.com/securego/gosec/v2/cmd/gosec" = "latest"
 "go:github.com/google/go-licenses" = "latest"
 "go:golang.org/x/vuln/cmd/govulncheck" = "latest"
 "go:github.com/sigstore/cosign/v2/cmd/cosign" = "latest"
@@ -48,6 +52,229 @@ uv = "latest"
 
 # Development tools
 "go:github.com/air-verse/air" = "1.63.1"
+
+# Task definitions (replacing Makefile)
+[tasks.build]
+description = "Build the uptool binary"
+run = """
+echo "Building uptool..."
+mkdir -p dist
+go build -o dist/uptool ./cmd/uptool
+echo "✓ Built: ./dist/uptool"
+"""
+
+[tasks.install]
+description = "Install uptool to $GOPATH/bin"
+run = """
+echo "Installing uptool..."
+go install ./cmd/uptool
+echo "✓ Installed to $(go env GOPATH)/bin/uptool"
+"""
+
+[tasks.test]
+description = "Run all tests"
+run = """
+echo "Running tests..."
+go test -v -race -coverprofile=coverage.out ./...
+echo "✓ Tests passed"
+"""
+
+[tasks.test-coverage]
+description = "Run tests with coverage report"
+depends = ["test"]
+run = """
+echo "Generating coverage report..."
+go tool cover -html=coverage.out -o coverage.html
+echo "✓ Coverage report: coverage.html"
+"""
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = """
+echo "Running golangci-lint..."
+golangci-lint run ./...
+echo "✓ Linting passed"
+"""
+
+[tasks.fmt]
+description = "Format code with gofmt"
+run = """
+echo "Formatting code..."
+find . -name '*.go' -not -path './.mise/*' -not -path './vendor/*' -exec gofmt -w -s {} +
+echo "✓ Code formatted"
+"""
+
+[tasks.vet]
+description = "Run go vet"
+run = """
+echo "Running go vet..."
+go vet ./...
+echo "✓ Vet passed"
+"""
+
+[tasks.complexity]
+description = "Check cyclomatic complexity with gocyclo"
+run = """
+echo "Checking cyclomatic complexity..."
+if gocyclo -over 15 . 2>&1; then
+  echo "✓ No functions exceed complexity threshold of 15"
+else
+  echo "⚠ Warning: Some functions have high complexity (see above)"
+fi
+"""
+
+[tasks.check]
+description = "Run all checks (fmt, vet, complexity, lint, test)"
+depends = ["fmt", "vet", "complexity", "lint", "test"]
+run = "echo '✓ All checks passed'"
+
+[tasks.clean]
+description = "Remove build artifacts"
+run = """
+echo "Cleaning..."
+rm -f uptool
+rm -f coverage.out coverage.html
+rm -rf dist
+go clean
+echo "✓ Cleaned"
+"""
+
+[tasks.run-scan]
+description = "Run uptool scan on current repository"
+depends = ["build"]
+run = """
+echo "Running scan on current repository..."
+./dist/uptool scan
+"""
+
+[tasks.run-plan]
+description = "Run uptool plan on current repository"
+depends = ["build"]
+run = """
+echo "Running plan on current repository..."
+./dist/uptool plan
+"""
+
+[tasks.run-update]
+description = "Run uptool update --dry-run on current repository"
+depends = ["build"]
+run = """
+echo "Running update --dry-run on current repository..."
+./dist/uptool update --dry-run --diff
+"""
+
+[tasks.build-all]
+description = "Build for multiple platforms"
+run = """
+echo "Building for multiple platforms..."
+mkdir -p dist
+GOOS=linux GOARCH=amd64 go build -o dist/uptool-linux-amd64 ./cmd/uptool
+GOOS=linux GOARCH=arm64 go build -o dist/uptool-linux-arm64 ./cmd/uptool
+GOOS=darwin GOARCH=amd64 go build -o dist/uptool-darwin-amd64 ./cmd/uptool
+GOOS=darwin GOARCH=arm64 go build -o dist/uptool-darwin-arm64 ./cmd/uptool
+GOOS=windows GOARCH=amd64 go build -o dist/uptool-windows-amd64.exe ./cmd/uptool
+echo "✓ Built all platforms in dist/"
+"""
+
+[tasks.setup]
+description = "Setup development environment"
+run = """
+echo "Setting up development environment..."
+go mod download
+mise install
+echo "✓ Development environment ready"
+"""
+
+[tasks.version-show]
+description = "Show current version"
+run = """
+echo "Current version:"
+cat internal/version/VERSION
+"""
+
+[tasks.version-bump-patch]
+description = "Bump patch version (0.1.0 -> 0.1.1)"
+run = """
+echo "Bumping patch version..."
+bump-my-version bump patch --verbose
+echo "✓ Version bumped. Don't forget to commit the changes!"
+"""
+
+[tasks.version-bump-minor]
+description = "Bump minor version (0.1.0 -> 0.2.0)"
+run = """
+echo "Bumping minor version..."
+bump-my-version bump minor --verbose
+echo "✓ Version bumped. Don't forget to commit the changes!"
+"""
+
+[tasks.version-bump-major]
+description = "Bump major version (0.1.0 -> 1.0.0)"
+run = """
+echo "Bumping major version..."
+bump-my-version bump major --verbose
+echo "✓ Version bumped. Don't forget to commit the changes!"
+"""
+
+[tasks.version]
+description = "Alias for version-show"
+alias = "version-show"
+
+[tasks.docs-install]
+description = "Install documentation dependencies"
+run = """
+echo "Installing documentation dependencies..."
+pip3 install --user --break-system-packages -r docs/requirements.txt
+echo "✓ Documentation dependencies installed"
+"""
+
+[tasks.docs-build]
+description = "Build MkDocs site"
+depends = ["docs-install"]
+run = """
+echo "Building MkDocs site..."
+# Generate API docs
+mkdir -p docs/api
+if command -v gomarkdoc >/dev/null 2>&1; then
+  gomarkdoc --output docs/api/README.md --exclude-dirs ./.mise/... ./... || echo "⚠ API docs generation failed"
+fi
+# Build CLI docs
+mkdir -p docs/cli dist
+go build -o dist/uptool ./cmd/uptool
+./dist/uptool --help > docs/cli/commands.md 2>/dev/null || echo "# CLI Commands" > docs/cli/commands.md
+# Build site (try multiple paths for mkdocs)
+if command -v mkdocs >/dev/null 2>&1; then
+  mkdocs build --strict
+elif [ -f "$HOME/.local/bin/mkdocs" ]; then
+  $HOME/.local/bin/mkdocs build --strict
+elif [ -f "$HOME/Library/Python/3.14/bin/mkdocs" ]; then
+  $HOME/Library/Python/3.14/bin/mkdocs build --strict
+else
+  echo "⚠ mkdocs not found. Try: export PATH=\"$HOME/.local/bin:$PATH\""
+  exit 1
+fi
+echo "✓ MkDocs site built in site/"
+"""
+
+[tasks.docs-serve]
+description = "Serve documentation locally (http://127.0.0.1:8000)"
+depends = ["docs-install"]
+run = """
+echo "Starting MkDocs development server..."
+echo "📚 Documentation will be available at http://127.0.0.1:8000"
+echo "Press Ctrl+C to stop the server"
+mkdocs serve
+"""
+
+[tasks.docs-clean]
+description = "Clean documentation build artifacts"
+run = """
+echo "Cleaning documentation artifacts..."
+rm -rf site/
+rm -rf docs/api/
+rm -f docs/cli/commands.md
+echo "✓ Documentation cleaned"
+"""
 
 # Environment variables for development
 [env]

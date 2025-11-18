@@ -94,6 +94,7 @@ List of integration configurations. Each integration can be individually configu
 The integration identifier. Must match a registered integration.
 
 **Example**:
+
 ```yaml
 integrations:
   - id: npm
@@ -110,6 +111,7 @@ integrations:
 Whether this integration should run.
 
 **Example**:
+
 ```yaml
 # Enable npm updates
 - id: npm
@@ -139,6 +141,7 @@ File matching rules for this integration. Overrides integration defaults.
 Glob patterns for files to include.
 
 **Example**:
+
 ```yaml
 - id: npm
   match:
@@ -209,6 +212,7 @@ Maximum version bump to allow.
 - **`major`**: All updates including major (1.2.3 → 2.0.0)
 
 **Example**:
+
 ```yaml
 integrations:
   # Conservative: only patch updates for runtime tools
@@ -244,6 +248,7 @@ integrations:
 Whether to consider pre-release versions (alpha, beta, rc).
 
 **Example**:
+
 ```yaml
 # Stable versions only
 - id: terraform
@@ -257,6 +262,7 @@ Whether to consider pre-release versions (alpha, beta, rc).
 ```
 
 **Pre-release formats recognized**:
+
 - `1.2.3-alpha.1`
 - `1.2.3-beta.2`
 - `1.2.3-rc.1`
@@ -271,6 +277,7 @@ Whether to consider pre-release versions (alpha, beta, rc).
 Whether to write exact versions or ranges.
 
 **Example**:
+
 ```yaml
 # Write exact versions
 - id: terraform
@@ -308,6 +315,7 @@ Whether to write exact versions or ranges.
 Recommended update frequency for CI/CD automation.
 
 **Example**:
+
 ```yaml
 - id: mise
   policy:
@@ -330,6 +338,7 @@ This field is currently for documentation only. Future versions may enforce cade
 Organization-wide policy settings for enterprise use.
 
 **Planned features**:
+
 ```yaml
 org_policy:
   # Require sign-off for certain update types
@@ -516,6 +525,7 @@ Settings are applied in this order (later overrides earlier):
 3. **CLI flags** (`--only`, `--exclude`)
 
 **Example**:
+
 ```yaml
 # uptool.yaml
 integrations:
@@ -533,6 +543,7 @@ uptool update --only=npm  # npm WILL update despite enabled: false
 uptool validates configuration on startup:
 
 **Valid**:
+
 ```yaml
 version: 1
 integrations:
@@ -543,6 +554,7 @@ integrations:
 ```
 
 **Invalid** (logs warning, uses defaults):
+
 ```yaml
 version: 1
 integrations:
@@ -555,7 +567,8 @@ integrations:
 ```
 
 **Validation errors are logged**:
-```
+
+```text
 WARN: Unknown integration 'unknown_integration' in config, skipping
 WARN: Invalid update policy 'invalid_value' for npm, using default 'minor'
 ```
@@ -696,11 +709,13 @@ integrations:
 **Problem**: uptool ignores config file
 
 **Causes**:
+
 1. File not in repository root
 2. Filename typo (must be `uptool.yaml`, not `uptool.yml`)
 3. Invalid YAML syntax
 
 **Solution**:
+
 ```bash
 # Check file exists in root
 ls uptool.yaml
@@ -717,6 +732,7 @@ uptool scan -v
 **Problem**: Integration doesn't run despite configuration
 
 **Check**:
+
 1. Is `enabled: true`?
 2. Are CLI flags overriding? (`--exclude=npm`)
 3. Are files matched by pattern?
@@ -746,7 +762,7 @@ uptool update --only=npm  # Updates regardless of policy.enabled
 
 ## See Also
 
-- [Integration Details](../README.md#integration-details)
-- [CLI Reference](../README.md#cli-reference)
+- [Integration Details](overview.md#integration-details)
+- [CLI Reference](overview.md#cli-reference)
 - [GitHub Action Configuration](action-usage.md)
 - [Example Configurations](../examples/uptool.yaml)

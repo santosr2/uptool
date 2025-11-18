@@ -19,20 +19,24 @@ This ensures your declared dependencies stay current, not just resolved versions
 **Integration**: `npm`
 
 **Manifest Files**:
+
 - `package.json`
 
 **What Gets Updated**:
+
 - `dependencies`
 - `devDependencies`
 - `peerDependencies`
 - `optionalDependencies`
 
 **Update Strategy**:
+
 - Custom JSON rewriting
 - Preserves version constraint prefixes (`^`, `~`, `>=`, etc.)
 - Preserves formatting and key order
 
 **Example**:
+
 ```json
 {
   "dependencies": {
@@ -48,6 +52,7 @@ This ensures your declared dependencies stay current, not just resolved versions
 **Registry**: npm Registry API (`https://registry.npmjs.org`)
 
 **Notes**:
+
 - Does NOT update `package-lock.json` directly
 - Run `npm install` after updating to regenerate lockfile
 - Workspace support: Yes (monorepos with `workspaces` field)
@@ -59,16 +64,20 @@ This ensures your declared dependencies stay current, not just resolved versions
 **Integration**: `helm`
 
 **Manifest Files**:
+
 - `Chart.yaml`
 
 **What Gets Updated**:
+
 - `dependencies[].version` - Chart dependencies
 
 **Update Strategy**:
+
 - YAML parsing and rewriting
 - Preserves comments and formatting
 
 **Example**:
+
 ```yaml
 apiVersion: v2
 name: my-app
@@ -84,6 +93,7 @@ dependencies:
 **Registry**: Helm chart repositories (index.yaml)
 
 **Notes**:
+
 - Does NOT update `Chart.lock`
 - Run `helm dependency update` after to regenerate lockfile
 - Only updates dependency versions, not chart metadata
@@ -95,19 +105,23 @@ dependencies:
 **Integration**: `terraform`
 
 **Manifest Files**:
+
 - `*.tf` (any Terraform file)
 - `main.tf`, `modules.tf`, `providers.tf`, etc.
 
 **What Gets Updated**:
+
 - `module` block `version` attributes
 - Module source versions in git URLs (future)
 - Provider versions (future)
 
 **Update Strategy**:
+
 - HCL parsing and rewriting via `hashicorp/hcl`
 - Preserves comments and formatting
 
 **Example**:
+
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -123,6 +137,7 @@ module "security_group" {
 **Registry**: Terraform Registry API (`https://registry.terraform.io`)
 
 **Notes**:
+
 - Does NOT update `.terraform.lock.hcl`
 - Run `terraform init -upgrade` after to regenerate lockfile
 - Version constraints are preserved
@@ -134,16 +149,20 @@ module "security_group" {
 **Integration**: `tflint`
 
 **Manifest Files**:
+
 - `.tflint.hcl`
 
 **What Gets Updated**:
+
 - `plugin` block `version` attributes
 
 **Update Strategy**:
+
 - HCL parsing and rewriting
 - Preserves comments and formatting
 
 **Example**:
+
 ```hcl
 plugin "aws" {
   enabled = true
@@ -161,6 +180,7 @@ plugin "azurerm" {
 **Registry**: GitHub Releases (for plugins)
 
 **Notes**:
+
 - Plugin sources must be valid GitHub repository paths
 - Follows semantic versioning
 
@@ -171,17 +191,21 @@ plugin "azurerm" {
 **Integration**: `precommit`
 
 **Manifest Files**:
+
 - `.pre-commit-config.yaml`
 
 **What Gets Updated**:
+
 - `repos[].rev` - Hook repository revisions
 
 **Update Strategy**:
+
 - **Native command**: `pre-commit autoupdate`
 - Uses pre-commit's built-in update mechanism
 - This is because `pre-commit autoupdate` updates the manifest directly
 
 **Example**:
+
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -199,6 +223,7 @@ repos:
 **Registry**: GitHub Releases (for hook repositories)
 
 **Notes**:
+
 - Uses native `pre-commit autoupdate` command
 - Respects minimum_pre_commit_version
 - Does NOT create `.pre-commit-config.yaml.lock` (pre-commit doesn't use lockfiles)
@@ -210,17 +235,21 @@ repos:
 **Integration**: `asdf`
 
 **Manifest Files**:
+
 - `.tool-versions`
 
 **What Gets Updated**:
+
 - Tool versions (e.g., `go 1.23.0` → `go 1.25.0`)
 
 **Update Strategy**:
+
 - Line-based parsing and rewriting
 - Preserves formatting and comments
 
 **Example**:
-```
+
+```text
 # Development tools
 go 1.23.0                     # Updated to 1.25.0
 nodejs 20.10.0                # Updated to 22.12.0
@@ -233,6 +262,7 @@ python 3.11.0                 # Updated to 3.13.1
 **Registry**: GitHub Releases (per tool via asdf plugin mapping)
 
 **Notes**:
+
 - Does NOT update installed versions
 - Run `asdf install` after to install new versions
 - Supports multiple versions per tool (space-separated)
@@ -244,18 +274,22 @@ python 3.11.0                 # Updated to 3.13.1
 **Integration**: `mise`
 
 **Manifest Files**:
+
 - `mise.toml`
 - `.mise.toml`
 
 **What Gets Updated**:
+
 - `[tools]` section tool versions
 
 **Update Strategy**:
+
 - TOML parsing and rewriting
 - Supports both string format and map format
 - Preserves comments and formatting
 
 **Example (String Format)**:
+
 ```toml
 [tools]
 go = "1.23"                   # Updated to "1.25"
@@ -265,6 +299,7 @@ terraform = "1.5.0"           # Updated to "1.10.5"
 ```
 
 **Example (Map Format)**:
+
 ```toml
 [tools]
 go = { version = "1.23" }     # Updated to { version = "1.25" }
@@ -274,6 +309,7 @@ node = { version = "20", path = ".nvmrc" }
 **Registry**: GitHub Releases (per tool)
 
 **Notes**:
+
 - Does NOT install new versions automatically
 - Run `mise install` after to install new versions
 - Supports both mise.toml and .mise.toml (hidden file)
@@ -304,6 +340,7 @@ func Detect(ctx context.Context, repoRoot string) ([]*Manifest, error) {
 ### Ignored Directories
 
 By default, uptool skips:
+
 - `.git/`
 - `node_modules/`
 - `vendor/`
@@ -392,6 +429,7 @@ See [configuration.md](configuration.md) for complete reference.
 **Problem**: uptool doesn't find your manifest file
 
 **Solutions**:
+
 1. Run `uptool scan` to see what's detected
 2. Check file is in repository root or subdirectory
 3. Verify filename matches exactly (e.g., `package.json` not `Package.json`)
@@ -402,6 +440,7 @@ See [configuration.md](configuration.md) for complete reference.
 **Problem**: uptool detects manifest but doesn't update it
 
 **Solutions**:
+
 1. Run `uptool plan` to see if updates are available
 2. Check registry connectivity (npm, Terraform Registry, etc.)
 3. Verify version constraints allow updates
@@ -410,6 +449,7 @@ See [configuration.md](configuration.md) for complete reference.
 ### Format Preserved
 
 uptool preserves:
+
 - ✅ Comments (YAML, HCL, TOML)
 - ✅ Formatting (indentation, spacing)
 - ✅ Key order (JSON, YAML)
@@ -420,5 +460,5 @@ If formatting is changed unexpectedly, please open an issue.
 ## See Also
 
 - [Configuration Reference](configuration.md)
-- [Integration Details](../README.md#integration-details)
+- [Integration Details](overview.md#integration-details)
 - [Version Management](versioning.md)

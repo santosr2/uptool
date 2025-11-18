@@ -5,6 +5,7 @@ This directory contains example configuration files for all supported integratio
 ## Overview
 
 These examples demonstrate:
+
 - **Manifest file formats** for each integration
 - **Version syntax** and constraints
 - **Common patterns** and use cases
@@ -63,11 +64,13 @@ uptool update --dry-run --diff
 ### Scenario 1: Basic Project
 
 **Files needed**:
+
 - `uptool.yaml` (minimal)
 - `package.json` (npm)
 - `.pre-commit-config.yaml` (pre-commit)
 
 **Workflow**:
+
 1. Copy configuration files
 2. Run `uptool scan` to verify detection
 3. Run `uptool plan` to see available updates
@@ -76,11 +79,13 @@ uptool update --dry-run --diff
 ### Scenario 2: Terraform Infrastructure
 
 **Files needed**:
+
 - `uptool.yaml` (with terraform, tflint)
 - `main.tf` (Terraform modules)
 - `.tflint.hcl` (TFLint plugins)
 
 **Workflow**:
+
 1. Configure conservative update policy (patch only)
 2. Run `uptool plan` weekly
 3. Review Terraform module changelogs
@@ -89,11 +94,13 @@ uptool update --dry-run --diff
 ### Scenario 3: Monorepo
 
 **Files needed**:
+
 - `uptool-monorepo.yaml` (multi-path configuration)
 - Multiple `package.json` files in subdirectories
 - Multiple `Chart.yaml` files for services
 
 **Workflow**:
+
 1. Configure path matching for each integration
 2. Run `uptool scan` to verify all manifests detected
 3. Use `--only` flag to update specific ecosystems

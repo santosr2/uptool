@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
+
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
 )
@@ -34,6 +35,19 @@ func New() *Integration {
 // Name returns the integration identifier.
 func (i *Integration) Name() string {
 	return "mise"
+}
+
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
 }
 
 // Detect scans for mise.toml and .mise.toml files.
@@ -78,9 +92,14 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 // parseManifest parses mise.toml or .mise.toml files.
 func (i *Integration) parseManifest(path string) (*engine.Manifest, error) {
+	// Validate path for security
+	if err := validateFilePath(path); err != nil {
+		return nil, err
+	}
+
 	content, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read file: %w", err)
+		return nil, err
 	}
 
 	manifest := &engine.Manifest{
@@ -94,14 +113,14 @@ func (i *Integration) parseManifest(path string) (*engine.Manifest, error) {
 	return i.parseMiseToml(manifest, content)
 }
 
-// MiseConfig represents the structure of a mise.toml file.
-type MiseConfig struct {
+// Config represents the structure of a mise.toml file.
+type Config struct {
 	Tools map[string]interface{} `toml:"tools"`
 }
 
 // parseMiseToml parses mise.toml format.
 func (i *Integration) parseMiseToml(manifest *engine.Manifest, content []byte) (*engine.Manifest, error) {
-	var config MiseConfig
+	var config Config
 	if err := toml.Unmarshal(content, &config); err != nil {
 		return nil, fmt.Errorf("parse toml: %w", err)
 	}
@@ -160,9 +179,9 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 //   - mise use <tool>@latest       # Pin specific tool to latest
 //
 // To manually update versions in mise.toml or .mise.toml:
-//   1. Check available versions: mise ls-remote <tool>
-//   2. Edit mise.toml with desired versions
-//   3. Install: mise install
+//  1. Check available versions: mise ls-remote <tool>
+//  2. Edit mise.toml with desired versions
+//  3. Install: mise install
 func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engine.ApplyResult, error) {
 	if len(plan.Updates) == 0 {
 		return &engine.ApplyResult{

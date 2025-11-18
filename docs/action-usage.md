@@ -44,6 +44,7 @@ jobs:
 ```
 
 **Version Pinning Options**:
+
 - `@v0` - Latest stable v0.x.x (recommended, auto-updates)
 - `@v0.1` - Latest v0.1.x patch (mutable)
 - `@v0.1.0` - Exact version (immutable, most secure)
@@ -291,11 +292,13 @@ jobs:
 ### Input Details
 
 **`command`**: The uptool command to run
+
 - `scan`: Discover manifests and dependencies
 - `plan`: Show available updates
 - `update`: Apply updates to manifests
 
 **`only`**: Filter to specific integrations
+
 ```yaml
 only: npm              # Single integration
 only: npm,helm         # Multiple integrations
@@ -303,16 +306,19 @@ only: npm,terraform,tflint
 ```
 
 **`exclude`**: Exclude specific integrations
+
 ```yaml
 exclude: precommit     # Skip pre-commit
 exclude: terraform,tflint
 ```
 
 **`create-pr`**: Automatically create a pull request
+
 - Requires `command: update`
 - Requires appropriate permissions
 
 **`token`**: GitHub authentication
+
 - Use `${{ secrets.GITHUB_TOKEN }}` for auto-scoped token
 - Can use PAT for additional permissions
 
@@ -345,12 +351,14 @@ steps:
 ### Minimum Permissions
 
 For `scan` and `plan` (read-only):
+
 ```yaml
 permissions:
   contents: read
 ```
 
 For `update` with `create-pr`:
+
 ```yaml
 permissions:
   contents: write        # To create commits
@@ -360,11 +368,13 @@ permissions:
 ### Token Scopes
 
 **`GITHUB_TOKEN` (recommended)**:
+
 - Automatically provided by GitHub Actions
 - Scoped to the current repository
 - Expires after the workflow run
 
 **Personal Access Token (PAT)**:
+
 - Use when cross-repository access needed
 - Required scopes: `repo`, `workflow` (if updating workflows)
 - Store as repository secret
@@ -442,6 +452,7 @@ jobs:
 **Problem**: Workflow runs but no PR appears
 
 **Solutions**:
+
 1. Check permissions are set correctly
 2. Verify `create-pr: 'true'` (must be string)
 3. Ensure token has `pull-requests: write` scope
@@ -452,6 +463,7 @@ jobs:
 **Problem**: uptool reports "No updates available" but dependencies are outdated
 
 **Solutions**:
+
 1. Check integration is enabled: `--only=<integration>`
 2. Verify manifest files are in expected locations
 3. Test locally: `uptool scan` and `uptool plan`
@@ -462,6 +474,7 @@ jobs:
 **Problem**: "403 Forbidden" or "401 Unauthorized"
 
 **Solutions**:
+
 1. For GitHub releases: May be rate-limited without auth
 2. Use `GITHUB_TOKEN`: `token: ${{ secrets.GITHUB_TOKEN }}`
 3. For private registries: Configure credentials separately
@@ -471,6 +484,7 @@ jobs:
 **Problem**: Workflow exceeds time limits
 
 **Solutions**:
+
 1. Use `--only` to run integrations separately
 2. Schedule different integrations at different times
 3. Increase timeout: `timeout-minutes: 30`
@@ -480,6 +494,7 @@ jobs:
 **Problem**: Update PR has conflicts
 
 **Solutions**:
+
 1. Close PR and let workflow create a fresh one
 2. Update the base branch: `git merge main`
 3. Schedule updates when `main` is stable
@@ -501,6 +516,7 @@ jobs:
 ### Integration with Other Tools
 
 **Run tests after update**:
+
 ```yaml
 - uses: santosr2/uptool@v0.1 # or v0.1.0 or v0 or commit hash
   with:

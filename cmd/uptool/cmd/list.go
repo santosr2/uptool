@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	listCategory      string
+	listCategory     string
 	listExperimental bool
 )
 
@@ -53,7 +53,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	// Filter integrations
-	var displayIntegrations []string
+	displayIntegrations := make([]string, 0, len(registered))
 	for id, info := range meta.Integrations {
 		// Skip if not registered
 		if !registeredMap[id] {

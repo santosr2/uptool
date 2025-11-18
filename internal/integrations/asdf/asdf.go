@@ -22,6 +22,8 @@ func init() {
 	})
 }
 
+const integrationName = "asdf"
+
 // Integration implements the engine.Integration interface for asdf.
 type Integration struct{}
 
@@ -32,7 +34,20 @@ func New() *Integration {
 
 // Name returns the integration identifier.
 func (i *Integration) Name() string {
-	return "asdf"
+	return integrationName
+}
+
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
 }
 
 // Detect scans for .tool-versions files.
@@ -77,9 +92,14 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 // parseManifest parses .tool-versions files.
 func (i *Integration) parseManifest(path string) (*engine.Manifest, error) {
-	content, err := os.ReadFile(path)
+	// Validate path for security
+	if err := validateFilePath(path); err != nil {
+		return nil, err
+	}
+
+	content, err := os.ReadFile(path) // #nosec G304 - path is validated above
 	if err != nil {
-		return nil, fmt.Errorf("read file: %w", err)
+		return nil, err
 	}
 
 	manifest := &engine.Manifest{
@@ -157,9 +177,9 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 //   - asdf install <tool> latest   # Install latest version of a tool
 //
 // To manually update versions in .tool-versions:
-//   1. Check available versions: asdf list all <tool>
-//   2. Edit .tool-versions with desired versions
-//   3. Install: asdf install
+//  1. Check available versions: asdf list all <tool>
+//  2. Edit .tool-versions with desired versions
+//  3. Install: asdf install
 func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engine.ApplyResult, error) {
 	if len(plan.Updates) == 0 {
 		return &engine.ApplyResult{

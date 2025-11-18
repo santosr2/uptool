@@ -724,9 +724,9 @@ type slowMockIntegration struct {
 }
 
 type concurrencyTracker struct {
-	mu              sync.Mutex
-	current         int
-	max             int
+	mu      sync.Mutex
+	current int
+	max     int
 }
 
 func (c *concurrencyTracker) enter() {

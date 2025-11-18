@@ -50,6 +50,7 @@ type IntegrationPolicy struct {
 // Impact describes the severity of an update.
 type Impact string
 
+// Impact levels for update severity
 const (
 	ImpactNone  Impact = "none"
 	ImpactPatch Impact = "patch"

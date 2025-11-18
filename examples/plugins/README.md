@@ -13,12 +13,14 @@ Plugins allow you to extend uptool with custom integrations without modifying th
 **Status**: Complete working example
 
 Complete plugin for managing Python `requirements.txt` dependencies:
+
 - Detects `requirements.txt` files
 - Queries PyPI for latest versions
 - Updates version constraints
 - Preserves comments and formatting
 
 **Features demonstrated**:
+
 - PyPI JSON API integration
 - Requirements.txt parsing
 - Version constraint handling
@@ -93,6 +95,7 @@ sed -i 's/python/my-plugin/g' go.mod
 ### 3. Follow the Guide
 
 See the comprehensive [Plugin Development Guide](../../docs/plugin-development.md) for:
+
 - Plugin architecture
 - Interface requirements
 - Best practices
@@ -303,12 +306,14 @@ const (
 **Symptoms**: Plugin not visible in `uptool list`
 
 **Causes**:
+
 - Plugin not in search path
 - Incorrect file extension (.so required)
 - Build mode not set to plugin
 - RegisterWith function not exported
 
 **Solutions**:
+
 ```bash
 # Verify plugin location
 ls -la ~/.uptool/plugins/
@@ -331,6 +336,7 @@ uptool list -v
 **Cause**: Plugin built with different Go version than uptool
 
 **Solution**: Rebuild plugin with same Go version:
+
 ```bash
 go version  # Check uptool's Go version
 go build -buildmode=plugin -o plugin.so .
@@ -343,6 +349,7 @@ go build -buildmode=plugin -o plugin.so .
 **Cause**: Incorrect function signature
 
 **Solution**: Ensure exact signature:
+
 ```go
 func RegisterWith(register func(name string, constructor func() engine.Integration))
 ```

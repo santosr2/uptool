@@ -50,6 +50,32 @@ func resetRegistry() {
 	datasources = make(map[string]Datasource)
 }
 
+// testDatasourceBasicOps tests basic datasource operations to reduce code duplication
+func testDatasourceBasicOps(t *testing.T, expectedName string, ds Datasource, testPackage string) {
+	t.Helper()
+
+	t.Run("returns correct name", func(t *testing.T) {
+		if ds.Name() != expectedName {
+			t.Errorf("Name() = %q, want %q", ds.Name(), expectedName)
+		}
+	})
+
+	t.Run("GetLatestVersion calls client", func(t *testing.T) {
+		ctx := context.Background()
+		_, _ = ds.GetLatestVersion(ctx, testPackage)
+	})
+
+	t.Run("GetVersions calls client", func(t *testing.T) {
+		ctx := context.Background()
+		_, _ = ds.GetVersions(ctx, testPackage)
+	})
+
+	t.Run("GetPackageInfo calls client", func(t *testing.T) {
+		ctx := context.Background()
+		_, _ = ds.GetPackageInfo(ctx, testPackage)
+	})
+}
+
 func TestRegister(t *testing.T) {
 	resetRegistry()
 
@@ -171,32 +197,7 @@ func TestConcurrentAccess(t *testing.T) {
 }
 
 func TestNPMDatasource(t *testing.T) {
-	t.Run("returns correct name", func(t *testing.T) {
-		ds := NewNPMDatasource()
-		if ds.Name() != "npm" {
-			t.Errorf("Name() = %q, want %q", ds.Name(), "npm")
-		}
-	})
-
-	t.Run("GetLatestVersion calls client", func(t *testing.T) {
-		ds := NewNPMDatasource()
-		// Note: This will make a real HTTP call unless the registry client is mocked
-		// For now, we're testing that it doesn't panic and has the right signature
-		ctx := context.Background()
-		_, _ = ds.GetLatestVersion(ctx, "test-package")
-	})
-
-	t.Run("GetVersions calls client", func(t *testing.T) {
-		ds := NewNPMDatasource()
-		ctx := context.Background()
-		_, _ = ds.GetVersions(ctx, "test-package")
-	})
-
-	t.Run("GetPackageInfo calls client", func(t *testing.T) {
-		ds := NewNPMDatasource()
-		ctx := context.Background()
-		_, _ = ds.GetPackageInfo(ctx, "test-package")
-	})
+	testDatasourceBasicOps(t, "npm", NewNPMDatasource(), "test-package")
 }
 
 func TestHelmDatasource(t *testing.T) {
@@ -257,30 +258,7 @@ func TestHelmDatasource(t *testing.T) {
 }
 
 func TestTerraformDatasource(t *testing.T) {
-	t.Run("returns correct name", func(t *testing.T) {
-		ds := NewTerraformDatasource()
-		if ds.Name() != "terraform" {
-			t.Errorf("Name() = %q, want %q", ds.Name(), "terraform")
-		}
-	})
-
-	t.Run("GetLatestVersion calls client", func(t *testing.T) {
-		ds := NewTerraformDatasource()
-		ctx := context.Background()
-		_, _ = ds.GetLatestVersion(ctx, "hashicorp/consul/aws")
-	})
-
-	t.Run("GetVersions calls client", func(t *testing.T) {
-		ds := NewTerraformDatasource()
-		ctx := context.Background()
-		_, _ = ds.GetVersions(ctx, "hashicorp/consul/aws")
-	})
-
-	t.Run("GetPackageInfo calls client", func(t *testing.T) {
-		ds := NewTerraformDatasource()
-		ctx := context.Background()
-		_, _ = ds.GetPackageInfo(ctx, "hashicorp/consul/aws")
-	})
+	testDatasourceBasicOps(t, "terraform", NewTerraformDatasource(), "hashicorp/consul/aws")
 }
 
 func TestGitHubDatasource(t *testing.T) {

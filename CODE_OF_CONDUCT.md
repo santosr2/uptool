@@ -61,8 +61,8 @@ representative at an online or offline event.
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement via:
 
-- GitHub Issues: [https://github.com/santosr2/uptool/issues](https://github.com/santosr2/uptool/issues)
-- Security Issues: See [SECURITY.md](SECURITY.md) for reporting security concerns
+* GitHub Issues: [https://github.com/santosr2/uptool/issues](https://github.com/santosr2/uptool/issues)
+* Security Issues: See [SECURITY.md](SECURITY.md) for reporting security concerns
 
 All complaints will be reviewed and investigated promptly and fairly.
 

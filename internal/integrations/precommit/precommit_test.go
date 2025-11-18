@@ -180,7 +180,7 @@ func TestExtractDependencies(t *testing.T) {
 	integ := New()
 
 	t.Run("extracts repository dependencies", func(t *testing.T) {
-		config := &PreCommitConfig{
+		config := &Config{
 			Repos: []Repo{
 				{
 					Repo: "https://github.com/pre-commit/pre-commit-hooks",
@@ -219,7 +219,7 @@ func TestExtractDependencies(t *testing.T) {
 	})
 
 	t.Run("skips local repos", func(t *testing.T) {
-		config := &PreCommitConfig{
+		config := &Config{
 			Repos: []Repo{
 				{Repo: "local", Rev: ""},
 				{Repo: "https://github.com/example/repo", Rev: "v1.0.0"},
@@ -237,7 +237,7 @@ func TestExtractDependencies(t *testing.T) {
 	})
 
 	t.Run("skips meta repos", func(t *testing.T) {
-		config := &PreCommitConfig{
+		config := &Config{
 			Repos: []Repo{
 				{Repo: "meta", Rev: ""},
 				{Repo: "https://github.com/example/repo", Rev: "v1.0.0"},
@@ -252,7 +252,7 @@ func TestExtractDependencies(t *testing.T) {
 	})
 
 	t.Run("skips empty repos", func(t *testing.T) {
-		config := &PreCommitConfig{
+		config := &Config{
 			Repos: []Repo{
 				{Repo: "", Rev: "v1.0.0"},
 				{Repo: "https://github.com/example/repo", Rev: "v1.0.0"},
@@ -267,7 +267,7 @@ func TestExtractDependencies(t *testing.T) {
 	})
 
 	t.Run("handles empty config", func(t *testing.T) {
-		config := &PreCommitConfig{}
+		config := &Config{}
 		deps := integ.extractDependencies(config)
 
 		if len(deps) != 0 {

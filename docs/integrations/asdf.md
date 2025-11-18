@@ -24,7 +24,8 @@ The asdf integration updates tool versions:
 ## Example
 
 **Before** (`.tool-versions`):
-```
+
+```text
 # Development tools
 go 1.23.0
 nodejs 20.10.0
@@ -36,7 +37,8 @@ ruby 3.2.0
 ```
 
 **After** (uptool update):
-```
+
+```text
 # Development tools
 go 1.25.0
 nodejs 22.12.0
@@ -77,7 +79,8 @@ uptool scan --only=asdf
 ```
 
 Output:
-```
+
+```text
 Type                 Path                Dependencies
 ----------------------------------------------------------------
 asdf                 .tool-versions      5
@@ -92,7 +95,8 @@ uptool plan --only=asdf
 ```
 
 Output:
-```
+
+```text
 .tool-versions (asdf):
 Tool             Current         Target          Impact
 --------------------------------------------------------
@@ -123,12 +127,14 @@ asdf install
 asdf supports multiple versions per tool:
 
 **Before**:
-```
+
+```text
 nodejs 20.10.0 18.19.0 16.20.0
 ```
 
 **After** (uptool updates latest in each major):
-```
+
+```text
 nodejs 22.12.0 18.20.5 16.20.2
 ```
 
@@ -151,6 +157,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates (1.23.0 → 1.23.1)
 - `minor` - Patch + minor updates (1.23.0 → 1.24.0)
@@ -160,7 +167,7 @@ integrations:
 
 Pin to exact version:
 
-```
+```text
 # .tool-versions
 go 1.23.0        # Will be updated
 nodejs 20.10.0   # Will be updated
@@ -190,7 +197,7 @@ asdf global nodejs 22.12.0
 
 asdf supports per-project `.tool-versions`:
 
-```
+```tree
 my-project/
 ├── .tool-versions              # Project-specific versions
 ├── app/
@@ -204,7 +211,7 @@ Each `.tool-versions` is updated independently.
 
 Some tools use non-semver versioning:
 
-```
+```text
 # Traditional versioning
 java openjdk-11.0.2
 erlang 26.0
@@ -215,6 +222,7 @@ python system
 ```
 
 uptool handles:
+
 - ✅ Semantic versions (1.2.3)
 - ✅ Version prefixes (v1.2.3, openjdk-11.0.2)
 - ❌ `system` keyword (not updated)
@@ -264,11 +272,13 @@ Rate limit: 5000 requests/hour
 **Problem**: "Tool not found in GitHub"
 
 **Causes**:
+
 1. Tool name doesn't map to known GitHub repository
 2. asdf plugin uses non-GitHub source
 3. Tool name misspelled
 
 **Solutions**:
+
 ```bash
 # Check asdf plugin for tool
 asdf plugin list
@@ -286,10 +296,12 @@ asdf plugin add <tool>
 **Problem**: "API rate limit exceeded"
 
 **Causes**:
+
 1. Many tools without authentication
 2. Frequent updates
 
 **Solutions**:
+
 ```bash
 # Set GitHub token
 export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
@@ -307,10 +319,12 @@ uptool update --only=asdf
 **Problem**: uptool suggests version that doesn't exist
 
 **Causes**:
+
 1. Version numbering changed
 2. Pre-release versions included
 
 **Solutions**:
+
 ```bash
 # Check available versions
 asdf list all <tool>
@@ -329,11 +343,13 @@ policy:
 **Problem**: `asdf install` fails after update
 
 **Causes**:
+
 1. New version has different dependencies
 2. Plugin not updated
 3. Build requirements missing
 
 **Solutions**:
+
 ```bash
 # Update asdf plugin
 asdf plugin update <tool>
@@ -350,6 +366,7 @@ cat ~/.asdf/plugins/<tool>/README.md
 ## Best Practices
 
 1. **Always install after updating**:
+
    ```bash
    uptool update --only=asdf
    asdf install
@@ -358,6 +375,7 @@ cat ~/.asdf/plugins/<tool>/README.md
    ```
 
 2. **Test versions before committing**:
+
    ```bash
    asdf install
    asdf current  # Verify all tools installed
@@ -365,11 +383,13 @@ cat ~/.asdf/plugins/<tool>/README.md
    ```
 
 3. **Update plugins regularly**:
+
    ```bash
    asdf plugin update --all
    ```
 
 4. **Use conservative policy**:
+
    ```yaml
    # For production
    policy:
@@ -381,6 +401,7 @@ cat ~/.asdf/plugins/<tool>/README.md
    ```
 
 5. **Set GitHub token**:
+
    ```bash
    # In CI/CD
    env:
@@ -391,6 +412,7 @@ cat ~/.asdf/plugins/<tool>/README.md
    ```
 
 6. **Document required plugins**:
+
    ```bash
    # In README or docs
    # Required asdf plugins:
@@ -404,10 +426,12 @@ cat ~/.asdf/plugins/<tool>/README.md
 uptool works with asdf >= 0.8.0.
 
 **asdf < 0.8.0**:
+
 - Not tested
 - `.tool-versions` format may differ
 
 **asdf >= 0.8.0**:
+
 - ✅ Fully supported
 - Standard `.tool-versions` format
 
@@ -415,12 +439,13 @@ uptool works with asdf >= 0.8.0.
 
 asdf uses simple format:
 
-```
+```text
 <tool-name> <version> [<version> ...]
 ```
 
 Examples:
-```
+
+```text
 nodejs 20.10.0
 nodejs 20.10.0 18.19.0
 terraform 1.5.0

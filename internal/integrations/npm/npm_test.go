@@ -11,6 +11,30 @@ import (
 	"github.com/santosr2/uptool/internal/engine"
 )
 
+// setupTestDir creates a test directory with root and nested package.json files
+func setupTestDir(t *testing.T, nestedDir, rootContent, nestedContent string) (string, string, string) {
+	t.Helper()
+	tmpDir := t.TempDir()
+
+	// Root package.json
+	rootPkg := filepath.Join(tmpDir, "package.json")
+	if err := os.WriteFile(rootPkg, []byte(rootContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Nested package.json
+	nestedPath := filepath.Join(tmpDir, nestedDir)
+	if err := os.MkdirAll(nestedPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	nestedPkg := filepath.Join(nestedPath, "package.json")
+	if err := os.WriteFile(nestedPkg, []byte(nestedContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	return tmpDir, rootPkg, nestedPkg
+}
+
 func TestNew(t *testing.T) {
 	integ := New()
 	if integ == nil {
@@ -44,13 +68,12 @@ func TestDetect(t *testing.T) {
 		}
 
 		data, _ := json.Marshal(pkg)
-		if err := os.WriteFile(pkgPath, data, 0644); err != nil {
+		if err := os.WriteFile(pkgPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -71,27 +94,10 @@ func TestDetect(t *testing.T) {
 	})
 
 	t.Run("finds multiple package.json files", func(t *testing.T) {
-		tmpDir := t.TempDir()
-
-		// Root package.json
-		rootPkg := filepath.Join(tmpDir, "package.json")
-		if err := os.WriteFile(rootPkg, []byte(`{"name":"root"}`), 0644); err != nil {
-			t.Fatal(err)
-		}
-
-		// Nested package.json
-		nestedDir := filepath.Join(tmpDir, "packages", "app")
-		if err := os.MkdirAll(nestedDir, 0755); err != nil {
-			t.Fatal(err)
-		}
-		nestedPkg := filepath.Join(nestedDir, "package.json")
-		if err := os.WriteFile(nestedPkg, []byte(`{"name":"app"}`), 0644); err != nil {
-			t.Fatal(err)
-		}
+		tmpDir, _, _ := setupTestDir(t, filepath.Join("packages", "app"), `{"name":"root"}`, `{"name":"app"}`)
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -105,23 +111,22 @@ func TestDetect(t *testing.T) {
 
 		// Root package.json
 		rootPkg := filepath.Join(tmpDir, "package.json")
-		if err := os.WriteFile(rootPkg, []byte(`{"name":"root"}`), 0644); err != nil {
+		if err := os.WriteFile(rootPkg, []byte(`{"name":"root"}`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// node_modules package.json (should be skipped)
 		nmDir := filepath.Join(tmpDir, "node_modules", "react")
-		if err := os.MkdirAll(nmDir, 0755); err != nil {
+		if err := os.MkdirAll(nmDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		nmPkg := filepath.Join(nmDir, "package.json")
-		if err := os.WriteFile(nmPkg, []byte(`{"name":"react"}`), 0644); err != nil {
+		if err := os.WriteFile(nmPkg, []byte(`{"name":"react"}`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -134,27 +139,10 @@ func TestDetect(t *testing.T) {
 	})
 
 	t.Run("skips hidden directories", func(t *testing.T) {
-		tmpDir := t.TempDir()
-
-		// Root package.json
-		rootPkg := filepath.Join(tmpDir, "package.json")
-		if err := os.WriteFile(rootPkg, []byte(`{"name":"root"}`), 0644); err != nil {
-			t.Fatal(err)
-		}
-
-		// Hidden directory package.json (should be skipped)
-		hiddenDir := filepath.Join(tmpDir, ".hidden", "sub")
-		if err := os.MkdirAll(hiddenDir, 0755); err != nil {
-			t.Fatal(err)
-		}
-		hiddenPkg := filepath.Join(hiddenDir, "package.json")
-		if err := os.WriteFile(hiddenPkg, []byte(`{"name":"hidden"}`), 0644); err != nil {
-			t.Fatal(err)
-		}
+		tmpDir, _, _ := setupTestDir(t, filepath.Join(".hidden", "sub"), `{"name":"root"}`, `{"name":"hidden"}`)
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -168,13 +156,12 @@ func TestDetect(t *testing.T) {
 		pkgPath := filepath.Join(tmpDir, "package.json")
 
 		// Invalid JSON
-		if err := os.WriteFile(pkgPath, []byte(`{invalid json`), 0644); err != nil {
+		if err := os.WriteFile(pkgPath, []byte(`{invalid json`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -434,7 +421,7 @@ func TestApply(t *testing.T) {
 		}
 
 		data, _ := json.MarshalIndent(pkg, "", "  ")
-		if err := os.WriteFile(pkgPath, data, 0644); err != nil {
+		if err := os.WriteFile(pkgPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -503,7 +490,7 @@ func TestApply(t *testing.T) {
 				}
 
 				data, _ := json.MarshalIndent(pkg, "", "  ")
-				if err := os.WriteFile(pkgPath, data, 0644); err != nil {
+				if err := os.WriteFile(pkgPath, data, 0o644); err != nil {
 					t.Fatal(err)
 				}
 
@@ -551,7 +538,7 @@ func TestApply(t *testing.T) {
 		}
 
 		data, _ := json.MarshalIndent(pkg, "", "  ")
-		if err := os.WriteFile(pkgPath, data, 0644); err != nil {
+		if err := os.WriteFile(pkgPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 

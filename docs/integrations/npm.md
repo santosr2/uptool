@@ -26,6 +26,7 @@ The npm integration updates all dependency types in `package.json`:
 ## Example
 
 **Before** (`package.json`):
+
 ```json
 {
   "name": "my-app",
@@ -43,6 +44,7 @@ The npm integration updates all dependency types in `package.json`:
 ```
 
 **After** (uptool update):
+
 ```json
 {
   "name": "my-app",
@@ -85,7 +87,8 @@ uptool scan --only=npm
 ```
 
 Output:
-```
+
+```text
 Type                 Path                Dependencies
 ----------------------------------------------------------------
 npm                  package.json        12
@@ -102,7 +105,8 @@ uptool plan --only=npm
 ```
 
 Output:
-```
+
+```text
 package.json (npm):
 Package          Current         Target          Impact
 --------------------------------------------------------
@@ -136,7 +140,7 @@ npm install
 
 The npm integration supports npm workspaces:
 
-```
+```tree
 my-monorepo/
 ├── package.json           # Root workspace
 ├── package-lock.json
@@ -173,6 +177,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates (1.0.0 → 1.0.1)
 - `minor` - Patch + minor updates (1.0.0 → 1.1.0)
@@ -191,6 +196,7 @@ To exclude specific packages, use lockfiles or version pinning:
 ```
 
 Or use npm's `overrides` field:
+
 ```json
 {
   "overrides": {
@@ -206,11 +212,13 @@ The npm integration queries the npm Registry API:
 **Endpoint**: `https://registry.npmjs.org/{package}`
 
 **Example**:
+
 ```bash
 curl https://registry.npmjs.org/express
 ```
 
 Returns:
+
 ```json
 {
   "name": "express",
@@ -272,10 +280,12 @@ echo "//registry.company.com/:_authToken=TOKEN" >> ~/.npmrc
 **Problem**: `uptool plan` shows updates but `uptool update` doesn't apply them
 
 **Causes**:
+
 1. Policy restrictions in `uptool.yaml`
 2. Version constraints don't allow the update
 
 **Solutions**:
+
 ```bash
 # Check policy
 cat uptool.yaml
@@ -292,11 +302,13 @@ cat package.json
 **Problem**: "Failed to fetch package info from registry"
 
 **Causes**:
+
 1. Network connectivity issues
 2. Private registry authentication failed
 3. Package doesn't exist
 
 **Solutions**:
+
 ```bash
 # Test registry connectivity
 npm view express
@@ -313,6 +325,7 @@ npm whoami
 **Problem**: After updating, `npm install` reports conflicts
 
 **Solution**:
+
 ```bash
 # Delete lockfile and reinstall
 rm package-lock.json
@@ -326,6 +339,7 @@ npm ci
 ## Best Practices
 
 1. **Always regenerate lockfile**:
+
    ```bash
    uptool update --only=npm
    npm install
@@ -334,12 +348,14 @@ npm ci
    ```
 
 2. **Test after updating**:
+
    ```bash
    npm test
    npm run build
    ```
 
 3. **Review major updates carefully**:
+
    ```bash
    # Plan first to see impact
    uptool plan --only=npm
@@ -348,6 +364,7 @@ npm ci
    ```
 
 4. **Use separate PRs for major updates**:
+
    ```bash
    # Minor/patch updates together
    uptool update --only=npm  # (with policy: minor)
@@ -357,6 +374,7 @@ npm ci
    ```
 
 5. **Pin critical dependencies**:
+
    ```json
    {
      "dependencies": {

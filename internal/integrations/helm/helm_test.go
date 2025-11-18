@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/santosr2/uptool/internal/engine"
 	"gopkg.in/yaml.v3"
+
+	"github.com/santosr2/uptool/internal/engine"
 )
 
 func TestNew(t *testing.T) {
@@ -517,10 +518,10 @@ func TestValidate(t *testing.T) {
 
 func TestDetermineImpact(t *testing.T) {
 	tests := []struct {
-		name    string
-		old     string
-		new     string
-		want    string
+		name string
+		old  string
+		new  string
+		want string
 	}{
 		{"major version change", "1.0.0", "2.0.0", "major"},
 		{"major with v prefix", "v1.0.0", "v2.0.0", "major"},

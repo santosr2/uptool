@@ -5,6 +5,7 @@ uptool uses **automated semantic versioning** based on conventional commits and 
 ## Overview
 
 Version management in uptool is fully automated:
+
 1. **Conventional commits** determine version bumps
 2. **GitHub Actions** calculate and apply versions
 3. **`bump-my-version`** updates all files consistently
@@ -16,11 +17,12 @@ Version management in uptool is fully automated:
 
 The canonical version is stored in `internal/version/VERSION`:
 
-```
+```text
 0.1.0
 ```
 
 This file is:
+
 - Embedded into Go binaries at build time
 - Updated automatically by GitHub Actions
 - Used by `bump-my-version` to update all documentation
@@ -52,6 +54,7 @@ func Get() string {
 ```
 
 When you build the binary:
+
 ```bash
 go build ./cmd/uptool
 ./uptool --version
@@ -64,7 +67,7 @@ uptool follows the [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ### Commit Format
 
-```
+```text
 <type>(<scope>): <subject>
 
 [optional body]
@@ -99,11 +102,13 @@ uptool follows the [Conventional Commits](https://www.conventionalcommits.org/) 
 To trigger a major version bump, use either:
 
 **Method 1: Exclamation mark**
+
 ```bash
 git commit -m "feat!: redesign integration interface"
 ```
 
 **Method 2: Footer**
+
 ```bash
 git commit -m "feat: redesign integration interface
 
@@ -113,35 +118,43 @@ BREAKING CHANGE: Integration interface now requires Validate method"
 ### Examples
 
 **Feature Addition (Minor Bump)**:
+
 ```bash
 git commit -m "feat(integrations): add Python integration
 
 Add support for pyproject.toml, requirements.txt, and Pipfile.
 Includes version resolution via PyPI API and TOML rewriting."
 ```
+
 → **0.1.0 → 0.2.0**
 
 **Bug Fix (Patch Bump)**:
+
 ```bash
 git commit -m "fix(npm): handle empty devDependencies
 
 Previously crashed when package.json had missing devDependencies section."
 ```
+
 → **0.1.0 → 0.1.1**
 
 **Breaking Change (Major Bump)**:
+
 ```bash
 git commit -m "feat!: redesign configuration format
 
 BREAKING CHANGE: uptool.yaml now requires version: 2 and uses
 different policy structure. See migration guide in docs/."
 ```
+
 → **0.1.0 → 1.0.0**
 
 **Documentation (No Bump)**:
+
 ```bash
 git commit -m "docs: add versioning guide"
 ```
+
 → **No version change**
 
 ## Automated Release Process
@@ -210,12 +223,14 @@ git commit -m "docs: add versioning guide"
    - See [Approving Deployments](environments.md#approving-a-deployment)
 
 **Example**:
+
 - Current version: `v0.1.0`
 - Commits since last tag: 2 `feat:` commits, 1 `fix:` commit
 - Pre-release type: `rc`
 - **Result**: `v0.2.0-rc.1` (feat causes minor bump)
 
 If you run another pre-release without new commits:
+
 - **Result**: `v0.2.0-rc.2` (increments rc number)
 
 ### Promote to Stable Workflow
@@ -271,6 +286,7 @@ If you run another pre-release without new commits:
    - See [Approving Deployments](environments.md#approving-a-deployment)
 
 **The system automatically** (after approval):
+
 - Detects stable version (`v0.2.0`)
 - Updates VERSION file
 - Promotes artifacts
@@ -279,12 +295,12 @@ If you run another pre-release without new commits:
 
 ## Local Version Management
 
-For local development and testing, you can manually manage versions using Makefile targets.
+For local development and testing, you can manually manage versions using Mise tasks targets.
 
 ### Show Current Version
 
 ```bash
-make version-show
+mise run version-show
 # Output:
 # Current version:
 # 0.1.0
@@ -296,25 +312,27 @@ make version-show
 
 ```bash
 # Patch bump (0.1.0 → 0.1.1)
-make version-bump-patch
+mise run version-bump-patch
 
 # Minor bump (0.1.0 → 0.2.0)
-make version-bump-minor
+mise run version-bump-minor
 
 # Major bump (0.1.0 → 1.0.0)
-make version-bump-major
+mise run version-bump-major
 ```
 
 These commands use `bump-my-version` to update:
+
 - `internal/version/VERSION`
 - `README.md`
 - `SECURITY.md`
 - `docs/action-usage.md`
 
 **After bumping locally**:
+
 ```bash
 # Rebuild to test
-make build
+mise run build
 ./dist/uptool --version
 
 # Commit changes
@@ -377,11 +395,13 @@ uptool uses **semantic versioning** with `v` prefix and supports both **immutabl
 For GitHub Actions convenience, mutable tags are automatically maintained:
 
 **Stable Release Tags**:
+
 - `v0` - Always points to latest `v0.x.x` stable release
 - `v0.1` - Always points to latest `v0.1.x` patch release
 - `v1` - Always points to latest `v1.x.x` stable release
 
 **Pre-Release Tags**:
+
 - `v0-rc` - Always points to latest release candidate in v0
 - `v0.1-rc` - Always points to latest release candidate in v0.1
 - `v0-beta` - Always points to latest beta in v0
@@ -394,6 +414,7 @@ Tags are created automatically by GitHub Actions:
 #### Pre-release Workflow
 
 Creates 3 tags:
+
 ```bash
 # Immutable tag (exact version)
 git tag -a "v0.2.0-rc.1" -m "Pre-release v0.2.0-rc.1"
@@ -408,6 +429,7 @@ git push origin "v0-rc" --force
 ```
 
 **Example**: If you release `v0.2.0-rc.1`, then `v0.2.0-rc.2`:
+
 - `v0.2.0-rc.1` - Points to rc.1 (immutable)
 - `v0.2.0-rc.2` - Points to rc.2 (immutable)
 - `v0.2-rc` - Updates from rc.1 → rc.2 (mutable)
@@ -416,6 +438,7 @@ git push origin "v0-rc" --force
 #### Promote Workflow
 
 Creates 3 tags:
+
 ```bash
 # Immutable tag (exact version)
 git tag -a "v0.2.0" -m "Release v0.2.0 (promoted from v0.2.0-rc.1)"
@@ -430,6 +453,7 @@ git push origin "v0" --force
 ```
 
 **Example**: If you release `v0.1.0`, then `v0.2.0`, then `v0.2.1`:
+
 - `v0.1.0`, `v0.2.0`, `v0.2.1` - Immutable exact versions
 - `v0.1` - Points to v0.1.0 (immutable after v0.2.0 release)
 - `v0.2` - Updates from v0.2.0 → v0.2.1 (mutable)
@@ -485,10 +509,12 @@ git show v0-rc  # Shows latest rc
 ### Tag Management Rules
 
 **Immutable Tags** (created once, never modified):
+
 - ✅ Exact versions: `v0.1.0`, `v1.2.3`
 - ✅ Exact pre-releases: `v0.2.0-rc.1`, `v1.0.0-beta.2`
 
 **Mutable Tags** (force-updated on each release):
+
 - ⚠️ Major version: `v0`, `v1`
 - ⚠️ Minor version: `v0.1`, `v1.2`
 - ⚠️ Pre-release major: `v0-rc`, `v1-beta`
@@ -503,6 +529,7 @@ The CHANGELOG is automatically generated from commit messages using `git-cliff`.
 **Location**: `git-cliff.toml`
 
 Defines:
+
 - Commit grouping by type (`feat`, `fix`, etc.)
 - Link generation for commits and comparisons
 - Version extraction from tags
@@ -513,6 +540,7 @@ Defines:
 **Pre-release workflow**: Generates changelog section for release notes
 
 **Promote workflow**: Updates CHANGELOG.md with new version:
+
 ```bash
 git-cliff --config git-cliff.toml --tag "v0.2.0" --prepend CHANGELOG.md
 ```
@@ -599,6 +627,7 @@ When a release workflow runs:
 ### Reviewing a Release
 
 Before approving a pre-release:
+
 - [ ] Version number is correct based on commits
 - [ ] All tests passed
 - [ ] No critical issues in commits
@@ -606,6 +635,7 @@ Before approving a pre-release:
 - [ ] Pre-release type matches intent (rc/beta/alpha)
 
 Before approving a stable release:
+
 - [ ] Pre-release was tested successfully
 - [ ] No blocking issues reported
 - [ ] Documentation is accurate
@@ -632,7 +662,8 @@ For critical security fixes that need immediate release:
 1. Ensure multiple reviewers are available
 2. Follow normal process but expedite review
 3. Document reason in approval comments:
-   ```
+
+   ```text
    Approved: Critical security fix for CVE-2025-XXXX
    Expedited due to active exploitation
    ```
@@ -641,14 +672,16 @@ For critical security fixes that need immediate release:
 
 ## Version Support Policy
 
-See [SECURITY.md](../SECURITY.md) for the official support policy.
+See [SECURITY.md](SECURITY.md) for the official support policy.
 
 **General Policy**:
+
 - **Latest minor version**: Full support with security patches
 - **Previous minor version**: Security patches only (6 months)
 - **Older versions**: No support
 
 **Example** (current version: 0.2.x):
+
 - ✅ `0.2.x` - Fully supported
 - ⚠️ `0.1.x` - Security patches only (until July 2025)
 - ❌ `< 0.1` - No support
@@ -660,12 +693,14 @@ See [SECURITY.md](../SECURITY.md) for the official support policy.
 **Problem**: Ran pre-release workflow but version didn't change
 
 **Causes**:
+
 1. No version-bumping commits since last tag
    - Solution: Ensure you have `feat:` or `fix:` commits
 2. Only `chore:` or `docs:` commits
    - Solution: These don't trigger version bumps by design
 
 **Check commits**:
+
 ```bash
 # See commits since last tag
 git log $(git describe --tags --abbrev=0)..HEAD --oneline
@@ -679,13 +714,14 @@ git log $(git describe --tags --abbrev=0)..HEAD --pretty=format:"%s"
 **Problem**: Built binary shows wrong version
 
 **Solution**:
+
 ```bash
 # Ensure VERSION file is up to date
 cat internal/version/VERSION
 
 # Rebuild completely
-make clean
-make build
+mise run clean
+mise run build
 
 # Verify
 ./dist/uptool --version
@@ -696,6 +732,7 @@ make build
 **Problem**: README shows different version than binary
 
 **Solution**:
+
 ```bash
 # Run bump-my-version manually
 bump-my-version bump --new-version "0.2.0" patch
@@ -713,6 +750,7 @@ git commit -m "chore: sync version across files"
 ### 1. Use Conventional Commits
 
 **Always** follow the conventional commit format:
+
 ```bash
 # Good
 git commit -m "feat(npm): add peer dependencies support"
@@ -726,6 +764,7 @@ git commit -m "bug fix"
 ### 2. Meaningful Commit Messages
 
 Include context in the commit body:
+
 ```bash
 git commit -m "feat(terraform): add provider version updates
 
@@ -738,12 +777,13 @@ Closes #123"
 ### 3. Test Before Pre-Release
 
 Before creating a pre-release:
+
 ```bash
 # Run full test suite
-make check
+mise run check
 
 # Test locally
-make build
+mise run build
 ./dist/uptool scan
 ./dist/uptool plan
 ```
@@ -751,6 +791,7 @@ make build
 ### 4. Verify Pre-Release Before Promoting
 
 Before promoting to stable:
+
 1. Download and test pre-release artifacts
 2. Run integration tests
 3. Check documentation accuracy
@@ -759,6 +800,7 @@ Before promoting to stable:
 ### 5. Document Breaking Changes
 
 For major version bumps, provide migration guidance:
+
 ```bash
 git commit -m "feat!: redesign configuration format
 
@@ -781,9 +823,11 @@ New format:
 ### Workflow Inputs
 
 **Pre-Release Workflow**:
+
 - `prerelease_type`: `rc` | `beta` | `alpha`
 
 **Promote Workflow**:
+
 - `pre_release_tag`: Tag to promote (e.g., `v0.2.0-rc.1`)
 
 ### Environment Variables
@@ -796,12 +840,12 @@ New format:
 
 ```bash
 # Show version
-make version-show
+mise run version-show
 
 # Bump versions locally
-make version-bump-patch
-make version-bump-minor
-make version-bump-major
+mise run version-bump-patch
+mise run version-bump-minor
+mise run version-bump-major
 
 # View workflow runs
 gh run list --workflow=pre-release.yml

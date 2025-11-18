@@ -34,7 +34,7 @@ uptool scan
 
 Example output:
 
-```
+```text
 Found 5 manifest files:
   ✅ package.json (npm)
   ✅ Chart.yaml (helm)
@@ -57,7 +57,7 @@ uptool plan
 
 Example output:
 
-```
+```text
 Updates available:
 
 npm (package.json):

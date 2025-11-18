@@ -13,9 +13,11 @@ import (
 	"regexp"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"gopkg.in/yaml.v3"
+	"github.com/santosr2/uptool/internal/secureio"
 )
 
 func init() {
@@ -39,8 +41,8 @@ func (i *Integration) Name() string {
 	return integrationName
 }
 
-// PreCommitConfig represents the structure of .pre-commit-config.yaml.
-type PreCommitConfig struct {
+// Config represents the structure of .pre-commit-config.yaml.
+type Config struct {
 	Repos []Repo `yaml:"repos"`
 }
 
@@ -62,7 +64,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 	err := filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil
+			return err
 		}
 
 		// Skip hidden directories except .pre-commit-config.yaml in root
@@ -73,17 +75,17 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 		if info.Name() == ".pre-commit-config.yaml" {
 			relPath, err := filepath.Rel(repoRoot, path)
 			if err != nil {
-				return nil
+				return err
 			}
 
-			content, err := os.ReadFile(path)
+			content, err := secureio.ReadFile(path)
 			if err != nil {
-				return nil
+				return err
 			}
 
-			var config PreCommitConfig
+			var config Config
 			if err := yaml.Unmarshal(content, &config); err != nil {
-				return nil // Skip invalid YAML
+				return err
 			}
 
 			deps := i.extractDependencies(&config)
@@ -108,8 +110,8 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 }
 
 // extractDependencies extracts hook repositories as dependencies.
-func (i *Integration) extractDependencies(config *PreCommitConfig) []engine.Dependency {
-	var deps []engine.Dependency
+func (i *Integration) extractDependencies(config *Config) []engine.Dependency {
+	deps := make([]engine.Dependency, 0, len(config.Repos))
 
 	for _, repo := range config.Repos {
 		if repo.Repo == "" || repo.Repo == "local" || repo.Repo == "meta" {
@@ -162,18 +164,22 @@ func (i *Integration) detectUpdates(ctx context.Context, manifestPath string) ([
 	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Copy the config file
-	content, err := os.ReadFile(manifestPath)
+	content, err := secureio.ReadFile(manifestPath)
 	if err != nil {
 		return nil, fmt.Errorf("read config: %w", err)
 	}
 
 	tmpConfig := filepath.Join(tmpDir, ".pre-commit-config.yaml")
-	if err := os.WriteFile(tmpConfig, content, 0644); err != nil {
-		return nil, fmt.Errorf("write temp config: %w", err)
+	if writeErr := os.WriteFile(tmpConfig, content, 0o600); writeErr != nil {
+		return nil, fmt.Errorf("write temp config: %w", writeErr)
 	}
 
 	// Run autoupdate
-	cmd := exec.CommandContext(ctx, "pre-commit", "autoupdate", "--config", tmpConfig)
+	// Validate tmpConfig path to prevent command injection
+	if !filepath.IsAbs(tmpConfig) || strings.Contains(tmpConfig, "..") {
+		return nil, fmt.Errorf("invalid temp config path: %s", tmpConfig)
+	}
+	cmd := exec.CommandContext(ctx, "pre-commit", "autoupdate", "--config", tmpConfig) // #nosec G204 - tmpConfig is a validated temporary file path
 	output, err := cmd.CombinedOutput()
 	// Note: We continue even if there's an error, as the output might still be useful
 	_ = err // Explicitly ignore error - we parse output regardless
@@ -249,13 +255,22 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	}
 
 	// Read old content for diff
-	oldContent, err := os.ReadFile(plan.Manifest.Path)
+	oldContent, err := secureio.ReadFile(plan.Manifest.Path)
 	if err != nil {
 		return nil, fmt.Errorf("read config: %w", err)
 	}
 
 	// Run pre-commit autoupdate
-	cmd := exec.CommandContext(ctx, "pre-commit", "autoupdate", "--config", plan.Manifest.Path)
+	// Validate manifest path to prevent command injection
+	if !filepath.IsAbs(plan.Manifest.Path) || strings.Contains(plan.Manifest.Path, "..") {
+		return &engine.ApplyResult{
+			Manifest: plan.Manifest,
+			Applied:  0,
+			Failed:   len(plan.Updates),
+			Errors:   []string{fmt.Sprintf("invalid manifest path: %s", plan.Manifest.Path)},
+		}, nil
+	}
+	cmd := exec.CommandContext(ctx, "pre-commit", "autoupdate", "--config", plan.Manifest.Path) // #nosec G204 - manifest path is validated above
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return &engine.ApplyResult{
@@ -267,7 +282,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	}
 
 	// Read new content for diff
-	newContent, err := os.ReadFile(plan.Manifest.Path)
+	newContent, err := secureio.ReadFile(plan.Manifest.Path)
 	if err != nil {
 		return nil, fmt.Errorf("read updated config: %w", err)
 	}
@@ -292,7 +307,11 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 		return nil // Skip validation if pre-commit not available
 	}
 
-	cmd := exec.CommandContext(ctx, "pre-commit", "validate-config", manifest.Path)
+	// Validate manifest path to prevent command injection
+	if !filepath.IsAbs(manifest.Path) || strings.Contains(manifest.Path, "..") {
+		return fmt.Errorf("invalid manifest path: %s", manifest.Path)
+	}
+	cmd := exec.CommandContext(ctx, "pre-commit", "validate-config", manifest.Path) // #nosec G204 - manifest path is validated above
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("validation failed: %v\n%s", err, output)

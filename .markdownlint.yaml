@@ -1,0 +1,17 @@
+# Set indentation for lists to 2 spaces
+MD007:
+  indent: 2
+
+# Disable line length rule
+MD013: false
+
+# Allow 'name' elements to have inline code without triggering line length rule
+MD033:
+  allowed_elements: ["name", "div", "small"]
+
+# Disable rule for enforcing consistent heading styles
+MD036: false
+
+# Allow multiple top-level headings in a single file
+MD024:
+  siblings_only: true

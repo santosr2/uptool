@@ -1,12 +1,11 @@
 package cmd
 
 import (
-	"fmt"
 	"log/slog"
-	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/santosr2/uptool/internal/version"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -49,11 +48,4 @@ func Execute() error {
 // GetLogLevel returns the current log level based on flags
 func GetLogLevel() slog.Level {
 	return logLevel
-}
-
-// printError prints error to stderr with proper formatting
-func printError(err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-	}
 }
