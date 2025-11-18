@@ -160,7 +160,7 @@ jobs:
             gh pr checkout ${{ github.event.pull_request.number }}
 
             # Build and serve docs
-            make docs-serve
+            mise run docs-serve
             \`\`\`
 
             ---
