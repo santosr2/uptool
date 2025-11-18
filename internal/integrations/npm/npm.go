@@ -61,12 +61,12 @@ func validateFilePath(path string) error {
 
 // PackageJSON represents the structure of package.json.
 type PackageJSON struct {
-	Name                 string            `json:"name,omitempty"`
-	Version              string            `json:"version,omitempty"`
 	Dependencies         map[string]string `json:"dependencies,omitempty"`
 	DevDependencies      map[string]string `json:"devDependencies,omitempty"`
 	PeerDependencies     map[string]string `json:"peerDependencies,omitempty"`
 	OptionalDependencies map[string]string `json:"optionalDependencies,omitempty"`
+	Name                 string            `json:"name,omitempty"`
+	Version              string            `json:"version,omitempty"`
 }
 
 // Detect finds package.json files in the repository.
@@ -95,7 +95,8 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			}
 
 			// Validate path for security
-			if err := validateFilePath(path); err != nil {
+			err = validateFilePath(path)
+			if err != nil {
 				return err
 			}
 
@@ -105,7 +106,8 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			}
 
 			var pkg PackageJSON
-			if err := json.Unmarshal(content, &pkg); err != nil {
+			err = json.Unmarshal(content, &pkg)
+			if err != nil {
 				return err
 			}
 
@@ -281,7 +283,8 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	}
 
 	var pkg PackageJSON
-	if err := json.Unmarshal(content, &pkg); err != nil {
+	err = json.Unmarshal(content, &pkg)
+	if err != nil {
 		return nil, fmt.Errorf("parse package.json: %w", err)
 	}
 
@@ -289,7 +292,8 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	applied := 0
 
 	// Apply updates
-	for _, update := range plan.Updates {
+	for idx := range plan.Updates {
+		update := &plan.Updates[idx]
 		if i.updateDependency(&pkg, update) {
 			applied++
 		}
@@ -320,18 +324,19 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 }
 
 // updateDependency updates a dependency in the package.json structure.
-func (i *Integration) updateDependency(pkg *PackageJSON, update engine.Update) bool {
+func (i *Integration) updateDependency(pkg *PackageJSON, update *engine.Update) bool {
 	name := update.Dependency.Name
 	newVersion := update.TargetVersion
 
 	// Preserve constraint prefix (^, ~, >=)
 	prefix := ""
 	oldVersion := update.Dependency.CurrentVersion
-	if strings.HasPrefix(oldVersion, "^") {
+	switch {
+	case strings.HasPrefix(oldVersion, "^"):
 		prefix = "^"
-	} else if strings.HasPrefix(oldVersion, "~") {
+	case strings.HasPrefix(oldVersion, "~"):
 		prefix = "~"
-	} else if strings.HasPrefix(oldVersion, ">=") {
+	case strings.HasPrefix(oldVersion, ">="):
 		prefix = ">="
 	}
 
@@ -381,13 +386,13 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 }
 
 // generateDiff creates a simple diff between old and new content.
-func generateDiff(old, new string) string {
-	if old == new {
+func generateDiff(old, newContent string) string {
+	if old == newContent {
 		return ""
 	}
 
 	oldLines := strings.Split(old, "\n")
-	newLines := strings.Split(new, "\n")
+	newLines := strings.Split(newContent, "\n")
 
 	var diff strings.Builder
 	diff.WriteString("--- package.json\n")

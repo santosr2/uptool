@@ -41,14 +41,6 @@ site/
 docs/api/
 docs/cli/commands.md
 
-# Root documentation files copied to docs/ during build
-docs/CONTRIBUTING.md
-docs/CHANGELOG.md
-docs/SECURITY.md
-docs/GOVERNANCE.md
-docs/CODE_OF_CONDUCT.md
-docs/LICENSE.md
-
 # Temporary files
 *.log
 *.tmp

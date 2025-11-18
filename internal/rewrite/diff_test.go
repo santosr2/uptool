@@ -11,8 +11,8 @@ func TestGenerateUnifiedDiff(t *testing.T) {
 		filename    string
 		oldContent  string
 		newContent  string
-		wantErr     bool
 		wantContain []string
+		wantErr     bool
 	}{
 		{
 			name:       "simple change",
@@ -80,8 +80,8 @@ func TestGeneratePatch(t *testing.T) {
 		filename    string
 		oldContent  string
 		newContent  string
-		wantErr     bool
 		wantContain []string
+		wantErr     bool
 	}{
 		{
 			name:       "git-style patch",

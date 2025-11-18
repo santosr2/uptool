@@ -741,9 +741,13 @@ curl -L "$DOWNLOAD_URL" -o ~/.uptool/plugins/${PLUGIN_NAME}.so
 echo "✓ Installed ${PLUGIN_NAME} plugin"
 ```
 
+## Example plugins
+
+see: [example](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/plugins/)
+
 ## See Also
 
-- [Integration Development Guide](CONTRIBUTING.md#adding-a-new-integration) - Built-in integrations
-- [Engine Interface](../internal/engine/types.go) - Integration interface definition
-- [Example Plugins](../examples/plugins/) - Complete working examples
+- [Integration Development Guide](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md#adding-a-new-integration) - Built-in integrations
+- [Engine Interface](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/engine/types.go) - Integration interface definition
+- [Example Plugins](https://github.com/santosr2/uptool/tree/{{ extra.uptool_version }}/examples/plugins/) - Complete working examples
 - [API Documentation](https://pkg.go.dev/github.com/santosr2/uptool) - Go package docs

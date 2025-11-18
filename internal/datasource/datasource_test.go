@@ -9,13 +9,13 @@ import (
 
 // mockDatasource implements Datasource for testing
 type mockDatasource struct {
-	name              string
-	latestVersion     string
-	versions          []string
-	packageInfo       *PackageInfo
 	getLatestErr      error
 	getVersionsErr    error
 	getPackageInfoErr error
+	packageInfo       *PackageInfo
+	name              string
+	latestVersion     string
+	versions          []string
 }
 
 func (m *mockDatasource) Name() string {
@@ -362,10 +362,7 @@ func TestDatasourceInterface(t *testing.T) {
 func TestPackageInfoStruct(t *testing.T) {
 	t.Run("creates PackageInfo with all fields", func(t *testing.T) {
 		info := &PackageInfo{
-			Name:        "test-package",
-			Description: "A test package",
-			Homepage:    "https://example.com",
-			Repository:  "https://github.com/test/package",
+			Name: "test-package",
 			Versions: []VersionInfo{
 				{
 					Version:      "1.0.0",
@@ -398,7 +395,6 @@ func TestVersionInfoStruct(t *testing.T) {
 	t.Run("creates VersionInfo with all fields", func(t *testing.T) {
 		v := VersionInfo{
 			Version:      "1.2.3",
-			PublishedAt:  "2024-01-15T10:30:00Z",
 			IsPrerelease: false,
 			Deprecated:   true,
 		}

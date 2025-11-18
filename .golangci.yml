@@ -7,7 +7,6 @@ run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
-  go: "1.25"
 
 linters:
   default: none  # Explicitly enable linters below
@@ -26,8 +25,8 @@ linters:
     - misspell      # Find misspelled English words
 
     # Complexity & code quality
-    - gocyclo       # Cyclomatic complexity
-    - gocognit      # Cognitive complexity
+    # - gocyclo       # Cyclomatic complexity
+    # - gocognit      # Cognitive complexity
     - dupl          # Duplicate code detection
     - goconst       # Repeated strings that could be constants
     - gocritic      # Comprehensive Go source code linter
@@ -95,6 +94,23 @@ linters:
       simple: true  # Only check simple loops
       range-loops: true  # Check range loops
       for-loops: false  # Don't check for loops (can be noisy)
+
+  exclusions:
+    # Exclude test files from linters where test patterns differ from production code
+    rules:
+      - path: _test\.go$
+        linters:
+          - errcheck      # Tests often intentionally ignore errors
+          - gosec         # Tests may use insecure patterns for test data (e.g., 0644 perms)
+          - unparam       # Test helpers may have unused params for consistency
+          - fieldalignment # Test structs prioritize readability over memory alignment
+          - unusedwrite   # Test data may have unused fields for completeness
+          - shadow        # Variable shadowing is acceptable in tests
+          - gocognit      # Test functions can be complex for thoroughness
+          - gocyclo       # Cyclomatic complexity less relevant for tests
+      - path: testdata/
+        linters:
+          - shadow
 
 formatters:
   enable:

@@ -27,7 +27,10 @@ func init() {
 	})
 }
 
-const integrationName = "terraform"
+const (
+	integrationName = "terraform"
+	blockTypeModule = "module"
+)
 
 // Integration implements terraform configuration updates.
 type Integration struct {
@@ -66,10 +69,10 @@ func validateFilePath(path string) error {
 
 // Config represents terraform configuration structure.
 type Config struct {
+	Remain    hcl.Body        `hcl:",remain"`
 	Terraform []Block         `hcl:"terraform,block"`
 	Modules   []ModuleBlock   `hcl:"module,block"`
 	Providers []ProviderBlock `hcl:"provider,block"`
-	Remain    hcl.Body        `hcl:",remain"`
 }
 
 // Block represents a terraform configuration block.
@@ -86,16 +89,16 @@ type RequiredProvidersBlock struct {
 
 // ModuleBlock represents a module block.
 type ModuleBlock struct {
+	Remain  hcl.Body `hcl:",remain"`
 	Name    string   `hcl:"name,label"`
 	Source  string   `hcl:"source,optional"`
 	Version string   `hcl:"version,optional"`
-	Remain  hcl.Body `hcl:",remain"`
 }
 
 // ProviderBlock represents a provider block.
 type ProviderBlock struct {
-	Name   string   `hcl:"name,label"`
 	Remain hcl.Body `hcl:",remain"`
+	Name   string   `hcl:"name,label"`
 }
 
 // Detect finds .tf files in the repository.
@@ -134,7 +137,8 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 			// Parse the file
 			// Validate path for security
-			if err := validateFilePath(path); err != nil {
+			err = validateFilePath(path)
+			if err != nil {
 				return err
 			}
 
@@ -153,37 +157,39 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 			// Extract module dependencies
 			for _, block := range file.Body().Blocks() {
-				if block.Type() == "module" {
-					labels := block.Labels()
-					if len(labels) == 0 {
-						continue
-					}
+				if block.Type() != blockTypeModule {
+					continue
+				}
 
-					sourceAttr := block.Body().GetAttribute("source")
-					versionAttr := block.Body().GetAttribute("version")
+				labels := block.Labels()
+				if len(labels) == 0 {
+					continue
+				}
 
-					if sourceAttr != nil && versionAttr != nil {
-						sourceTokens := sourceAttr.Expr().BuildTokens(nil)
-						source := strings.Trim(string(sourceTokens.Bytes()), ` "`)
+				sourceAttr := block.Body().GetAttribute("source")
+				versionAttr := block.Body().GetAttribute("version")
 
-						versionTokens := versionAttr.Expr().BuildTokens(nil)
-						version := strings.Trim(string(versionTokens.Bytes()), ` "`)
+				if sourceAttr != nil && versionAttr != nil {
+					sourceTokens := sourceAttr.Expr().BuildTokens(nil)
+					source := strings.Trim(string(sourceTokens.Bytes()), ` "`)
 
-						// Only track registry modules
-						if !strings.HasPrefix(source, ".") && !strings.Contains(source, "git::") {
-							manifest.Dependencies = append(manifest.Dependencies, engine.Dependency{
-								Name:           source,
-								CurrentVersion: version,
-								Type:           "module",
-								Registry:       "terraform",
-							})
-						}
+					versionTokens := versionAttr.Expr().BuildTokens(nil)
+					version := strings.Trim(string(versionTokens.Bytes()), ` "`)
+
+					// Only track registry modules
+					if !strings.HasPrefix(source, ".") && !strings.Contains(source, "git::") {
+						manifest.Dependencies = append(manifest.Dependencies, engine.Dependency{
+							Name:           source,
+							CurrentVersion: version,
+							Type:           "module",
+							Registry:       "terraform",
+						})
 					}
 				}
 			}
 
 			// Track files in this directory
-			files := manifest.Metadata["files"].([]string)
+			files := manifest.Metadata["files"].([]string) //nolint:errcheck // metadata set by us
 			files = append(files, filepath.Base(path))
 			manifest.Metadata["files"] = files
 		}
@@ -202,7 +208,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 }
 
 // processDependencyUpdate fetches and compares versions for a dependency
-func (i *Integration) processDependencyUpdate(ctx context.Context, dep engine.Dependency) (engine.Update, bool) {
+func (i *Integration) processDependencyUpdate(ctx context.Context, dep *engine.Dependency) (engine.Update, bool) {
 	latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
 	if err != nil {
 		return engine.Update{}, false
@@ -220,7 +226,7 @@ func (i *Integration) processDependencyUpdate(ctx context.Context, dep engine.De
 	// Compare versions - only return update if they're actually different
 	if latestClean != currentClean && latest != "" && currentClean != "" {
 		return engine.Update{
-			Dependency:    dep,
+			Dependency:    *dep,
 			TargetVersion: latest,
 			Impact:        determineImpact(currentClean, latestClean),
 		}, true
@@ -234,8 +240,8 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
-		if dep.Type == "provider" || dep.Type == "module" {
-			if update, ok := i.processDependencyUpdate(ctx, dep); ok {
+		if dep.Type == "provider" || dep.Type == blockTypeModule {
+			if update, ok := i.processDependencyUpdate(ctx, &dep); ok {
 				updates = append(updates, update)
 			}
 		}
@@ -262,11 +268,12 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	providerUpdates := make(map[string]string)
 	moduleUpdates := make(map[string]string)
 
-	for _, update := range plan.Updates {
+	for i := range plan.Updates {
+		update := &plan.Updates[i]
 		switch update.Dependency.Type {
 		case "provider":
 			providerUpdates[update.Dependency.Name] = update.TargetVersion
-		case "module":
+		case blockTypeModule:
 			moduleUpdates[update.Dependency.Name] = update.TargetVersion
 		}
 	}
@@ -275,7 +282,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	var allDiffs strings.Builder
 
 	// Get list of files to update
-	files := plan.Manifest.Metadata["files"].([]string)
+	files := plan.Manifest.Metadata["files"].([]string) //nolint:errcheck // metadata set by us
 
 	for _, filename := range files {
 		filePath := filepath.Join(plan.Manifest.Path, filename)
@@ -326,7 +333,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 			}
 
 			// Update module blocks
-			if block.Type() == "module" {
+			if block.Type() == blockTypeModule {
 				labels := block.Labels()
 				if len(labels) == 0 {
 					continue
@@ -366,7 +373,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 
 				// Match: provider_name = { ... version = "old_version" ... }
 				re := regexp.MustCompile(fmt.Sprintf(`(%s\s*=\s*\{[^}]*version\s*=\s*)"([^"]*)"`, providerName))
-				newContent = re.ReplaceAll(newContent, []byte(fmt.Sprintf(`${1}"%s"`, newVersion)))
+				newContent = re.ReplaceAll(newContent, []byte(fmt.Sprintf(`${1}%q`, newVersion)))
 			}
 
 			if err := os.WriteFile(filePath, newContent, 0o600); err != nil {
@@ -390,7 +397,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 // Validate checks if the terraform configuration is valid.
 func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) error {
 	// Basic HCL validation
-	files := manifest.Metadata["files"].([]string)
+	files := manifest.Metadata["files"].([]string) //nolint:errcheck // metadata set by us
 	for _, filename := range files {
 		filePath := filepath.Join(manifest.Path, filename)
 		// Validate path for security
@@ -412,7 +419,7 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 }
 
 // determineImpact tries to determine the impact of an update.
-func determineImpact(old, new string) string {
+func determineImpact(old, newVer string) string {
 	// Strip constraint prefixes
 	old = strings.TrimPrefix(old, "~> ")
 	old = strings.TrimPrefix(old, ">= ")
@@ -420,7 +427,7 @@ func determineImpact(old, new string) string {
 
 	// Simple heuristic: if major version changes (v1 -> v2), it's major
 	oldParts := strings.Split(strings.TrimPrefix(old, "v"), ".")
-	newParts := strings.Split(strings.TrimPrefix(new, "v"), ".")
+	newParts := strings.Split(strings.TrimPrefix(newVer, "v"), ".")
 
 	if len(oldParts) > 0 && len(newParts) > 0 && oldParts[0] != newParts[0] {
 		return "major"
@@ -434,13 +441,13 @@ func determineImpact(old, new string) string {
 }
 
 // generateDiff creates a simple diff between old and new content.
-func generateDiff(filename, old, new string) string {
-	if old == new {
+func generateDiff(filename, old, newContent string) string {
+	if old == newContent {
 		return ""
 	}
 
 	oldLines := strings.Split(old, "\n")
-	newLines := strings.Split(new, "\n")
+	newLines := strings.Split(newContent, "\n")
 
 	var diff strings.Builder
 	diff.WriteString(fmt.Sprintf("--- %s\n", filename))

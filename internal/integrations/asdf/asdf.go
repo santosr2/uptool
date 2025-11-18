@@ -82,7 +82,6 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("walk repository: %w", err)
 	}

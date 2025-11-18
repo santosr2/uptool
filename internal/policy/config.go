@@ -14,17 +14,17 @@ import (
 
 // Config represents the uptool.yaml configuration file.
 type Config struct {
-	Version      int                 `yaml:"version"`
-	Integrations []IntegrationConfig `yaml:"integrations"`
 	OrgPolicy    *OrgPolicy          `yaml:"org_policy,omitempty"`
+	Integrations []IntegrationConfig `yaml:"integrations"`
+	Version      int                 `yaml:"version"`
 }
 
 // IntegrationConfig defines configuration for a specific integration.
 type IntegrationConfig struct {
-	ID      string                   `yaml:"id"`
-	Enabled bool                     `yaml:"enabled"`
 	Match   *MatchConfig             `yaml:"match,omitempty"`
+	ID      string                   `yaml:"id"`
 	Policy  engine.IntegrationPolicy `yaml:"policy"`
+	Enabled bool                     `yaml:"enabled"`
 }
 
 // MatchConfig specifies file patterns for integration detection.
@@ -34,9 +34,9 @@ type MatchConfig struct {
 
 // OrgPolicy contains organization-level policies and governance settings.
 type OrgPolicy struct {
-	RequireSignoffFrom []string         `yaml:"require_signoff_from,omitempty"`
 	Signing            *SigningConfig   `yaml:"signing,omitempty"`
 	AutoMerge          *AutoMergeConfig `yaml:"auto_merge,omitempty"`
+	RequireSignoffFrom []string         `yaml:"require_signoff_from,omitempty"`
 }
 
 // SigningConfig controls artifact signing verification.
@@ -46,8 +46,8 @@ type SigningConfig struct {
 
 // AutoMergeConfig controls automatic PR merging.
 type AutoMergeConfig struct {
-	Enabled bool     `yaml:"enabled"`
 	Guards  []string `yaml:"guards"`
+	Enabled bool     `yaml:"enabled"`
 }
 
 // LoadConfig reads and parses the configuration file.

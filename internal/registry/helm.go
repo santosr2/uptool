@@ -28,17 +28,17 @@ func NewHelmClient() *HelmClient {
 
 // ChartIndex represents the index.yaml structure from a Helm repository.
 type ChartIndex struct {
-	APIVersion string                       `yaml:"apiVersion"`
 	Entries    map[string][]ChartIndexEntry `yaml:"entries"`
+	APIVersion string                       `yaml:"apiVersion"`
 }
 
 // ChartIndexEntry represents a single chart version entry.
 type ChartIndexEntry struct {
+	Created     time.Time `yaml:"created"`
 	Name        string    `yaml:"name"`
 	Version     string    `yaml:"version"`
 	AppVersion  string    `yaml:"appVersion"`
 	Description string    `yaml:"description"`
-	Created     time.Time `yaml:"created"`
 }
 
 // GetLatestChartVersion fetches the latest version for a chart from a repository.
@@ -48,7 +48,7 @@ func (c *HelmClient) GetLatestChartVersion(ctx context.Context, repository, char
 	// Fetch index.yaml from repository
 	indexURL := strings.TrimSuffix(repository, "/") + "/index.yaml"
 
-	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -59,7 +59,7 @@ func (c *HelmClient) GetLatestChartVersion(ctx context.Context, repository, char
 	if err != nil {
 		return "", fmt.Errorf("fetch chart index: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return "", fmt.Errorf("chart repository not found: %s", repository)
@@ -75,7 +75,8 @@ func (c *HelmClient) GetLatestChartVersion(ctx context.Context, repository, char
 	}
 
 	var index ChartIndex
-	if err := yaml.Unmarshal(body, &index); err != nil {
+	err = yaml.Unmarshal(body, &index)
+	if err != nil {
 		return "", fmt.Errorf("parse index.yaml: %w", err)
 	}
 
@@ -115,7 +116,7 @@ func (c *HelmClient) FindBestChartVersion(ctx context.Context, repository, chart
 	// Fetch index.yaml from repository
 	indexURL := strings.TrimSuffix(repository, "/") + "/index.yaml"
 
-	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -126,7 +127,7 @@ func (c *HelmClient) FindBestChartVersion(ctx context.Context, repository, chart
 	if err != nil {
 		return "", fmt.Errorf("fetch chart index: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("unexpected status: %d", resp.StatusCode)
@@ -138,7 +139,8 @@ func (c *HelmClient) FindBestChartVersion(ctx context.Context, repository, chart
 	}
 
 	var index ChartIndex
-	if err := yaml.Unmarshal(body, &index); err != nil {
+	err = yaml.Unmarshal(body, &index)
+	if err != nil {
 		return "", fmt.Errorf("parse index.yaml: %w", err)
 	}
 
@@ -193,7 +195,7 @@ func (c *HelmClient) GetChartVersionDetails(ctx context.Context, repository, cha
 	// Fetch index.yaml from repository
 	indexURL := strings.TrimSuffix(repository, "/") + "/index.yaml"
 
-	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -204,7 +206,7 @@ func (c *HelmClient) GetChartVersionDetails(ctx context.Context, repository, cha
 	if err != nil {
 		return nil, fmt.Errorf("fetch chart index: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
@@ -234,7 +236,7 @@ func (c *HelmClient) GetChartVersions(ctx context.Context, repository, chartName
 	// Fetch index.yaml from repository
 	indexURL := strings.TrimSuffix(repository, "/") + "/index.yaml"
 
-	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", indexURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -243,7 +245,7 @@ func (c *HelmClient) GetChartVersions(ctx context.Context, repository, chartName
 	if err != nil {
 		return nil, fmt.Errorf("fetch chart index: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)

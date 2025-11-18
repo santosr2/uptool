@@ -672,7 +672,7 @@ For critical security fixes that need immediate release:
 
 ## Version Support Policy
 
-See [SECURITY.md](SECURITY.md) for the official support policy.
+See [SECURITY.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md) for the official support policy.
 
 **General Policy**:
 

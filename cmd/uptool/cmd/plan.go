@@ -99,7 +99,7 @@ func runPlan(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("marshal plan: %w", err)
 		}
-		if err := os.WriteFile(planOut, data, 0600); err != nil {
+		if err := os.WriteFile(planOut, data, 0o600); err != nil {
 			return fmt.Errorf("write plan file: %w", err)
 		}
 		fmt.Printf("Plan written to %s\n", planOut)
@@ -126,7 +126,8 @@ func outputPlanTable(result *engine.PlanResult) error {
 		fmt.Printf("%-40s %-15s %-15s %-10s\n", "Package", "Current", "Target", "Impact")
 		fmt.Println(strings.Repeat("-", 80))
 
-		for _, update := range plan.Updates {
+		for i := range plan.Updates {
+			update := &plan.Updates[i]
 			pkg := update.Dependency.Name
 			if len(pkg) > 40 {
 				pkg = pkg[:37] + "..."

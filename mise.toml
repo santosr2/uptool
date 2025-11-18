@@ -11,6 +11,7 @@ go = "1.25"
 # Go tooling
 golangci-lint = "2.6"
 "go:github.com/fzipp/gocyclo/cmd/gocyclo" = "latest"
+"go:golang.org/x/tools/cmd/goimports" = "latest"
 
 # Release & changelog
 "cargo:git-cliff" = "2.10"
@@ -18,6 +19,9 @@ golangci-lint = "2.6"
 
 # Workflow validation
 actionlint = "1.7"
+
+# Infrastructure as Code
+terraform = "latest"
 
 # Code quality
 pre-commit = "4.4"
@@ -233,12 +237,6 @@ description = "Build MkDocs site"
 depends = ["docs-install"]
 run = """
 echo "Building MkDocs site..."
-# Copy root documentation files to docs/ for MkDocs
-cp CONTRIBUTING.md docs/CONTRIBUTING.md
-cp CHANGELOG.md docs/CHANGELOG.md
-cp SECURITY.md docs/SECURITY.md
-cp GOVERNANCE.md docs/GOVERNANCE.md
-cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
 # Generate API docs
 mkdir -p docs/api
 if command -v gomarkdoc >/dev/null 2>&1; then
@@ -267,12 +265,6 @@ description = "Serve documentation locally (http://127.0.0.1:8000)"
 depends = ["docs-install"]
 run = """
 echo "Preparing documentation files..."
-# Copy root documentation files to docs/ for MkDocs
-cp CONTRIBUTING.md docs/CONTRIBUTING.md
-cp CHANGELOG.md docs/CHANGELOG.md
-cp SECURITY.md docs/SECURITY.md
-cp GOVERNANCE.md docs/GOVERNANCE.md
-cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
 echo "Starting MkDocs development server..."
 echo "📚 Documentation will be available at http://127.0.0.1:8000"
 echo "Press Ctrl+C to stop the server"
@@ -286,11 +278,6 @@ echo "Cleaning documentation artifacts..."
 rm -rf site/
 rm -rf docs/api/
 rm -f docs/cli/commands.md
-rm -f docs/CONTRIBUTING.md
-rm -f docs/CHANGELOG.md
-rm -f docs/SECURITY.md
-rm -f docs/GOVERNANCE.md
-rm -f docs/CODE_OF_CONDUCT.md
 echo "✓ Documentation cleaned"
 """
 

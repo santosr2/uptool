@@ -18,15 +18,15 @@ func TestNew(t *testing.T) {
 
 func TestName(t *testing.T) {
 	integration := New()
-	if got := integration.Name(); got != "mise" {
-		t.Errorf("Name() = %q, want %q", got, "mise")
+	if got := integration.Name(); got != integrationName {
+		t.Errorf("Name() = %q, want %q", got, integrationName)
 	}
 }
 
 func TestDetect(t *testing.T) {
 	tests := []struct {
-		name      string
 		setup     func(t *testing.T, dir string)
+		name      string
 		wantCount int
 		wantErr   bool
 	}{
@@ -34,7 +34,7 @@ func TestDetect(t *testing.T) {
 			name: "finds mise.toml in root",
 			setup: func(t *testing.T, dir string) {
 				content := []byte("[tools]\nnodejs = \"18.16.0\"\npython = \"3.11.0\"\n")
-				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -45,7 +45,7 @@ func TestDetect(t *testing.T) {
 			name: "finds .mise.toml in root",
 			setup: func(t *testing.T, dir string) {
 				content := []byte("[tools]\nnodejs = \"18.16.0\"\n")
-				if err := os.WriteFile(filepath.Join(dir, ".mise.toml"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, ".mise.toml"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -58,10 +58,10 @@ func TestDetect(t *testing.T) {
 				content1 := []byte("[tools]\nnodejs = \"18.16.0\"\n")
 				content2 := []byte("[tools]\npython = \"3.11.0\"\n")
 
-				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content1, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content1, 0o644); err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(dir, ".mise.toml"), content2, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, ".mise.toml"), content2, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -74,15 +74,15 @@ func TestDetect(t *testing.T) {
 				content1 := []byte("[tools]\nnodejs = \"18.16.0\"\n")
 				content2 := []byte("[tools]\npython = \"3.11.0\"\n")
 
-				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content1, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content1, 0o644); err != nil {
 					t.Fatal(err)
 				}
 
 				subdir := filepath.Join(dir, "subproject")
-				if err := os.Mkdir(subdir, 0755); err != nil {
+				if err := os.Mkdir(subdir, 0o755); err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(subdir, "mise.toml"), content2, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(subdir, "mise.toml"), content2, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -93,11 +93,11 @@ func TestDetect(t *testing.T) {
 			name: "skips hidden directories",
 			setup: func(t *testing.T, dir string) {
 				hiddenDir := filepath.Join(dir, ".hidden")
-				if err := os.Mkdir(hiddenDir, 0755); err != nil {
+				if err := os.Mkdir(hiddenDir, 0o755); err != nil {
 					t.Fatal(err)
 				}
 				content := []byte("[tools]\nnodejs = \"18.16.0\"\n")
-				if err := os.WriteFile(filepath.Join(hiddenDir, "mise.toml"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(hiddenDir, "mise.toml"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -108,11 +108,11 @@ func TestDetect(t *testing.T) {
 			name: "skips node_modules",
 			setup: func(t *testing.T, dir string) {
 				nmDir := filepath.Join(dir, "node_modules")
-				if err := os.Mkdir(nmDir, 0755); err != nil {
+				if err := os.Mkdir(nmDir, 0o755); err != nil {
 					t.Fatal(err)
 				}
 				content := []byte("[tools]\nnodejs = \"18.16.0\"\n")
-				if err := os.WriteFile(filepath.Join(nmDir, "mise.toml"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(nmDir, "mise.toml"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -131,7 +131,7 @@ func TestDetect(t *testing.T) {
 			name: "empty mise.toml file",
 			setup: func(t *testing.T, dir string) {
 				content := []byte("")
-				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "mise.toml"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -164,8 +164,8 @@ func TestDetect(t *testing.T) {
 
 			// Verify all manifests have correct type
 			for _, m := range manifests {
-				if m.Type != "mise" {
-					t.Errorf("Manifest type = %q, want %q", m.Type, "mise")
+				if m.Type != integrationName {
+					t.Errorf("Manifest type = %q, want %q", m.Type, integrationName)
 				}
 			}
 		})
@@ -176,8 +176,8 @@ func TestParseMiseToml(t *testing.T) {
 	tests := []struct {
 		name        string
 		content     string
-		wantDepsLen int
 		wantDeps    []engine.Dependency
+		wantDepsLen int
 		wantErr     bool
 	}{
 		{
@@ -419,7 +419,8 @@ func TestParseManifest(t *testing.T) {
 			defer os.RemoveAll(tmpDir)
 
 			manifestPath := filepath.Join(tmpDir, tt.filename)
-			if err := os.WriteFile(manifestPath, []byte(tt.content), 0644); err != nil {
+			err = os.WriteFile(manifestPath, []byte(tt.content), 0o644)
+			if err != nil {
 				t.Fatal(err)
 			}
 
@@ -451,7 +452,7 @@ func TestParseManifest(t *testing.T) {
 				t.Errorf("parseManifest() got %d dependencies, want %d", got, tt.wantDepsLen)
 			}
 
-			if len(manifest.Content) == 0 && len(tt.content) > 0 {
+			if len(manifest.Content) == 0 && tt.content != "" {
 				t.Error("Manifest.Content is empty but should contain file content")
 			}
 		})
@@ -623,7 +624,8 @@ python = "3.11.0"
 ruby = "3.2.0"
 `)
 	miseTomlPath := filepath.Join(tmpDir, "mise.toml")
-	if err := os.WriteFile(miseTomlPath, content, 0644); err != nil {
+	err = os.WriteFile(miseTomlPath, content, 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
 

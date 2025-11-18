@@ -60,5 +60,5 @@ func CountChanges(diff string) (additions, deletions int) {
 			deletions++
 		}
 	}
-	return
+	return additions, deletions
 }

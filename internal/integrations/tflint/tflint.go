@@ -66,25 +66,25 @@ func (i *Integration) Name() string {
 
 // Config represents .tflint.hcl structure.
 type Config struct {
+	Remain  hcl.Body `hcl:",remain"`
 	Plugins []Plugin `hcl:"plugin,block"`
 	Rules   []Rule   `hcl:"rule,block"`
-	Remain  hcl.Body `hcl:",remain"`
 }
 
 // Plugin represents a tflint plugin block.
 type Plugin struct {
+	Remain  hcl.Body `hcl:",remain"`
 	Name    string   `hcl:"name,label"`
-	Enabled bool     `hcl:"enabled,optional"`
 	Version string   `hcl:"version,optional"`
 	Source  string   `hcl:"source,optional"`
-	Remain  hcl.Body `hcl:",remain"`
+	Enabled bool     `hcl:"enabled,optional"`
 }
 
 // Rule represents a tflint rule block.
 type Rule struct {
+	Remain  hcl.Body `hcl:",remain"`
 	Name    string   `hcl:"name,label"`
 	Enabled bool     `hcl:"enabled,optional"`
-	Remain  hcl.Body `hcl:",remain"`
 }
 
 // Detect finds .tflint.hcl files in the repository.
@@ -108,7 +108,8 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			}
 
 			// Validate path for security
-			if err := validateFilePath(path); err != nil {
+			err = validateFilePath(path)
+			if err != nil {
 				return err
 			}
 
@@ -249,7 +250,8 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 
 	// Create update map for quick lookup
 	updateMap := make(map[string]string)
-	for _, update := range plan.Updates {
+	for i := range plan.Updates {
+		update := &plan.Updates[i]
 		updateMap[update.Dependency.Name] = update.TargetVersion
 	}
 
@@ -333,10 +335,10 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 }
 
 // determineImpact tries to determine the impact of an update.
-func determineImpact(old, new string) string {
+func determineImpact(old, newVer string) string {
 	// Simple heuristic: if major version changes (v1 -> v2), it's major
 	oldParts := strings.Split(strings.TrimPrefix(old, "v"), ".")
-	newParts := strings.Split(strings.TrimPrefix(new, "v"), ".")
+	newParts := strings.Split(strings.TrimPrefix(newVer, "v"), ".")
 
 	if len(oldParts) > 0 && len(newParts) > 0 && oldParts[0] != newParts[0] {
 		return "major"
@@ -350,13 +352,13 @@ func determineImpact(old, new string) string {
 }
 
 // generateDiff creates a simple diff between old and new content.
-func generateDiff(old, new string) string {
-	if old == new {
+func generateDiff(old, newContent string) string {
+	if old == newContent {
 		return ""
 	}
 
 	oldLines := strings.Split(old, "\n")
-	newLines := strings.Split(new, "\n")
+	newLines := strings.Split(newContent, "\n")
 
 	var diff strings.Builder
 	diff.WriteString("--- .tflint.hcl\n")

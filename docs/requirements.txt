@@ -5,6 +5,9 @@
 mkdocs>=1.6.0,<2.0.0
 mkdocs-material>=9.5.0,<10.0.0
 
+# Version management
+mike>=2.0.0,<3.0.0
+
 # Plugins
 mkdocs-git-revision-date-localized-plugin>=1.2.0
 

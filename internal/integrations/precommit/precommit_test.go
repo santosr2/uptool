@@ -38,13 +38,12 @@ func TestDetect(t *testing.T) {
       - id: trailing-whitespace
       - id: end-of-file-fixer
 `
-		if err := os.WriteFile(configPath, []byte(yaml), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(yaml), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -69,23 +68,22 @@ func TestDetect(t *testing.T) {
 
 		// Root config
 		rootConfig := filepath.Join(tmpDir, ".pre-commit-config.yaml")
-		if err := os.WriteFile(rootConfig, []byte("repos:\n  - repo: https://example.com\n    rev: v1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(rootConfig, []byte("repos:\n  - repo: https://example.com\n    rev: v1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Nested config
 		nestedDir := filepath.Join(tmpDir, "subproject")
-		if err := os.MkdirAll(nestedDir, 0755); err != nil {
+		if err := os.MkdirAll(nestedDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		nestedConfig := filepath.Join(nestedDir, ".pre-commit-config.yaml")
-		if err := os.WriteFile(nestedConfig, []byte("repos:\n  - repo: https://example2.com\n    rev: v2.0.0"), 0644); err != nil {
+		if err := os.WriteFile(nestedConfig, []byte("repos:\n  - repo: https://example2.com\n    rev: v2.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -99,23 +97,22 @@ func TestDetect(t *testing.T) {
 
 		// Root config
 		rootConfig := filepath.Join(tmpDir, ".pre-commit-config.yaml")
-		if err := os.WriteFile(rootConfig, []byte("repos:\n  - repo: https://example.com\n    rev: v1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(rootConfig, []byte("repos:\n  - repo: https://example.com\n    rev: v1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Hidden directory config (should be skipped)
 		hiddenDir := filepath.Join(tmpDir, ".git", "hooks")
-		if err := os.MkdirAll(hiddenDir, 0755); err != nil {
+		if err := os.MkdirAll(hiddenDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		hiddenConfig := filepath.Join(hiddenDir, ".pre-commit-config.yaml")
-		if err := os.WriteFile(hiddenConfig, []byte("repos:\n  - repo: https://hidden.com\n    rev: v1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(hiddenConfig, []byte("repos:\n  - repo: https://hidden.com\n    rev: v1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -124,23 +121,20 @@ func TestDetect(t *testing.T) {
 		}
 	})
 
-	t.Run("skips invalid YAML", func(t *testing.T) {
+	t.Run("returns error for invalid YAML", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".pre-commit-config.yaml")
 
 		// Invalid YAML
-		if err := os.WriteFile(configPath, []byte("repos: invalid yaml:"), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte("repos: invalid yaml:"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
-		manifests, err := integ.Detect(ctx, tmpDir)
+		_, err := integ.Detect(ctx, tmpDir)
 
-		if err != nil {
-			t.Fatalf("Detect() error = %v", err)
-		}
-		if len(manifests) != 0 {
-			t.Fatalf("Detect() found %d manifests, want 0 (invalid YAML should be skipped)", len(manifests))
+		if err == nil {
+			t.Fatal("Detect() expected error for invalid YAML, got nil")
 		}
 	})
 
@@ -158,7 +152,7 @@ func TestDetect(t *testing.T) {
     hooks:
       - id: black
 `
-		if err := os.WriteFile(configPath, []byte(yaml), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(yaml), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -290,7 +284,7 @@ func TestPlan(t *testing.T) {
     hooks:
       - id: trailing-whitespace
 `
-		if err := os.WriteFile(configPath, []byte(yaml), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(yaml), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -435,7 +429,7 @@ func TestApply(t *testing.T) {
 
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".pre-commit-config.yaml")
-		if err := os.WriteFile(configPath, []byte("repos: []"), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte("repos: []"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -489,13 +483,13 @@ func TestGenerateDiff(t *testing.T) {
     hooks:
       - id: trailing-whitespace
 `
-		new := `repos:
+		updated := `repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
 `
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if diff == "" {
 			t.Error("generateDiff() returned empty string, want diff")
 		}
@@ -512,9 +506,9 @@ func TestGenerateDiff(t *testing.T) {
 
 	t.Run("handles different line counts", func(t *testing.T) {
 		old := "line1\nline2"
-		new := "line1\nline2\nline3"
+		updated := "line1\nline2\nline3"
 
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if diff == "" {
 			t.Error("generateDiff() returned empty string, want diff")
 		}

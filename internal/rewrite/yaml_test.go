@@ -9,14 +9,14 @@ import (
 
 func TestReplaceYAMLValue(t *testing.T) {
 	tests := []struct {
+		matcher   func(*yaml.Node) bool
 		name      string
 		content   string
-		path      []string
 		oldValue  string
 		newValue  string
-		matcher   func(*yaml.Node) bool
-		wantErr   bool
 		wantValue string
+		path      []string
+		wantErr   bool
 	}{
 		{
 			name: "simple field replacement",
@@ -115,10 +115,10 @@ func TestUpdateYAMLField(t *testing.T) {
 	tests := []struct {
 		name      string
 		content   string
-		path      []string
 		newValue  string
-		wantErr   bool
 		wantValue string
+		path      []string
+		wantErr   bool
 	}{
 		{
 			name: "update top-level field",

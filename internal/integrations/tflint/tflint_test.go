@@ -10,6 +10,13 @@ import (
 	"github.com/santosr2/uptool/internal/engine"
 )
 
+const testAWSPlugin = `plugin "aws" {
+  enabled = true
+  version = "0.1.0"
+  source  = "github.com/terraform-linters/tflint-ruleset-aws"
+}
+`
+
 func TestNew(t *testing.T) {
 	integ := New()
 	if integ == nil {
@@ -22,8 +29,8 @@ func TestNew(t *testing.T) {
 
 func TestName(t *testing.T) {
 	integ := New()
-	if integ.Name() != "tflint" {
-		t.Errorf("Name() = %q, want %q", integ.Name(), "tflint")
+	if integ.Name() != integrationName {
+		t.Errorf("Name() = %q, want %q", integ.Name(), integrationName)
 	}
 }
 
@@ -34,19 +41,12 @@ func TestDetect(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".tflint.hcl")
 
-		hcl := `plugin "aws" {
-  enabled = true
-  version = "0.1.0"
-  source  = "github.com/terraform-linters/tflint-ruleset-aws"
-}
-`
-		if err := os.WriteFile(configPath, []byte(hcl), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(testAWSPlugin), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -58,8 +58,8 @@ func TestDetect(t *testing.T) {
 		if m.Path != ".tflint.hcl" {
 			t.Errorf("Detect() path = %q, want %q", m.Path, ".tflint.hcl")
 		}
-		if m.Type != "tflint" {
-			t.Errorf("Detect() type = %q, want %q", m.Type, "tflint")
+		if m.Type != integrationName {
+			t.Errorf("Detect() type = %q, want %q", m.Type, integrationName)
 		}
 		if len(m.Dependencies) != 1 {
 			t.Errorf("Detect() dependencies = %d, want 1", len(m.Dependencies))
@@ -71,23 +71,22 @@ func TestDetect(t *testing.T) {
 
 		// Root config
 		rootConfig := filepath.Join(tmpDir, ".tflint.hcl")
-		if err := os.WriteFile(rootConfig, []byte(`plugin "aws" { enabled = true }`), 0644); err != nil {
+		if err := os.WriteFile(rootConfig, []byte(`plugin "aws" { enabled = true }`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Nested config
 		nestedDir := filepath.Join(tmpDir, "modules", "vpc")
-		if err := os.MkdirAll(nestedDir, 0755); err != nil {
+		if err := os.MkdirAll(nestedDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		nestedConfig := filepath.Join(nestedDir, ".tflint.hcl")
-		if err := os.WriteFile(nestedConfig, []byte(`plugin "azurerm" { enabled = true }`), 0644); err != nil {
+		if err := os.WriteFile(nestedConfig, []byte(`plugin "azurerm" { enabled = true }`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -101,23 +100,22 @@ func TestDetect(t *testing.T) {
 
 		// Root config
 		rootConfig := filepath.Join(tmpDir, ".tflint.hcl")
-		if err := os.WriteFile(rootConfig, []byte(`plugin "aws" { enabled = true }`), 0644); err != nil {
+		if err := os.WriteFile(rootConfig, []byte(`plugin "aws" { enabled = true }`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Hidden directory config (should be skipped)
 		hiddenDir := filepath.Join(tmpDir, ".terraform")
-		if err := os.MkdirAll(hiddenDir, 0755); err != nil {
+		if err := os.MkdirAll(hiddenDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		hiddenConfig := filepath.Join(hiddenDir, ".tflint.hcl")
-		if err := os.WriteFile(hiddenConfig, []byte(`plugin "hidden" { enabled = true }`), 0644); err != nil {
+		if err := os.WriteFile(hiddenConfig, []byte(`plugin "hidden" { enabled = true }`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -126,23 +124,20 @@ func TestDetect(t *testing.T) {
 		}
 	})
 
-	t.Run("skips invalid HCL", func(t *testing.T) {
+	t.Run("returns error for invalid HCL", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".tflint.hcl")
 
 		// Invalid HCL
-		if err := os.WriteFile(configPath, []byte(`plugin "aws" { invalid syntax`), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(`plugin "aws" { invalid syntax`), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
-		manifests, err := integ.Detect(ctx, tmpDir)
+		_, err := integ.Detect(ctx, tmpDir)
 
-		if err != nil {
-			t.Fatalf("Detect() error = %v", err)
-		}
-		if len(manifests) != 0 {
-			t.Fatalf("Detect() found %d manifests, want 0 (invalid HCL should be skipped)", len(manifests))
+		if err == nil {
+			t.Fatal("Detect() expected error for invalid HCL, got nil")
 		}
 	})
 
@@ -150,12 +145,7 @@ func TestDetect(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".tflint.hcl")
 
-		hcl := `plugin "aws" {
-  enabled = true
-  version = "0.1.0"
-  source  = "github.com/terraform-linters/tflint-ruleset-aws"
-}
-
+		hcl := testAWSPlugin + `
 plugin "azurerm" {
   enabled = true
   version = "0.2.0"
@@ -166,7 +156,7 @@ rule "terraform_naming_convention" {
   enabled = true
 }
 `
-		if err := os.WriteFile(configPath, []byte(hcl), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(hcl), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -391,13 +381,7 @@ func TestApply(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".tflint.hcl")
 
-		hcl := `plugin "aws" {
-  enabled = true
-  version = "0.1.0"
-  source  = "github.com/terraform-linters/tflint-ruleset-aws"
-}
-`
-		if err := os.WriteFile(configPath, []byte(hcl), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(testAWSPlugin), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -428,7 +412,7 @@ func TestApply(t *testing.T) {
 		}
 
 		// Verify file was updated
-		content, _ := os.ReadFile(configPath)
+		content, _ := os.ReadFile(configPath) //nolint:errcheck // test data
 		contentStr := string(content)
 
 		if !strings.Contains(contentStr, `version = "0.2.0"`) {
@@ -456,7 +440,7 @@ plugin "azurerm" {
   source  = "github.com/terraform-linters/tflint-ruleset-azurerm"
 }
 `
-		if err := os.WriteFile(configPath, []byte(hcl), 0644); err != nil {
+		if err := os.WriteFile(configPath, []byte(hcl), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -489,7 +473,7 @@ plugin "azurerm" {
 			t.Errorf("Apply() applied = %d, want 2", result.Applied)
 		}
 
-		content, _ := os.ReadFile(configPath)
+		content, _ := os.ReadFile(configPath) //nolint:errcheck // test data
 		contentStr := string(content)
 
 		if !strings.Contains(contentStr, `version = "0.1.5"`) {
@@ -577,13 +561,13 @@ func TestGenerateDiff(t *testing.T) {
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 `
-		new := `plugin "aws" {
+		updated := `plugin "aws" {
   enabled = true
   version = "0.2.0"
   source  = "github.com/terraform-linters/tflint-ruleset-aws"
 }
 `
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if diff == "" {
 			t.Error("generateDiff() returned empty string, want diff")
 		}
@@ -607,12 +591,12 @@ func TestGenerateDiff(t *testing.T) {
   version = "0.1.0"
 }
 `
-		new := `plugin "aws" {
+		updated := `plugin "aws" {
   enabled = false
   version = "0.2.0"
 }
 `
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if !strings.Contains(diff, "version") {
 			t.Error("generateDiff() missing version line in diff")
 		}

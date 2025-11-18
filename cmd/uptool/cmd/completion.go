@@ -11,6 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	shellBash       = "bash"
+	shellZsh        = "zsh"
+	shellFish       = "fish"
+	shellPowershell = "powershell"
+	osWindows       = "windows"
+)
+
 // validateFilePath validates that a file path is safe to read/write
 func validateFilePath(path string) error {
 	// Clean the path to resolve any . or .. components
@@ -45,17 +53,17 @@ Alternatively, use 'completion install' to automatically install to the correct 
   # Temporary load (current session only)
   source <(uptool completion bash)`,
 	DisableFlagsInUseLine: true,
-	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+	ValidArgs:             []string{shellBash, shellZsh, shellFish, shellPowershell},
 	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		switch args[0] {
-		case "bash":
+		case shellBash:
 			return rootCmd.GenBashCompletion(os.Stdout)
-		case "zsh":
+		case shellZsh:
 			return rootCmd.GenZshCompletion(os.Stdout)
-		case "fish":
+		case shellFish:
 			return rootCmd.GenFishCompletion(os.Stdout, true)
-		case "powershell":
+		case shellPowershell:
 			return rootCmd.GenPowerShellCompletionWithDesc(os.Stdout)
 		}
 		return nil
@@ -74,7 +82,7 @@ This command requires write permissions to system directories.`,
 
   # Install for specific shell
   uptool completion install bash`,
-	ValidArgs: []string{"bash", "zsh", "fish", "powershell"},
+	ValidArgs: []string{shellBash, shellZsh, shellFish, shellPowershell},
 	Args:      cobra.MaximumNArgs(1),
 	RunE:      runCompletionInstall,
 }
@@ -106,13 +114,15 @@ func runCompletionInstall(cmd *cobra.Command, args []string) error {
 
 	// Create parent directory if needed
 	dir := filepath.Dir(installPath)
-	if err := os.MkdirAll(dir, 0o750); err != nil {
+	err = os.MkdirAll(dir, 0o750)
+	if err != nil {
 		return fmt.Errorf("create directory %s: %w", dir, err)
 	}
 
 	// Generate completion to file
 	// Validate path for security
-	if err := validateFilePath(installPath); err != nil {
+	err = validateFilePath(installPath)
+	if err != nil {
 		return fmt.Errorf("invalid install path: %w", err)
 	}
 
@@ -120,17 +130,21 @@ func runCompletionInstall(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("create file %s: %w\nTry running with sudo or install manually", installPath, err)
 	}
-	defer file.Close()
+	defer func() {
+		if cerr := file.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	// Generate completion
 	switch shell {
-	case "bash":
+	case shellBash:
 		err = rootCmd.GenBashCompletion(file)
-	case "zsh":
+	case shellZsh:
 		err = rootCmd.GenZshCompletion(file)
-	case "fish":
+	case shellFish:
 		err = rootCmd.GenFishCompletion(file, true)
-	case "powershell":
+	case shellPowershell:
 		err = rootCmd.GenPowerShellCompletionWithDesc(file)
 	default:
 		return fmt.Errorf("unsupported shell: %s", shell)
@@ -156,18 +170,18 @@ func detectShell() (string, error) {
 		shellName := filepath.Base(shellPath)
 		// Normalize shell names
 		switch {
-		case strings.Contains(shellName, "bash"):
-			return "bash", nil
-		case strings.Contains(shellName, "zsh"):
-			return "zsh", nil
-		case strings.Contains(shellName, "fish"):
-			return "fish", nil
+		case strings.Contains(shellName, shellBash):
+			return shellBash, nil
+		case strings.Contains(shellName, shellZsh):
+			return shellZsh, nil
+		case strings.Contains(shellName, shellFish):
+			return shellFish, nil
 		}
 	}
 
 	// On Windows, check for PowerShell
-	if runtime.GOOS == "windows" {
-		return "powershell", nil
+	if runtime.GOOS == osWindows {
+		return shellPowershell, nil
 	}
 
 	// Try to detect parent process
@@ -185,7 +199,7 @@ func detectShell() (string, error) {
 // detectParentShell tries to detect shell from parent process (best effort)
 func detectParentShell(pid int) string {
 	// This is a simplified detection, works on most Unix systems
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == osWindows {
 		return ""
 	}
 
@@ -200,14 +214,14 @@ func detectParentShell(pid int) string {
 	}
 
 	comm := strings.TrimSpace(string(output))
-	if strings.Contains(comm, "bash") {
-		return "bash"
+	if strings.Contains(comm, shellBash) {
+		return shellBash
 	}
-	if strings.Contains(comm, "zsh") {
-		return "zsh"
+	if strings.Contains(comm, shellZsh) {
+		return shellZsh
 	}
-	if strings.Contains(comm, "fish") {
-		return "fish"
+	if strings.Contains(comm, shellFish) {
+		return shellFish
 	}
 
 	return ""
@@ -221,7 +235,7 @@ func getCompletionPath(shell string) (path, instructions string, err error) {
 	}
 
 	switch shell {
-	case "bash":
+	case shellBash:
 		// Try system location first, fall back to user location
 		if runtime.GOOS == "darwin" {
 			// macOS with Homebrew
@@ -235,7 +249,7 @@ func getCompletionPath(shell string) (path, instructions string, err error) {
 		path = filepath.Join(homeDir, ".local", "share", "bash-completion", "completions", "uptool")
 		instructions = "Add to ~/.bashrc:\n  [ -f ~/.local/share/bash-completion/completions/uptool ] && source ~/.local/share/bash-completion/completions/uptool\nThen restart your terminal."
 
-	case "zsh":
+	case shellZsh:
 		// User's zsh completion directory
 		path = filepath.Join(homeDir, ".zsh", "completions", "_uptool")
 		instructions = `Add to ~/.zshrc:
@@ -243,15 +257,15 @@ func getCompletionPath(shell string) (path, instructions string, err error) {
   autoload -U compinit && compinit
 Then restart your terminal.`
 
-	case "fish":
+	case shellFish:
 		// Fish user completions directory
 		configDir := filepath.Join(homeDir, ".config", "fish", "completions")
 		path = filepath.Join(configDir, "uptool.fish")
 		instructions = "Restart your terminal for completions to take effect."
 
-	case "powershell":
+	case shellPowershell:
 		// PowerShell user profile
-		if runtime.GOOS == "windows" {
+		if runtime.GOOS == osWindows {
 			documentsDir := filepath.Join(homeDir, "Documents")
 			path = filepath.Join(documentsDir, "PowerShell", "Scripts", "uptool-completion.ps1")
 			instructions = `Add to your PowerShell profile:
