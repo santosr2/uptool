@@ -38,45 +38,45 @@ Download pre-compiled binaries from the [GitHub Releases](https://github.com/san
 
 === "Linux (AMD64)"
 
-    ```bash
-    curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-linux-amd64
-    chmod +x uptool-linux-amd64
-    sudo mv uptool-linux-amd64 /usr/local/bin/uptool
-    ```
+  ```bash
+  curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-linux-amd64
+  chmod +x uptool-linux-amd64
+  sudo mv uptool-linux-amd64 /usr/local/bin/uptool
+  ```
 
 === "Linux (ARM64)"
 
-    ```bash
-    curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-linux-arm64
-    chmod +x uptool-linux-arm64
-    sudo mv uptool-linux-arm64 /usr/local/bin/uptool
-    ```
+  ```bash
+  curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-linux-arm64
+  chmod +x uptool-linux-arm64
+  sudo mv uptool-linux-arm64 /usr/local/bin/uptool
+  ```
 
 === "macOS (Apple Silicon)"
 
-    ```bash
-    curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-darwin-arm64
-    chmod +x uptool-darwin-arm64
-    sudo mv uptool-darwin-arm64 /usr/local/bin/uptool
-    ```
+  ```bash
+  curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-darwin-arm64
+  chmod +x uptool-darwin-arm64
+  sudo mv uptool-darwin-arm64 /usr/local/bin/uptool
+  ```
 
 === "macOS (Intel)"
 
-    ```bash
-    curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-darwin-amd64
-    chmod +x uptool-darwin-amd64
-    sudo mv uptool-darwin-amd64 /usr/local/bin/uptool
-    ```
+  ```bash
+  curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-darwin-amd64
+  chmod +x uptool-darwin-amd64
+  sudo mv uptool-darwin-amd64 /usr/local/bin/uptool
+  ```
 
 === "Windows (AMD64)"
 
-    ```powershell
-    # Download from GitHub Releases
-    Invoke-WebRequest -Uri https://github.com/santosr2/uptool/releases/latest/download/uptool-windows-amd64.exe -OutFile uptool.exe
+  ```powershell
+  # Download from GitHub Releases
+  Invoke-WebRequest -Uri https://github.com/santosr2/uptool/releases/latest/download/uptool-windows-amd64.exe -OutFile uptool.exe
 
-    # Move to a directory in your PATH
-    Move-Item uptool.exe C:\Windows\System32\uptool.exe
-    ```
+  # Move to a directory in your PATH
+  Move-Item uptool.exe C:\Windows\System32\uptool.exe
+  ```
 
 ---
 
@@ -90,10 +90,10 @@ git clone https://github.com/santosr2/uptool.git
 cd uptool
 
 # Build the binary
-make build
+mise run build
 
 # Install to $GOPATH/bin
-make install
+mise run install
 
 # Or manually copy the binary
 sudo cp dist/uptool /usr/local/bin/
@@ -124,7 +124,8 @@ uptool version
 ```
 
 Expected output:
-```
+
+```text
 uptool version 0.1.0
 ```
 
@@ -153,7 +154,7 @@ Download the latest release and replace your existing binary.
 ```bash
 cd uptool
 git pull origin main
-make build
+mise run build
 sudo cp dist/uptool /usr/local/bin/
 ```
 

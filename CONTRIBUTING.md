@@ -12,8 +12,7 @@ Be respectful, inclusive, and constructive. We're all here to build great softwa
 
 - **Go 1.25+**: [Download Go](https://go.dev/dl/)
 - **Git**: For version control
-- **make**: For build automation (optional but recommended)
-- **mise**: For consistent tool versions (optional) - [Install mise](https://mise.jdx.dev/)
+- **mise**: For consistent tool versions and task runner - [Install mise](https://mise.jdx.dev/)
 - **A text editor**: VS Code, GoLand, vim, etc.
 
 ### Getting Started
@@ -21,17 +20,20 @@ Be respectful, inclusive, and constructive. We're all here to build great softwa
 1. **Fork the repository** on GitHub
 
 2. **Clone your fork**:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/uptool.git
    cd uptool
    ```
 
 3. **Add upstream remote**:
+
    ```bash
    git remote add upstream https://github.com/santosr2/uptool.git
    ```
 
 4. **Install development tools** (optional but recommended):
+
    ```bash
    # Option 1: Use mise for consistent tool versions
    mise install
@@ -41,24 +43,27 @@ Be respectful, inclusive, and constructive. We're all here to build great softwa
    ```
 
 5. **Build the project**:
+
    ```bash
-   # Using make (recommended)
-   make build
+   # Using mise (recommended)
+   mise run build
 
    # Or use go directly
    go build -o uptool ./cmd/uptool
    ```
 
 6. **Run tests**:
+
    ```bash
-   # Using make
-   make test
+   # Using mise
+   mise run test
 
    # Or use go directly
    go test ./...
    ```
 
 7. **Verify it works**:
+
    ```bash
    ./dist/uptool scan
    ./dist/uptool plan
@@ -69,6 +74,7 @@ Be respectful, inclusive, and constructive. We're all here to build great softwa
 We provide pre-commit hooks to automatically check code quality before commits:
 
 1. **Install pre-commit**:
+
    ```bash
    # If you ran `mise install` it is already installed
 
@@ -80,16 +86,19 @@ We provide pre-commit hooks to automatically check code quality before commits:
    ```
 
 2. **Install the git hooks**:
+
    ```bash
    pre-commit install
    ```
 
 3. **Run manually** (optional):
+
    ```bash
    pre-commit run --all-files
    ```
 
 Our pre-commit hooks include:
+
 - **Go formatting** (`gofmt`, `goimports`)
 - **Go linting** (`golangci-lint`)
 - **Go security checks** (`gosec`)
@@ -107,6 +116,7 @@ We use **trunk-based development**—not Git Flow. All changes go directly to `m
 ### Making Changes
 
 1. **Create a feature branch** from `main`:
+
    ```bash
    git checkout main
    git pull upstream main
@@ -120,6 +130,7 @@ We use **trunk-based development**—not Git Flow. All changes go directly to `m
    - Update documentation
 
 3. **Test your changes**:
+
    ```bash
    # Run tests
    go test ./...
@@ -134,6 +145,7 @@ We use **trunk-based development**—not Git Flow. All changes go directly to `m
    ```
 
 4. **Commit with conventional commits**:
+
    ```bash
    git add .
    git commit -m "feat: add support for Python pip"
@@ -152,6 +164,7 @@ We use **trunk-based development**—not Git Flow. All changes go directly to `m
    - `chore:` - Maintenance tasks
 
 5. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -216,11 +229,13 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 - Always check errors
 - Wrap errors with context:
+
   ```go
   if err := doSomething(); err != nil {
       return fmt.Errorf("failed to do something: %w", err)
   }
   ```
+
 - Don't panic unless absolutely necessary
 
 ### Testing
@@ -230,6 +245,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 - Test edge cases and error paths
 
 Example:
+
 ```go
 func TestNPMDetect(t *testing.T) {
     tests := []struct {
@@ -480,6 +496,7 @@ categories:
 ```
 
 **Integration Fields**:
+
 - `displayName`: Human-readable name shown in CLI
 - `description`: One-line description of what it does
 - `filePatterns`: Glob patterns for manifest files
@@ -490,6 +507,7 @@ categories:
 - `category`: Category for grouping (see categories below)
 
 **Categories** (existing):
+
 - `runtime-manager`: asdf, mise, etc.
 - `package-manager`: npm, pip, cargo, etc.
 - `kubernetes`: Helm, kubectl, etc.
@@ -583,7 +601,7 @@ func (r *YourRegistry) GetPackageInfo(ctx context.Context, pkg string) (*Package
 
 Create test data in `internal/integrations/<name>/testdata/`:
 
-```
+```tree
 internal/integrations/yourintegration/
 ├── yourintegration.go
 ├── yourintegration_test.go
@@ -722,6 +740,7 @@ dependencies:
 ```
 
 Also update:
+
 - `README.md` - Add to Supported Integrations table
 - `docs/integrations/README.md` - Add to integration list
 - `examples/<name>.yaml` - Add example manifest
@@ -730,7 +749,7 @@ Also update:
 
 ```bash
 # Build
-make build
+mise run build
 
 # Test scan
 ./dist/uptool scan --only=yourintegration
@@ -742,7 +761,7 @@ make build
 ./dist/uptool update --only=yourintegration --dry-run --diff
 
 # Run all tests
-make test
+mise run test
 
 # Check coverage
 go test -cover ./internal/integrations/yourintegration
@@ -751,9 +770,10 @@ go test -cover ./internal/integrations/yourintegration
 #### Step 9: Create Pull Request
 
 1. Ensure all tests pass
-2. Run `make check` (fmt + lint + test)
+2. Run `mise run check` (fmt + vet + complexity + lint + test)
 3. Update CHANGELOG.md with entry
 4. Commit with conventional commit message:
+
    ```bash
    git commit -m "feat(integration): add yourname support
 
@@ -762,6 +782,7 @@ go test -cover ./internal/integrations/yourintegration
    - Updates dependencies with version constraints
    - Includes comprehensive tests and documentation"
    ```
+
 5. Push and create PR
 
 ## Documentation Standards
@@ -769,6 +790,7 @@ go test -cover ./internal/integrations/yourintegration
 ### README Updates
 
 When adding features, update:
+
 - Features section
 - Supported Integrations table
 - Integration Details section
@@ -869,6 +891,7 @@ func (c *YourRegistryClient) GetLatestVersion(ctx context.Context, packageName s
 ### Test Coverage
 
 Aim for:
+
 - Core engine: 80%+ coverage
 - Integrations: 70%+ coverage
 - Registry clients: 60%+ coverage
@@ -881,7 +904,7 @@ uptool uses **automated semantic versioning** based on conventional commits. Und
 
 All commits **must** follow the [Conventional Commits](https://www.conventionalcommits.org/) format:
 
-```
+```text
 <type>(<scope>): <subject>
 
 [optional body]
@@ -899,11 +922,13 @@ All commits **must** follow the [Conventional Commits](https://www.conventionalc
 | `docs:`, `chore:`, `test:`, etc. | No bump | `docs: update README` |
 
 **Why This Matters**:
+
 - Commits determine the next version automatically
 - GitHub Actions uses commit history to calculate version bumps
 - Incorrect commit types can cause wrong version numbers
 
 **Good Examples**:
+
 ```bash
 git commit -m "feat(npm): add peer dependencies support"
 git commit -m "fix(helm): handle missing Chart.lock files"
@@ -913,6 +938,7 @@ git commit -m "chore: update dependencies"
 ```
 
 **Bad Examples**:
+
 ```bash
 git commit -m "added feature"           # ❌ No type prefix
 git commit -m "Fixed bug"               # ❌ Wrong capitalization
@@ -923,17 +949,20 @@ git commit -m "updated stuff"           # ❌ Vague
 ### Commit Message Guidelines
 
 **Subject Line**:
+
 - Use imperative mood ("add" not "added" or "adds")
 - Don't capitalize first letter
 - No period at the end
 - Keep under 72 characters
 
 **Body** (optional but recommended for complex changes):
+
 - Explain what and why, not how
 - Wrap at 72 characters
 - Separate from subject with blank line
 
 **Footer** (for breaking changes):
+
 ```bash
 git commit -m "feat!: redesign configuration format
 
@@ -947,12 +976,12 @@ For testing version changes locally:
 
 ```bash
 # Show current version
-make version-show
+mise run version-show
 
 # Manually bump for testing (don't commit these)
-make version-bump-patch   # 0.1.0 → 0.1.1
-make version-bump-minor   # 0.1.0 → 0.2.0
-make version-bump-major   # 0.1.0 → 1.0.0
+mise run version-bump-patch   # 0.1.0 → 0.1.1
+mise run version-bump-minor   # 0.1.0 → 0.2.0
+mise run version-bump-major   # 0.1.0 → 1.0.0
 ```
 
 **Important**: Don't manually bump versions in PRs. The automated release process handles versioning.
@@ -998,6 +1027,7 @@ Releases are **fully automated** based on conventional commits. Maintainers trig
 5. **Publication**: Stable release is published
 
 **Contributors don't need to:**
+
 - Manually update VERSION files
 - Create git tags
 - Build release artifacts
@@ -1013,35 +1043,35 @@ See [SECURITY.md](SECURITY.md) for the official support policy.
 - Previous minor version: Security patches (6 months)
 - Older versions: No support
 
-## Makefile Targets
+## Mise Tasks
 
 Common development tasks:
 
 ```bash
 # Build
-make build          # Build binary to dist/uptool
-make build-all      # Build for all platforms
+mise run build          # Build binary to dist/uptool
+mise run build-all      # Build for all platforms
 
 # Testing
-make test           # Run all tests
-make test-coverage  # Run tests with coverage report
+mise run test           # Run all tests
+mise run test-coverage  # Run tests with coverage report
 
 # Code Quality
-make fmt            # Format code
-make lint           # Run golangci-lint
-make vet            # Run go vet
-make check          # Run all checks (fmt + vet + lint + test)
+mise run fmt            # Format code
+mise run lint           # Run golangci-lint
+mise run vet            # Run go vet
+mise run check          # Run all checks (fmt + vet + lint + test)
 
 # Version Management
-make version-show   # Display current version
+mise run version-show   # Display current version
 
 # Cleanup
-make clean          # Remove build artifacts
+mise run clean          # Remove build artifacts
 
 # Development
-make run-scan       # Build and run scan
-make run-plan       # Build and run plan
-make run-update     # Build and run update --dry-run
+mise run run-scan       # Build and run scan
+mise run run-plan       # Build and run plan
+mise run run-update     # Build and run update --dry-run
 ```
 
 ## Getting Help
@@ -1053,6 +1083,7 @@ make run-update     # Build and run update --dry-run
 ## Recognition
 
 Contributors will be:
+
 - Listed in release notes
 - Credited in CHANGELOG.md
 - Thanked in the community

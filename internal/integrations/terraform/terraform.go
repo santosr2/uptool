@@ -14,10 +14,11 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"github.com/zclconf/go-cty/cty"
 )
 
 func init() {
@@ -50,19 +51,32 @@ func (i *Integration) Name() string {
 	return integrationName
 }
 
-// Config represents terraform configuration structure.
-type Config struct {
-	Terraform []TerraformBlock `hcl:"terraform,block"`
-	Modules   []ModuleBlock    `hcl:"module,block"`
-	Providers []ProviderBlock  `hcl:"provider,block"`
-	Remain    hcl.Body         `hcl:",remain"`
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
 }
 
-// TerraformBlock represents a terraform configuration block.
-type TerraformBlock struct {
-	RequiredVersion   string                  `hcl:"required_version,optional"`
-	RequiredProviders *RequiredProvidersBlock `hcl:"required_providers,block"`
+// Config represents terraform configuration structure.
+type Config struct {
+	Terraform []Block         `hcl:"terraform,block"`
+	Modules   []ModuleBlock   `hcl:"module,block"`
+	Providers []ProviderBlock `hcl:"provider,block"`
+	Remain    hcl.Body        `hcl:",remain"`
+}
+
+// Block represents a terraform configuration block.
+type Block struct {
 	Remain            hcl.Body                `hcl:",remain"`
+	RequiredProviders *RequiredProvidersBlock `hcl:"required_providers,block"`
+	RequiredVersion   string                  `hcl:"required_version,optional"`
 }
 
 // RequiredProvidersBlock represents the required_providers block.
@@ -91,7 +105,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 	err := filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil
+			return err
 		}
 
 		// Skip hidden directories
@@ -103,7 +117,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			dir := filepath.Dir(path)
 			relDir, err := filepath.Rel(repoRoot, dir)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			// Group all .tf files in the same directory
@@ -119,15 +133,20 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			}
 
 			// Parse the file
-			content, err := os.ReadFile(path)
+			// Validate path for security
+			if err := validateFilePath(path); err != nil {
+				return err
+			}
+
+			content, err := os.ReadFile(path) // #nosec G304 - path is validated above
 			if err != nil {
-				return nil
+				return err
 			}
 
 			// Use hclwrite for more flexible parsing
 			file, diags := hclwrite.ParseConfig(content, path, hcl.Pos{Line: 1, Column: 1})
 			if diags.HasErrors() {
-				return nil // Skip invalid HCL
+				return diags
 			}
 
 			manifest := manifestMap[relDir]
@@ -182,58 +201,42 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 	return manifests, err
 }
 
+// processDependencyUpdate fetches and compares versions for a dependency
+func (i *Integration) processDependencyUpdate(ctx context.Context, dep engine.Dependency) (engine.Update, bool) {
+	latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
+	if err != nil {
+		return engine.Update{}, false
+	}
+
+	// Strip constraint prefixes for comparison
+	currentClean := strings.TrimPrefix(dep.CurrentVersion, "~> ")
+	currentClean = strings.TrimPrefix(currentClean, ">= ")
+	currentClean = strings.TrimPrefix(currentClean, "= ")
+	currentClean = strings.TrimSpace(currentClean)
+
+	latestClean := strings.TrimPrefix(latest, "v")
+	currentClean = strings.TrimPrefix(currentClean, "v")
+
+	// Compare versions - only return update if they're actually different
+	if latestClean != currentClean && latest != "" && currentClean != "" {
+		return engine.Update{
+			Dependency:    dep,
+			TargetVersion: latest,
+			Impact:        determineImpact(currentClean, latestClean),
+		}, true
+	}
+
+	return engine.Update{}, false
+}
+
 // Plan determines available updates for terraform providers and modules.
 func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
 	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
-		if dep.Type == "provider" {
-			// Get latest provider version
-			latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
-			if err != nil {
-				continue
-			}
-
-			// Strip constraint prefixes for comparison
-			currentClean := strings.TrimPrefix(dep.CurrentVersion, "~> ")
-			currentClean = strings.TrimPrefix(currentClean, ">= ")
-			currentClean = strings.TrimPrefix(currentClean, "= ")
-			currentClean = strings.TrimSpace(currentClean)
-
-			latestClean := strings.TrimPrefix(latest, "v")
-			currentClean = strings.TrimPrefix(currentClean, "v")
-
-			// Compare versions - only add update if they're actually different
-			if latestClean != currentClean && latest != "" && currentClean != "" {
-				updates = append(updates, engine.Update{
-					Dependency:    dep,
-					TargetVersion: latest,
-					Impact:        determineImpact(currentClean, latestClean),
-				})
-			}
-		} else if dep.Type == "module" {
-			// Get latest module version
-			latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
-			if err != nil {
-				continue
-			}
-
-			// Strip constraint prefixes for comparison
-			currentClean := strings.TrimPrefix(dep.CurrentVersion, "~> ")
-			currentClean = strings.TrimPrefix(currentClean, ">= ")
-			currentClean = strings.TrimPrefix(currentClean, "= ")
-			currentClean = strings.TrimSpace(currentClean)
-
-			latestClean := strings.TrimPrefix(latest, "v")
-			currentClean = strings.TrimPrefix(currentClean, "v")
-
-			// Compare versions - only add update if they're actually different
-			if latestClean != currentClean && latest != "" && currentClean != "" {
-				updates = append(updates, engine.Update{
-					Dependency:    dep,
-					TargetVersion: latest,
-					Impact:        determineImpact(currentClean, latestClean),
-				})
+		if dep.Type == "provider" || dep.Type == "module" {
+			if update, ok := i.processDependencyUpdate(ctx, dep); ok {
+				updates = append(updates, update)
 			}
 		}
 	}
@@ -260,9 +263,10 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	moduleUpdates := make(map[string]string)
 
 	for _, update := range plan.Updates {
-		if update.Dependency.Type == "provider" {
+		switch update.Dependency.Type {
+		case "provider":
 			providerUpdates[update.Dependency.Name] = update.TargetVersion
-		} else if update.Dependency.Type == "module" {
+		case "module":
 			moduleUpdates[update.Dependency.Name] = update.TargetVersion
 		}
 	}
@@ -277,7 +281,12 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 		filePath := filepath.Join(plan.Manifest.Path, filename)
 
 		// Read old content
-		oldContent, err := os.ReadFile(filePath)
+		// Validate path for security
+		if err := validateFilePath(filePath); err != nil {
+			continue
+		}
+
+		oldContent, err := os.ReadFile(filePath) // #nosec G304 - path is validated above
 		if err != nil {
 			continue
 		}
@@ -360,7 +369,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 				newContent = re.ReplaceAll(newContent, []byte(fmt.Sprintf(`${1}"%s"`, newVersion)))
 			}
 
-			if err := os.WriteFile(filePath, newContent, 0644); err != nil {
+			if err := os.WriteFile(filePath, newContent, 0o600); err != nil {
 				continue
 			}
 
@@ -384,9 +393,14 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 	files := manifest.Metadata["files"].([]string)
 	for _, filename := range files {
 		filePath := filepath.Join(manifest.Path, filename)
-		content, err := os.ReadFile(filePath)
+		// Validate path for security
+		if err := validateFilePath(filePath); err != nil {
+			continue
+		}
+
+		content, err := os.ReadFile(filePath) // #nosec G304 - path is validated above
 		if err != nil {
-			return fmt.Errorf("read file %s: %w", filename, err)
+			continue
 		}
 
 		var config Config

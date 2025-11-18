@@ -26,6 +26,7 @@ Unlike traditional dependency updaters that focus on lockfiles, uptool updates *
 ## Why uptool?
 
 **The Problem**: Modern projects use dozens of tools across multiple ecosystems:
+
 - Language dependencies (npm, pip, go modules)
 - Infrastructure tools (Terraform, Helm)
 - Development tools (pre-commit, tflint)
@@ -106,7 +107,7 @@ sudo mv uptool-darwin-arm64 /usr/local/bin/uptool
 # Or build from source
 git clone https://github.com/santosr2/uptool.git
 cd uptool
-make build  # Binary will be in dist/uptool
+mise run build  # Binary will be in dist/uptool
 ```
 
 ### CLI Usage
@@ -220,6 +221,7 @@ uptool scan --exclude=terraform  # Exclude integrations
 ```
 
 **Flags**:
+
 - `--format=FORMAT`: Output format (`table` or `json`)
 - `--only=INTEGRATIONS`: Comma-separated list of integrations to run
 - `--exclude=INTEGRATIONS`: Comma-separated list to skip
@@ -238,6 +240,7 @@ uptool plan --only=npm           # Specific integrations
 ```
 
 **Flags**:
+
 - `--format=FORMAT`: Output format (`table` or `json`)
 - `--out=FILE`: Save output to file
 - `--only=INTEGRATIONS`: Comma-separated integrations
@@ -257,6 +260,7 @@ uptool update --exclude=precommit
 ```
 
 **Flags**:
+
 - `--dry-run`: Show what would change without modifying files
 - `--diff`: Display unified diffs of changes
 - `--only=INTEGRATIONS`: Comma-separated list of integrations to run
@@ -274,6 +278,7 @@ uptool list --experimental            # Include experimental integrations
 ```
 
 **Flags**:
+
 - `--category=CATEGORY`: Filter by category (e.g., `package-manager`, `infrastructure`, `tooling`)
 - `--experimental`: Include experimental integrations
 
@@ -301,11 +306,13 @@ uptool supports **mutable tags** for convenient version pinning:
 ```
 
 **How it works**:
+
 - `@v0` - Automatically updated to latest `v0.x.x` release
 - `@v0.1` - Automatically updated to latest `v0.1.x` patch
 - `@v0.1.0` - Fixed to exact release (never changes)
 
 **Pre-release tags** (for testing):
+
 - `@v0-rc` - Latest release candidate in v0
 - `@v0.1-rc` - Latest release candidate in v0.1
 - `@v0.1.0-rc.1` - Exact pre-release (immutable)
@@ -356,6 +363,7 @@ This section provides a quick overview. For comprehensive documentation includin
 **Registry**: npm Registry API (`https://registry.npmjs.org`)
 
 Updates all dependency types:
+
 - `dependencies`
 - `devDependencies`
 - `peerDependencies`
@@ -364,6 +372,7 @@ Updates all dependency types:
 Preserves version constraint prefixes (`^`, `~`, `>=`, etc.).
 
 **Example**:
+
 ```json
 {
   "dependencies": {
@@ -382,6 +391,7 @@ Preserves version constraint prefixes (`^`, `~`, `>=`, etc.).
 Updates chart dependencies while preserving structure and comments.
 
 **Example**:
+
 ```yaml
 dependencies:
   - name: postgresql
@@ -398,6 +408,7 @@ dependencies:
 Leverages pre-commit's built-in update mechanism since it updates the manifest directly.
 
 **Example**:
+
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -413,6 +424,7 @@ repos:
 Updates module versions in `module` blocks. Provider updates coming soon.
 
 **Example**:
+
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -429,6 +441,7 @@ module "vpc" {
 Updates tflint plugin versions.
 
 **Example**:
+
 ```hcl
 plugin "aws" {
   enabled = true
@@ -446,7 +459,8 @@ plugin "aws" {
 Updates tool versions managed by asdf. Currently supports detection and parsing. Version resolution and updates in active development.
 
 **Example**:
-```
+
+```text
 go 1.23.0        # Updates to 1.25.0
 nodejs 20.10.0   # Updates to 22.0.0
 terraform 1.5.0  # Updates to 1.10.5
@@ -461,6 +475,7 @@ terraform 1.5.0  # Updates to 1.10.5
 Updates tool versions managed by mise (formerly rtx). Supports both string format (`go = "1.23"`) and map format (`go = { version = "1.23" }`).
 
 **Example**:
+
 ```toml
 [tools]
 go = "1.23"              # Updates to "1.25"
@@ -474,7 +489,7 @@ golangci-lint = "2.6"    # Updates to "2.7"
 
 ### Project Structure
 
-```
+```text
 uptool/
 ├── cmd/uptool/              # CLI entry point
 │   ├── main.go              # Main entry and integration registration
@@ -519,7 +534,6 @@ uptool/
 ├── docs/                    # Detailed documentation
 ├── action.yml               # GitHub Action definition
 ├── mise.toml                # Development tool versions
-├── Makefile                 # Build and development tasks
 └── README.md                # This file
 ```
 
@@ -538,6 +552,7 @@ type Integration interface {
 ```
 
 **Workflow**:
+
 1. **Detect**: Scan repository tree for manifest files
 2. **Plan**: Query registries for available updates
 3. **Apply**: Rewrite manifests with new versions
@@ -546,6 +561,7 @@ type Integration interface {
 ### Concurrent Execution
 
 uptool uses Go's concurrency primitives for performance:
+
 - Concurrent scanning across integrations
 - Parallel planning with semaphore-controlled worker pools
 - Atomic file updates with diffs
@@ -649,12 +665,12 @@ uptool uses **automated semantic versioning** based on conventional commits. Thi
 
 ```bash
 # Show current version
-make version-show
+mise run version-show
 
 # Manually bump versions (for local testing only)
-make version-bump-patch   # 0.1.0 → 0.1.1
-make version-bump-minor   # 0.1.0 → 0.2.0
-make version-bump-major   # 0.1.0 → 1.0.0
+mise run version-bump-patch   # 0.1.0 → 0.1.1
+mise run version-bump-minor   # 0.1.0 → 0.2.0
+mise run version-bump-major   # 0.1.0 → 1.0.0
 ```
 
 See [docs/versioning.md](docs/versioning.md) for complete documentation.
@@ -667,8 +683,27 @@ See [docs/versioning.md](docs/versioning.md) for complete documentation.
 
 - **Go 1.25** or later
 - Git
-- make (for convenience targets)
-- [mise](https://mise.jdx.dev/) (optional, for consistent tool versions)
+- [mise](https://mise.jdx.dev/) (for task runner and tool management)
+- **VS Code** (recommended) - See [.vscode/README.md](.vscode/README.md) for setup
+
+### Available Tasks
+
+All development tasks are managed through mise. To see all available tasks:
+
+```bash
+mise tasks ls
+```
+
+Common tasks:
+
+- `mise run build` - Build the binary
+- `mise run test` - Run tests
+- `mise run check` - Run all quality checks
+- `mise run fmt` - Format code
+- `mise run lint` - Run linter
+- `mise run clean` - Clean build artifacts
+
+See `mise.toml` for the complete list of tasks.
 
 ### Build from Source
 
@@ -676,12 +711,9 @@ See [docs/versioning.md](docs/versioning.md) for complete documentation.
 git clone https://github.com/santosr2/uptool.git
 cd uptool
 
-# Option 1: Use mise for consistent tool versions (recommended)
+# Install tools and build (recommended)
 mise install
-make build
-
-# Option 2: Use system Go
-go build -o uptool ./cmd/uptool
+mise run build
 
 # Built binary will be in dist/uptool
 ```
@@ -690,10 +722,10 @@ go build -o uptool ./cmd/uptool
 
 ```bash
 # Run all tests
-make test
+mise run test
 
 # Run with coverage
-make test-coverage
+mise run test-coverage
 
 # Run specific package tests
 go test ./internal/integrations/npm/...
@@ -706,29 +738,29 @@ go test -race ./...
 
 ```bash
 # Format code
-make fmt
+mise run fmt
 
 # Run linter
-make lint
+mise run lint
 
-# Run all checks (fmt + vet + lint + test)
-make check
+# Run all checks (fmt + vet + complexity + lint + test)
+mise run check
 ```
 
 ### Run Locally on This Repository
 
 ```bash
 # Build
-make build
+mise run build
 
 # Scan this repository
-./dist/uptool scan
+mise run run-scan
 
 # Plan updates
-./dist/uptool plan
+mise run run-plan
 
 # Dry-run
-./dist/uptool update --dry-run --diff
+mise run run-update
 ```
 
 ### Adding a New Integration
@@ -736,6 +768,7 @@ make build
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed instructions.
 
 Quick overview:
+
 1. Create `internal/integrations/<name>/<name>.go`
 2. Implement the `engine.Integration` interface
 3. Add registry client in `internal/registry/<name>.go` if needed
@@ -750,6 +783,7 @@ Quick overview:
 ## Contributing
 
 We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Development setup
 - Coding standards
 - Testing requirements
@@ -758,10 +792,11 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Version management process
 
 **Quick Start**:
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes with tests
-4. Run `make check` to validate
+4. Run `mise run check` to validate
 5. Commit using conventional commits (`git commit -m 'feat: add amazing feature'`)
 6. Push (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
@@ -779,6 +814,7 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 ## Governance
 
 See [GOVERNANCE.md](GOVERNANCE.md) for:
+
 - Maintainer responsibilities
 - Decision-making process
 - PR review expectations
@@ -810,7 +846,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ### Documentation
 
-- **[Documentation Portal](docs/README.md)** - Complete documentation index
+- **[Documentation Portal](docs/overview.md)** - Complete documentation index
 - **[Configuration Guide](docs/configuration.md)** - Complete `uptool.yaml` reference
 - **[Manifest Files Reference](docs/manifests.md)** - All supported manifest types
 - **[Integration Guides](docs/integrations/)** - Detailed guides for each integration

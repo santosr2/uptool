@@ -26,6 +26,7 @@ The mise integration updates tool versions in the `[tools]` section:
 ### String Format
 
 **Before** (`mise.toml`):
+
 ```toml
 [tools]
 go = "1.23"
@@ -36,6 +37,7 @@ python = "3.11"
 ```
 
 **After** (uptool update):
+
 ```toml
 [tools]
 go = "1.25"
@@ -48,6 +50,7 @@ python = "3.13"
 ### Map Format
 
 **Before** (`mise.toml`):
+
 ```toml
 [tools]
 go = { version = "1.23", path = ".go-version" }
@@ -56,6 +59,7 @@ python = { version = "3.11", virtualenv = ".venv" }
 ```
 
 **After** (uptool update):
+
 ```toml
 [tools]
 go = { version = "1.25", path = ".go-version" }
@@ -90,7 +94,8 @@ uptool scan --only=mise
 ```
 
 Output:
-```
+
+```text
 Type                 Path                Dependencies
 ----------------------------------------------------------------
 mise                 mise.toml           6
@@ -106,7 +111,8 @@ uptool plan --only=mise
 ```
 
 Output:
-```
+
+```text
 mise.toml (mise):
 Tool             Current         Target          Impact
 --------------------------------------------------------
@@ -176,6 +182,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates (1.23.0 → 1.23.1)
 - `minor` - Patch + minor updates (1.23.0 → 1.24.0)
@@ -214,7 +221,7 @@ mise supports multiple config file locations:
 
 ### Project Config
 
-```
+```tree
 my-project/
 ├── mise.toml                   # Project config (recommended)
 ├── .mise.toml                  # Hidden variant
@@ -224,11 +231,12 @@ my-project/
 
 ### Global Config
 
-```
+```text
 ~/.config/mise/config.toml      # Global config
 ```
 
 uptool scans and updates:
+
 - ✅ `mise.toml` in repository
 - ✅ `.mise.toml` in repository
 - ❌ Global config (not in repo)
@@ -237,7 +245,7 @@ uptool scans and updates:
 
 mise supports directory-specific configs:
 
-```
+```tree
 monorepo/
 ├── mise.toml                   # Root tools
 ├── frontend/
@@ -334,11 +342,13 @@ Rate limit: 5000 requests/hour
 **Problem**: "Tool not found in GitHub"
 
 **Causes**:
+
 1. Tool name doesn't map to known GitHub repository
 2. Tool uses non-GitHub backend
 3. Tool name misspelled
 
 **Solutions**:
+
 ```bash
 # Check mise tool name
 mise ls-remote <tool>
@@ -355,10 +365,12 @@ mise install <tool>@latest
 **Problem**: "API rate limit exceeded"
 
 **Causes**:
+
 1. Many tools without authentication
 2. Frequent updates
 
 **Solutions**:
+
 ```bash
 # Set GitHub token
 export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
@@ -376,10 +388,12 @@ uptool update --only=mise
 **Problem**: uptool suggests version that doesn't exist
 
 **Causes**:
+
 1. Version numbering changed
 2. Pre-release versions included
 
 **Solutions**:
+
 ```bash
 # Check available versions
 mise ls-remote <tool>
@@ -398,11 +412,13 @@ policy:
 **Problem**: `mise install` fails after update
 
 **Causes**:
+
 1. New version has different dependencies
 2. Backend not available
 3. Build requirements missing
 
 **Solutions**:
+
 ```bash
 # Check mise backend
 mise doctor
@@ -422,10 +438,12 @@ mise install <tool>@<version> --verbose
 **Problem**: "Failed to parse mise.toml"
 
 **Causes**:
+
 1. Invalid TOML syntax
 2. Unsupported mise.toml features
 
 **Solutions**:
+
 ```bash
 # Validate TOML
 cat mise.toml | mise validate
@@ -439,6 +457,7 @@ taplo format mise.toml --check
 ## Best Practices
 
 1. **Always install after updating**:
+
    ```bash
    uptool update --only=mise
    mise install
@@ -447,6 +466,7 @@ taplo format mise.toml --check
    ```
 
 2. **Test versions before committing**:
+
    ```bash
    mise install
    mise current  # Verify all tools installed
@@ -454,6 +474,7 @@ taplo format mise.toml --check
    ```
 
 3. **Use string format when possible**:
+
    ```toml
    # Preferred (simpler)
    [tools]
@@ -465,6 +486,7 @@ taplo format mise.toml --check
    ```
 
 4. **Use conservative policy**:
+
    ```yaml
    # For production
    policy:
@@ -476,6 +498,7 @@ taplo format mise.toml --check
    ```
 
 5. **Set GitHub token**:
+
    ```bash
    # In CI/CD
    env:
@@ -486,6 +509,7 @@ taplo format mise.toml --check
    ```
 
 6. **Document required tools**:
+
    ```toml
    # mise.toml
    [tools]
@@ -502,10 +526,12 @@ taplo format mise.toml --check
 uptool works with mise >= 2024.1.0.
 
 **mise < 2024.1.0** (rtx era):
+
 - May work but not tested
 - TOML format may differ
 
 **mise >= 2024.1.0**:
+
 - ✅ Fully supported
 - Standard `mise.toml` format
 

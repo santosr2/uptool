@@ -7,6 +7,7 @@ This document outlines the governance model for the uptool project.
 ### Maintainers
 
 Maintainers have write access to the repository and are responsible for:
+
 - Reviewing and merging pull requests
 - Triaging issues
 - Releasing new versions
@@ -14,11 +15,13 @@ Maintainers have write access to the repository and are responsible for:
 - Maintaining code quality
 
 **Current Maintainers**:
+
 - [@santosr2](https://github.com/santosr2) (Creator, Lead Maintainer)
 
 ### Becoming a Maintainer
 
 Contributors who demonstrate:
+
 - Consistent, high-quality contributions
 - Understanding of the codebase and architecture
 - Collaborative spirit and good judgment
@@ -37,7 +40,7 @@ We use **trunk-based development**, not Git Flow:
 - **No develop/staging branches**: Features merge when ready
 - **Releases**: Tagged from `main`
 
-```
+```text
 main (protected)
 ├── feature/add-python-support ──┐
 ├── fix/helm-parsing-bug ────────┤
@@ -56,21 +59,25 @@ main (protected)
 ### Types of Decisions
 
 **Minor decisions** (bug fixes, small features, docs):
+
 - Any maintainer can approve and merge
 - Require 1 approval
 
 **Major decisions** (breaking changes, new integrations, architecture):
+
 - Discuss in an issue or discussion first
 - Require consensus from maintainers
 - May require 2+ approvals
 
 **Project direction** (roadmap, major initiatives):
+
 - Lead maintainer makes final call
 - After community input via discussions
 
 ### Consensus Model
 
 We aim for consensus, not voting. If disagreement:
+
 1. Discuss in the PR/issue
 2. Seek compromise
 3. Lead maintainer makes final decision if needed
@@ -102,10 +109,12 @@ We aim for consensus, not voting. If disagreement:
 ### Merge Strategy
 
 **Squash and merge** (default):
+
 - Keeps `main` history clean
 - Preserves full history in PR
 
 **Rebase and merge** (for multi-commit features):
+
 - When commit history is meaningful
 - Ask in PR if you want this
 
@@ -127,11 +136,12 @@ Current stage: **v0.x.x** (pre-1.0, API may change)
 - **Patch releases**: As needed for bugs
 - **Major releases**: When breaking changes are necessary
 
-### Release Process
+### Process
 
 Releases are **fully automated** using GitHub Actions and conventional commits. See [docs/versioning.md](docs/versioning.md) for complete details.
 
 **Pre-Release**:
+
 1. Trigger Pre-Release workflow via GitHub Actions
 2. Select pre-release type (rc/beta/alpha)
 3. Workflow calculates version from commits
@@ -140,6 +150,7 @@ Releases are **fully automated** using GitHub Actions and conventional commits. 
 6. Artifacts built and pre-release published
 
 **Stable Release**:
+
 1. Test pre-release thoroughly
 2. Trigger Promote workflow via GitHub Actions
 3. Provide pre-release tag to promote
@@ -148,6 +159,7 @@ Releases are **fully automated** using GitHub Actions and conventional commits. 
 6. CHANGELOG updated automatically
 
 **Maintainers don't need to**:
+
 - Manually update version numbers
 - Create git tags
 - Build artifacts
@@ -184,12 +196,14 @@ Releases are **fully automated** using GitHub Actions and conventional commits. 
 ### Code of Conduct
 
 **Be respectful**:
+
 - Welcoming to newcomers
 - Patient with questions
 - Constructive in criticism
 - Inclusive in language
 
 **Be collaborative**:
+
 - Assume good intentions
 - Seek to understand before being understood
 - Find common ground

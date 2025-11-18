@@ -23,6 +23,7 @@ The pre-commit integration updates hook repository revisions:
 ## Example
 
 **Before** (`.pre-commit-config.yaml`):
+
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -45,6 +46,7 @@ repos:
 ```
 
 **After** (uptool update):
+
 ```yaml
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -86,7 +88,8 @@ uptool scan --only=precommit
 ```
 
 Output:
-```
+
+```text
 Type                 Path                        Dependencies
 ----------------------------------------------------------------
 precommit            .pre-commit-config.yaml     3
@@ -101,7 +104,8 @@ uptool plan --only=precommit
 ```
 
 Output:
-```
+
+```text
 .pre-commit-config.yaml (precommit):
 Hook                 Current         Target          Impact
 --------------------------------------------------------
@@ -142,6 +146,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates
 - `minor` - Patch + minor updates
@@ -274,10 +279,12 @@ git config --global credential.helper store
 **Problem**: "pre-commit command not found"
 
 **Causes**:
+
 1. pre-commit not installed
 2. Not in PATH
 
 **Solutions**:
+
 ```bash
 # Install pre-commit
 pip install pre-commit
@@ -299,10 +306,12 @@ pre-commit --version
 **Problem**: "Invalid .pre-commit-config.yaml"
 
 **Causes**:
+
 1. YAML syntax errors
 2. Invalid hook configuration
 
 **Solutions**:
+
 ```bash
 # Validate config
 pre-commit validate-config
@@ -318,11 +327,13 @@ yamllint .pre-commit-config.yaml
 **Problem**: "Repository not found" error
 
 **Causes**:
+
 1. Hook repository URL incorrect
 2. Repository deleted or renamed
 3. Network issues
 
 **Solutions**:
+
 ```bash
 # Verify repository exists
 curl -I https://github.com/pre-commit/pre-commit-hooks
@@ -338,10 +349,12 @@ grep repo .pre-commit-config.yaml
 **Problem**: "API rate limit exceeded"
 
 **Causes**:
+
 1. Too many hooks without authentication
 2. Running updates frequently
 
 **Solutions**:
+
 ```bash
 # Set GitHub token
 export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
@@ -360,10 +373,12 @@ curl -H "Authorization: token $GITHUB_TOKEN" \
 **Problem**: After update, `pre-commit run` fails
 
 **Causes**:
+
 1. New hook version incompatible
 2. Hook environment not set up
 
 **Solutions**:
+
 ```bash
 # Clean and reinstall hooks
 pre-commit clean
@@ -379,24 +394,28 @@ pre-commit run --verbose
 ## Best Practices
 
 1. **Test after updating**:
+
    ```bash
    uptool update --only=precommit
    pre-commit run --all-files
    ```
 
 2. **Review hook changelogs**:
+
    ```bash
    # Check for breaking changes
    # Visit hook repository's releases page
    ```
 
 3. **Update regularly**:
+
    ```bash
    # Weekly or monthly
    uptool update --only=precommit
    ```
 
 4. **Pin critical hooks** (if needed):
+
    ```yaml
    repos:
      - repo: https://github.com/psf/black
@@ -406,6 +425,7 @@ pre-commit run --verbose
    ```
 
 5. **Use GitHub token in CI**:
+
    ```yaml
    # .github/workflows/update.yml
    env:
@@ -418,6 +438,7 @@ pre-commit run --verbose
    ```
 
 6. **Commit lock files if used**:
+
    ```bash
    git add .pre-commit-config.yaml
    git commit -m "chore: update pre-commit hooks"
@@ -428,14 +449,17 @@ pre-commit run --verbose
 uptool works with pre-commit >= 2.0.0.
 
 **pre-commit < 2.0.0**:
+
 - Not tested
 - May not support all features
 
 **pre-commit >= 2.0.0**:
+
 - ✅ Fully supported
 - `autoupdate` command available
 
 **pre-commit >= 3.0.0**:
+
 - ✅ Fully supported
 - Improved update logic
 

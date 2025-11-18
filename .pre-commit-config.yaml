@@ -21,21 +21,33 @@ repos:
       - id: detect-private-key
       - id: mixed-line-ending
         args: [--fix=lf]
+      - id: check-added-large-files
+      - id: detect-aws-credentials
+        args: [--allow-missing-credentials]
 
-  # Go formatting
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
+  # Go hooks
+  - repo: https://github.com/TekWizely/pre-commit-golang
+    rev: v1.0.0-rc.4
     hooks:
+      # Formatting
       - id: go-fmt
         args: [-w, -s]  # Simplify code
-      - id: go-vet
       - id: go-imports
         args: [-w, -local, github.com/santosr2/uptool]
+
+      # Code quality
+      - id: go-vet-mod
+
+      # Build and test
       - id: go-mod-tidy
-      - id: go-build
+      - id: go-build-mod
         args: [./cmd/uptool]
-      - id: go-unit-tests
+      - id: go-test-mod
         args: [-v, -race, ./...]
+
+      # GoSec
+      - id: go-sec-mod
+        args: [-exclude-generated, -exclude-dir=.mise]
 
   # Go linting with golangci-lint
   - repo: https://github.com/golangci/golangci-lint
@@ -44,22 +56,12 @@ repos:
       - id: golangci-lint
         args: [--fix]
 
-  # Security checks (using local hook to avoid upstream issues)
-  - repo: local
-    hooks:
-      - id: gosec
-        name: gosec
-        entry: bash -c 'mise exec -- gosec -exclude-generated ./...'
-        language: system
-        types: [go]
-        pass_filenames: false
-
   # YAML linting
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.37.1
     hooks:
       - id: yamllint
-        args: [-c, .yamllint]
+        args: [--config-file, .yamllint]
 
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
@@ -94,14 +96,17 @@ repos:
       - id: hadolint-docker
         args: [--config, .hadolint.yaml]
 
-  # Check for TODO/FIXME comments (informational)
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  # Documentation validation
+  - repo: local
     hooks:
-      - id: check-added-large-files
-      - id: detect-aws-credentials
-        args: [--allow-missing-credentials]
+      - id: mkdocs-build
+        name: mkdocs build
+        entry: mise run docs-build
+        language: system
+        files: ^(docs/|mkdocs\.yml)
+        pass_filenames: false
 
 # Configuration
 default_stages: [pre-commit]
 fail_fast: false
+exclude: ^(\.mise/|vendor/|dist/|\.terraform/|node_modules/|examples/plugins/)

@@ -148,7 +148,7 @@ nav:
   - Home: index.md
 
   - Getting Started:
-    - Overview: README.md
+    - Overview: overview.md
     - Installation: installation.md
     - Quick Start: quickstart.md
 
@@ -173,7 +173,7 @@ nav:
     - Contributing: CONTRIBUTING.md
     - Plugin Development: plugin-development.md
     - Patch Release Workflow: patch-release-workflow.md
-    - Architecture: ARCHITECTURE.md
+    - Architecture: architecture.md
 
   - Reference:
     - API Documentation: api/README.md

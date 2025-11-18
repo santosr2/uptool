@@ -5,10 +5,11 @@ package policy
 
 import (
 	"fmt"
-	"os"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/santosr2/uptool/internal/engine"
-	"gopkg.in/yaml.v3"
+	"github.com/santosr2/uptool/internal/secureio"
 )
 
 // Config represents the uptool.yaml configuration file.
@@ -51,7 +52,7 @@ type AutoMergeConfig struct {
 
 // LoadConfig reads and parses the configuration file.
 func LoadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+	data, err := secureio.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read config: %w", err)
 	}

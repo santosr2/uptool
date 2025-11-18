@@ -23,6 +23,7 @@ The tflint integration updates plugin versions:
 ## Example
 
 **Before** (`.tflint.hcl`):
+
 ```hcl
 plugin "aws" {
   enabled = true
@@ -44,6 +45,7 @@ plugin "google" {
 ```
 
 **After** (uptool update):
+
 ```hcl
 plugin "aws" {
   enabled = true
@@ -83,6 +85,7 @@ uptool queries GitHub Releases API for the plugin repository to find latest vers
 ### Official tflint Rulesets
 
 Common plugins:
+
 - `github.com/terraform-linters/tflint-ruleset-aws` - AWS
 - `github.com/terraform-linters/tflint-ruleset-azurerm` - Azure
 - `github.com/terraform-linters/tflint-ruleset-google` - Google Cloud
@@ -97,7 +100,8 @@ uptool scan --only=tflint
 ```
 
 Output:
-```
+
+```text
 Type                 Path                Dependencies
 ----------------------------------------------------------------
 tflint               .tflint.hcl         3
@@ -113,7 +117,8 @@ uptool plan --only=tflint
 ```
 
 Output:
-```
+
+```text
 .tflint.hcl (tflint):
 Plugin           Current         Target          Impact
 --------------------------------------------------------
@@ -154,6 +159,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates (0.21.0 → 0.21.1)
 - `minor` - Patch + minor updates (0.21.0 → 0.22.0)
@@ -189,7 +195,7 @@ tflint --init --config=.tflint.hcl
 
 tflint supports multiple configuration files:
 
-```
+```tree
 project/
 ├── .tflint.hcl              # Root config, updated
 └── modules/
@@ -251,11 +257,13 @@ Rate limit: 5000 requests/hour
 **Problem**: "Plugin not found on GitHub"
 
 **Causes**:
+
 1. Plugin repository doesn't exist
 2. Source URL incorrect
 3. Plugin renamed or moved
 
 **Solutions**:
+
 ```bash
 # Verify plugin exists
 curl -I https://api.github.com/repos/terraform-linters/tflint-ruleset-aws/releases
@@ -271,10 +279,12 @@ grep source .tflint.hcl
 **Problem**: "API rate limit exceeded"
 
 **Causes**:
+
 1. Too many plugin checks without authentication
 2. Many plugins in config
 
 **Solutions**:
+
 ```bash
 # Set GitHub token
 export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
@@ -292,10 +302,12 @@ uptool update --only=tflint
 **Problem**: uptool suggests version that doesn't exist
 
 **Causes**:
+
 1. Plugin releases use different versioning
 2. Pre-release versions included
 
 **Solutions**:
+
 ```bash
 # Check available releases
 gh release list --repo terraform-linters/tflint-ruleset-aws
@@ -311,10 +323,12 @@ policy:
 **Problem**: `tflint --init` fails after update
 
 **Causes**:
+
 1. New version incompatible with tflint version
 2. Plugin architecture changed
 
 **Solutions**:
+
 ```bash
 # Check tflint version
 tflint --version
@@ -330,6 +344,7 @@ brew upgrade tflint  # macOS
 ## Best Practices
 
 1. **Always reinstall plugins**:
+
    ```bash
    uptool update --only=tflint
    tflint --init
@@ -338,6 +353,7 @@ brew upgrade tflint  # macOS
    ```
 
 2. **Test after updating**:
+
    ```bash
    tflint --init
    tflint
@@ -345,12 +361,14 @@ brew upgrade tflint  # macOS
    ```
 
 3. **Review plugin changelogs**:
+
    ```bash
    # Check for new rules or breaking changes
    # Visit plugin's GitHub releases page
    ```
 
 4. **Use conservative update policy**:
+
    ```yaml
    # For 0.x.x plugins, use patch only
    policy:
@@ -358,6 +376,7 @@ brew upgrade tflint  # macOS
    ```
 
 5. **Set GitHub token**:
+
    ```bash
    # In CI/CD
    env:
@@ -368,6 +387,7 @@ brew upgrade tflint  # macOS
    ```
 
 6. **Pin critical plugins**:
+
    ```hcl
    plugin "aws" {
      enabled = true
@@ -381,10 +401,12 @@ brew upgrade tflint  # macOS
 uptool works with tflint >= 0.40.0 (plugin system v0.1.0).
 
 **tflint < 0.40.0**:
+
 - May work but not tested
 - Plugin system may differ
 
 **tflint >= 0.40.0**:
+
 - ✅ Fully supported
 - Plugin configuration in HCL
 

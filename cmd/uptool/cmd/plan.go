@@ -50,15 +50,24 @@ func init() {
 	planCmd.Flags().StringVar(&planExclude, "exclude", "", "comma-separated integrations to exclude")
 
 	// Add shell completion for flags
-	planCmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if err := planCmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"table", "json"}, cobra.ShellCompDirectiveNoFileComp
-	})
+	}); err != nil {
+		// This is a non-critical error during CLI initialization
+		fmt.Fprintf(os.Stderr, "Warning: failed to register shell completion: %v\n", err)
+	}
 
-	planCmd.RegisterFlagCompletionFunc("only", completeIntegrations)
-	planCmd.RegisterFlagCompletionFunc("exclude", completeIntegrations)
-	planCmd.RegisterFlagCompletionFunc("out", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if err := planCmd.RegisterFlagCompletionFunc("only", completeIntegrations); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to register shell completion: %v\n", err)
+	}
+	if err := planCmd.RegisterFlagCompletionFunc("exclude", completeIntegrations); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to register shell completion: %v\n", err)
+	}
+	if err := planCmd.RegisterFlagCompletionFunc("out", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return nil, cobra.ShellCompDirectiveDefault // File completion
-	})
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to register shell completion: %v\n", err)
+	}
 }
 
 func runPlan(cmd *cobra.Command, args []string) error {

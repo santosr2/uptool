@@ -34,10 +34,10 @@ type PackageInfo struct {
 
 // VersionInfo contains metadata about a specific version.
 type VersionInfo struct {
-	Version     string
-	PublishedAt string
+	Version      string
+	PublishedAt  string
 	IsPrerelease bool
-	Deprecated  bool
+	Deprecated   bool
 }
 
 var (

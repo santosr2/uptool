@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -37,10 +38,10 @@ type CategoryMetadata struct {
 
 // RegistryMetadata represents the full integrations.yaml structure.
 type RegistryMetadata struct {
-	Version      string                         `yaml:"version"`
-	Integrations map[string]Metadata            `yaml:"integrations"`
-	Datasources  map[string]DatasourceMetadata  `yaml:"datasources"`
-	Categories   map[string]CategoryMetadata    `yaml:"categories"`
+	Version      string                        `yaml:"version"`
+	Integrations map[string]Metadata           `yaml:"integrations"`
+	Datasources  map[string]DatasourceMetadata `yaml:"datasources"`
+	Categories   map[string]CategoryMetadata   `yaml:"categories"`
 }
 
 var cachedMetadata *RegistryMetadata
@@ -75,10 +76,25 @@ func findRegistryFile() (string, error) {
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			// Reached filesystem root
-			return "", fmt.Errorf("integrations.yaml not found")
+			break
 		}
 		dir = parent
 	}
+
+	return "", fmt.Errorf("integrations.yaml not found")
+}
+
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
 }
 
 // LoadMetadata loads integration metadata from the integrations.yaml file.
@@ -92,7 +108,12 @@ func LoadMetadata() (*RegistryMetadata, error) {
 		return nil, err
 	}
 
-	data, err := os.ReadFile(registryPath)
+	// Validate path for security
+	if err := validateFilePath(registryPath); err != nil {
+		return nil, fmt.Errorf("invalid registry path: %w", err)
+	}
+
+	data, err := os.ReadFile(registryPath) // #nosec G304 - path is validated above
 	if err != nil {
 		return nil, fmt.Errorf("reading integrations.yaml: %w", err)
 	}

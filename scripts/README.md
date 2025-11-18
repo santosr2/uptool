@@ -9,12 +9,14 @@ This directory contains utility scripts for uptool development and maintenance.
 **Purpose**: Automatically generates `internal/integrations/all/all.go` which imports all integration packages.
 
 **Why This Exists**:
+
 - Go requires explicit imports to trigger `init()` functions
 - Each integration registers itself in its `init()` function
 - Without this, adding a new integration would require manually updating imports
 - This script automates the process by scanning for integration packages
 
 **How It Works**:
+
 1. Scans `internal/integrations/` directory
 2. Finds all subdirectories containing `.go` files
 3. Excludes special directories (`all`, hidden directories, test files)
@@ -32,6 +34,7 @@ go generate ./internal/integrations
 ```
 
 **When to Run**:
+
 - After creating a new integration in `internal/integrations/<name>/`
 - After renaming an integration directory
 - After deleting an integration
@@ -91,6 +94,7 @@ go generate ./...
 **Error Handling**:
 
 The script will fail if:
+
 - `go.mod` is not found (not in repository root)
 - `internal/integrations/` directory doesn't exist
 - No integration packages are found
@@ -99,25 +103,29 @@ The script will fail if:
 **Development Workflow**:
 
 1. Create new integration:
+
    ```bash
    mkdir -p internal/integrations/myintegration
    # Add myintegration.go with init() function
    ```
 
 2. Run generator:
+
    ```bash
    go generate ./internal/integrations
    ```
 
 3. Verify:
+
    ```bash
    cat internal/integrations/all/all.go
    # Should include your new integration
    ```
 
 4. Build and test:
+
    ```bash
-   make build
+   mise run build
    ./dist/uptool list
    # Should show your integration
    ```
@@ -125,16 +133,19 @@ The script will fail if:
 **Troubleshooting**:
 
 **Problem**: "No integrations found"
+
 - Ensure integration directory contains `.go` files (not just `_test.go`)
 - Directory name should not start with `.` or `_`
 - Directory should not be named `all`
 
 **Problem**: "Generated code won't compile"
+
 - Check that integration package has valid Go code
 - Verify module path in `go.mod` matches `modulePath` constant
 - Run `go mod tidy`
 
 **Problem**: "Integration not registering"
+
 - Ensure integration package has `init()` function
 - Verify `init()` calls `integrations.Register()`
 - Check that `internal/integrations/all` is imported somewhere
@@ -163,19 +174,23 @@ When adding new scripts:
 ### Script Conventions
 
 **Naming**:
+
 - Go scripts: `gen_*.go` (generators), `check_*.go` (validators)
 - Shell scripts: `*.sh` with executable permissions
 
 **Error Messages**:
+
 - Write errors to stderr: `fmt.Fprintf(os.Stderr, "Error: %v\n", err)`
 - Exit with status 1 on failure: `os.Exit(1)`
 
 **Output**:
+
 - Normal output to stdout
 - Progress messages to stdout
 - Errors to stderr
 
 **Location**:
+
 - Executable from repository root
 - Use `findRepoRoot()` pattern to locate repository
 - Change to repository root before executing logic

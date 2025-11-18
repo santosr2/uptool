@@ -1,10 +1,11 @@
 # Patch Release Workflow Guide
 
-This guide explains how to manage security patches and bug fixes for previous minor versions of uptool, in accordance with our [Security Policy](../SECURITY.md).
+This guide explains how to manage security patches and bug fixes for previous minor versions of uptool, in accordance with our [Security Policy](SECURITY.md).
 
 ## Overview
 
 uptool supports **multiple minor versions simultaneously**:
+
 - **Latest minor version** (e.g., 0.2.x): Full support (features, bug fixes, security patches)
 - **Previous minor version** (e.g., 0.1.x): Security patches only for 6 months after next minor release
 - **Older versions**: No support
@@ -25,12 +26,14 @@ uptool supports **multiple minor versions simultaneously**:
 4. Click **Run workflow**
 
 **What it does**:
+
 - Creates a `release-X.Y` branch from the latest `vX.Y.Z` tag
 - Adds branch protection rules
 - Creates a README explaining the branch purpose
 
 **Example**:
-```
+
+```text
 Input: 0.1
 Result: Creates branch `release-0.1` from tag `v0.1.0`
 ```
@@ -44,6 +47,7 @@ Result: Creates branch `release-0.1` from tag `v0.1.0`
 **How to use**:
 
 1. Cherry-pick fixes to the release branch:
+
    ```bash
    git checkout release-0.1
    git cherry-pick <commit-sha>
@@ -59,6 +63,7 @@ Result: Creates branch `release-0.1` from tag `v0.1.0`
 5. Click **Run workflow**
 
 **What it does**:
+
 - Calculates the next patch version (e.g., 0.1.0 → 0.1.1)
 - Updates version files
 - Builds and signs binaries for all platforms
@@ -67,7 +72,8 @@ Result: Creates branch `release-0.1` from tag `v0.1.0`
 - Updates the mutable minor tag (e.g., `v0.1` → `v0.1.1`)
 
 **Example**:
-```
+
+```text
 Branch: release-0.1
 Current: v0.1.0
 Next: v0.1.1 (security patch)
@@ -94,6 +100,7 @@ Next: v0.1.1 (security patch)
 5. Click **Run workflow**
 
 **What it does**:
+
 - Identifies which release branches need patches
 - Creates patch branches for each affected version
 - Cherry-picks the fix commits
@@ -101,7 +108,8 @@ Next: v0.1.1 (security patch)
 - If cherry-pick fails, creates an issue for manual backporting
 
 **Example**:
-```
+
+```text
 Affected: 0.1.x, 0.2.x
 Commits: abc123, def456
 Result:
@@ -118,6 +126,7 @@ Result:
 **Steps**:
 
 1. **Fix on main**:
+
    ```bash
    git checkout main
    # Fix the vulnerability
@@ -158,6 +167,7 @@ Result:
 **Steps**:
 
 1. **Reproduce and fix**:
+
    ```bash
    git checkout main
    # Fix the bug
@@ -167,6 +177,7 @@ Result:
    ```
 
 2. **Cherry-pick to release branch**:
+
    ```bash
    git checkout release-0.1
    git cherry-pick def456
@@ -189,6 +200,7 @@ When you run the **Promote to Stable Release** workflow for v0.2.0, it will **au
 **Manual Approach** (if needed):
 
 1. **Verify latest stable tag**:
+
    ```bash
    git tag -l "v0.1.*" | grep -v '\-' | sort -V | tail -n 1
    # Output: v0.1.0
@@ -199,6 +211,7 @@ When you run the **Promote to Stable Release** workflow for v0.2.0, it will **au
    - Version: `0.1`
 
 3. **Verify branch**:
+
    ```bash
    git fetch origin
    git checkout release-0.1
@@ -219,6 +232,7 @@ When you run the **Promote to Stable Release** workflow for v0.2.0, it will **au
 ### Branch Protection
 
 Release branches have the same protection as `main`:
+
 - Required status checks
 - Required PR reviews
 - No force pushes
@@ -226,7 +240,7 @@ Release branches have the same protection as `main`:
 
 ### Support Timeline
 
-```
+```text
 Timeline: Support for release-0.1
 
 0.1.0 released ─────────── 0.2.0 released ──────────── +6 months ──────────>
@@ -243,10 +257,12 @@ When a release branch reaches end of support:
 1. **Announce end of support** (1 month before)
 2. **Final patch release** (if needed)
 3. **Archive the branch**:
+
    ```bash
    git tag archive/release-0.1 release-0.1
    git push origin archive/release-0.1
    ```
+
 4. **Update documentation**
 5. **Close remaining PRs/issues** for that branch
 
@@ -260,6 +276,7 @@ When a release branch reaches end of support:
 ### Tag Updates
 
 When creating a patch release (e.g., v0.1.1):
+
 1. Create immutable tag: `v0.1.1`
 2. Update mutable minor tag: `v0.1` → `v0.1.1`
 3. Do NOT update major tag: `v0` stays at latest minor (e.g., `v0.2.0`)
@@ -287,6 +304,7 @@ If **Coordinate Security Patches** fails with conflicts:
 
 1. Check the created issue for manual backport instructions
 2. Manually resolve conflicts:
+
    ```bash
    git checkout release-0.1
    git cherry-pick abc123
@@ -295,6 +313,7 @@ If **Coordinate Security Patches** fails with conflicts:
    git cherry-pick --continue
    git push origin release-0.1
    ```
+
 3. Run **Patch Release** workflow
 
 ### Missing Release Branch
@@ -321,10 +340,12 @@ If **Patch Release** workflow fails:
 If the patch version is wrong:
 
 1. Delete the tag (if created):
+
    ```bash
    git tag -d v0.1.1
    git push origin :refs/tags/v0.1.1
    ```
+
 2. Fix version files manually
 3. Re-run workflow
 
@@ -365,6 +386,7 @@ If the patch version is wrong:
 ### When should I create a release branch?
 
 After releasing a new minor version. For example:
+
 - Release v0.2.0 → Create `release-0.1` to support 0.1.x
 
 ### How long are release branches supported?
@@ -382,6 +404,7 @@ The **Coordinate Security Patches** workflow will create an issue with manual in
 ### How do I know which versions need patches?
 
 Check the security advisory for affected versions. Example:
+
 - Affected: < 0.2.3
 - Needs patches: 0.1.x (via release-0.1)
 
@@ -391,16 +414,17 @@ The workflow automatically updates the minor tag (e.g., `v0.1`). You don't need 
 
 ## Related Documentation
 
-- [Security Policy](../SECURITY.md) - Support timelines and reporting
-- [Contributing Guide](../CONTRIBUTING.md) - Development workflow
+- [Security Policy](SECURITY.md) - Support timelines and reporting
+- [Contributing Guide](CONTRIBUTING.md) - Development workflow
 - [Versioning Guide](versioning.md) - Semantic versioning details
-- [Release Process](../CONTRIBUTING.md#release-process) - Main branch releases
+- [Release Process](CONTRIBUTING.md#release-process) - Main branch releases
 
 ## Support
 
 For questions about patch releases:
-- **GitHub Discussions**: https://github.com/santosr2/uptool/discussions
-- **Security Issues**: https://github.com/santosr2/uptool/security/advisories
+
+- **GitHub Discussions**: <https://github.com/santosr2/uptool/discussions>
+- **Security Issues**: <https://github.com/santosr2/uptool/security/advisories>
 
 ---
 

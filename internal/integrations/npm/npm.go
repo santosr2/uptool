@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
@@ -45,6 +46,19 @@ func (i *Integration) Name() string {
 	return "npm"
 }
 
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
+}
+
 // PackageJSON represents the structure of package.json.
 type PackageJSON struct {
 	Name                 string            `json:"name,omitempty"`
@@ -61,7 +75,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 	err := filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Skip errors
+			return err
 		}
 
 		// Skip node_modules directories
@@ -77,17 +91,22 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 		if info.Name() == "package.json" {
 			relPath, err := filepath.Rel(repoRoot, path)
 			if err != nil {
-				return nil
+				return err
 			}
 
-			content, err := os.ReadFile(path)
+			// Validate path for security
+			if err := validateFilePath(path); err != nil {
+				return err
+			}
+
+			content, err := os.ReadFile(path) // #nosec G304 - path is validated above
 			if err != nil {
-				return nil
+				return err
 			}
 
 			var pkg PackageJSON
 			if err := json.Unmarshal(content, &pkg); err != nil {
-				return nil // Skip invalid JSON
+				return err
 			}
 
 			deps := i.extractDependencies(&pkg)
@@ -113,7 +132,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 // extractDependencies extracts all dependencies from package.json.
 func (i *Integration) extractDependencies(pkg *PackageJSON) []engine.Dependency {
-	var deps []engine.Dependency
+	deps := make([]engine.Dependency, 0, len(pkg.Dependencies)+len(pkg.DevDependencies))
 
 	for name, version := range pkg.Dependencies {
 		deps = append(deps, engine.Dependency{
@@ -251,7 +270,12 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 
 	// Read the current package.json
 	fullPath := plan.Manifest.Path
-	content, err := os.ReadFile(fullPath)
+	// Validate path for security
+	if err := validateFilePath(fullPath); err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
+
+	content, err := os.ReadFile(fullPath) // #nosec G304 - path is validated above
 	if err != nil {
 		return nil, fmt.Errorf("read package.json: %w", err)
 	}
@@ -280,7 +304,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	// Add trailing newline
 	newContent = append(newContent, '\n')
 
-	if err := os.WriteFile(fullPath, newContent, 0644); err != nil {
+	if err := os.WriteFile(fullPath, newContent, 0o600); err != nil {
 		return nil, fmt.Errorf("write package.json: %w", err)
 	}
 

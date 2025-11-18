@@ -21,12 +21,14 @@ The Terraform integration currently updates:
 - `module` block `version` attributes - Module versions from Terraform Registry
 
 **Future support** (not yet implemented):
+
 - Provider versions in `required_providers` blocks
 - Module source versions in git URLs
 
 ## Example
 
 **Before** (`main.tf`):
+
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -53,6 +55,7 @@ module "rds" {
 ```
 
 **After** (uptool update):
+
 ```hcl
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
@@ -103,7 +106,8 @@ uptool scan --only=terraform
 ```
 
 Output:
-```
+
+```text
 Type                 Path                    Dependencies
 ----------------------------------------------------------------
 terraform            main.tf                 3
@@ -120,7 +124,8 @@ uptool plan --only=terraform
 ```
 
 Output:
-```
+
+```text
 main.tf (terraform):
 Module           Current         Target          Impact
 --------------------------------------------------------
@@ -165,6 +170,7 @@ module "vpc" {
 Format: `NAMESPACE/NAME/PROVIDER`
 
 **Supported registries**:
+
 - Public Terraform Registry (default)
 - Private Terraform Cloud/Enterprise registries (future)
 
@@ -205,6 +211,7 @@ integrations:
 ```
 
 **Update Levels**:
+
 - `none` - No updates
 - `patch` - Only patch updates (3.0.0 → 3.0.1)
 - `minor` - Patch + minor updates (3.0.0 → 3.1.0)
@@ -239,7 +246,7 @@ terraform providers lock
 
 Common structure:
 
-```
+```tree
 terraform/
 ├── environments/
 │   ├── dev/
@@ -304,11 +311,13 @@ Ensure Terraform is authenticated to your Enterprise instance.
 **Problem**: "Module not found in registry"
 
 **Causes**:
+
 1. Module doesn't exist in Terraform Registry
 2. Module name misspelled
 3. Private module not accessible
 
 **Solutions**:
+
 ```bash
 # Search registry
 terraform search modules vpc aws
@@ -325,10 +334,12 @@ terraform login
 **Problem**: After updating, `terraform init` fails
 
 **Causes**:
+
 1. New version has breaking changes
 2. Version constraint too restrictive
 
 **Solutions**:
+
 ```bash
 # Check module changelog
 terraform show -json | jq '.module_calls'
@@ -344,6 +355,7 @@ terraform init -upgrade
 **Problem**: `.terraform.lock.hcl` has conflicts after update
 
 **Solution**:
+
 ```bash
 # Delete lock file and regenerate
 rm .terraform.lock.hcl
@@ -361,11 +373,13 @@ terraform providers lock \
 **Problem**: "403 Forbidden" for private modules
 
 **Causes**:
+
 1. Not logged in to Terraform Cloud/Enterprise
 2. Token expired
 3. Insufficient permissions
 
 **Solutions**:
+
 ```bash
 # Login to Terraform Cloud
 terraform login
@@ -380,6 +394,7 @@ terraform init
 ## Best Practices
 
 1. **Always regenerate lockfile**:
+
    ```bash
    uptool update --only=terraform
    terraform init -upgrade
@@ -388,6 +403,7 @@ terraform init
    ```
 
 2. **Test in non-prod first**:
+
    ```bash
    cd environments/dev
    uptool update --only=terraform
@@ -396,12 +412,14 @@ terraform init
    ```
 
 3. **Review module changelogs**:
+
    ```bash
    # Check breaking changes
    # Visit module's GitHub releases or CHANGELOG
    ```
 
 4. **Use version constraints wisely**:
+
    ```hcl
    # Good: Allow patch updates
    version = "~> 5.0"
@@ -414,6 +432,7 @@ terraform init
    ```
 
 5. **Separate PRs for major updates**:
+
    ```bash
    # Minor/patch updates together
    uptool update --only=terraform  # (with policy: minor)
@@ -423,6 +442,7 @@ terraform init
    ```
 
 6. **Run terraform plan after updating**:
+
    ```bash
    terraform init -upgrade
    terraform plan
@@ -434,15 +454,18 @@ terraform init
 uptool works with Terraform >= 0.13 (HCL2 format).
 
 **Terraform 0.12 and older**:
+
 - Not officially supported
 - May work but not tested
 
 **Terraform >= 0.13**:
+
 - ✅ Fully supported
 - Uses HCL2 format
 - Module registry syntax
 
 **Terraform >= 1.0**:
+
 - ✅ Fully supported
 - Lockfile format supported
 

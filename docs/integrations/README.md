@@ -51,6 +51,7 @@ This directory contains detailed guides for each uptool integration.
 ### By Update Strategy
 
 **Custom Rewriting** (uptool parses and rewrites manifest):
+
 - npm (`package.json`)
 - helm (`Chart.yaml`)
 - terraform (`*.tf`)
@@ -59,18 +60,22 @@ This directory contains detailed guides for each uptool integration.
 - mise (`mise.toml`)
 
 **Native Command** (integration calls native tool):
+
 - precommit (`pre-commit autoupdate`)
 
 ### By Registry Type
 
 **HTTP APIs**:
+
 - npm → npm Registry API
 - terraform → Terraform Registry API
 
 **Repository Indexes**:
+
 - helm → Helm chart repository `index.yaml`
 
 **GitHub Releases**:
+
 - precommit → Hook repository releases
 - tflint → Plugin repository releases
 - asdf → Tool repository releases (via plugin mapping)
@@ -135,4 +140,4 @@ integrations:
 
 - [Manifest Files Reference](../manifests.md)
 - [Configuration Guide](../configuration.md)
-- [Main README](../../README.md#supported-integrations)
+- [Main README](../overview.md#supported-integrations)

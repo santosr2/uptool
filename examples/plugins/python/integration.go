@@ -62,7 +62,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 		}
 
 		// Read and parse the requirements file
-		content, err := os.ReadFile(path)
+		content, err := os.ReadFile(path) // #nosec G304 -- path is from filepath.Walk, scoped to repoRoot
 		if err != nil {
 			return fmt.Errorf("reading %s: %w", path, err)
 		}
@@ -78,11 +78,17 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			return nil
 		}
 
+		// Convert pointer slice to value slice
+		valueDeps := make([]engine.Dependency, len(deps))
+		for i, dep := range deps {
+			valueDeps[i] = *dep
+		}
+
 		// Create manifest
 		manifests = append(manifests, &engine.Manifest{
 			Path:         path,
-			Integration:  integrationName,
-			Dependencies: deps,
+			Type:         integrationName,
+			Dependencies: valueDeps,
 		})
 
 		return nil
@@ -97,7 +103,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 // Plan generates an update plan for a requirements.txt file.
 func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
-	var updates []*engine.DependencyUpdate
+	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
 		// Query PyPI for latest version
@@ -111,11 +117,10 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 		// Check if update is needed
 		if dep.CurrentVersion != latestVersion {
 			// TODO: Calculate semantic version impact
-			updates = append(updates, &engine.DependencyUpdate{
-				Name:           dep.Name,
-				CurrentVersion: dep.CurrentVersion,
-				TargetVersion:  latestVersion,
-				Impact:         engine.ImpactMinor, // Simplified for example
+			updates = append(updates, engine.Update{
+				Dependency:    dep,
+				TargetVersion: latestVersion,
+				Impact:        string(engine.ImpactMinor), // Simplified for example
 			})
 		}
 	}
@@ -139,19 +144,19 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	for _, update := range plan.Updates {
 		// Replace version in requirements.txt
 		// This is a simplified implementation - a production version would be more robust
-		oldSpec := fmt.Sprintf("%s==%s", update.Name, update.CurrentVersion)
-		newSpec := fmt.Sprintf("%s==%s", update.Name, update.TargetVersion)
+		oldSpec := fmt.Sprintf("%s==%s", update.Dependency.Name, update.Dependency.CurrentVersion)
+		newSpec := fmt.Sprintf("%s==%s", update.Dependency.Name, update.TargetVersion)
 		updated = strings.ReplaceAll(updated, oldSpec, newSpec)
 	}
 
 	// Write updated content
-	if err := os.WriteFile(plan.Manifest.Path, []byte(updated), 0644); err != nil {
+	if err := os.WriteFile(plan.Manifest.Path, []byte(updated), 0600); err != nil {
 		return nil, fmt.Errorf("writing %s: %w", plan.Manifest.Path, err)
 	}
 
 	return &engine.ApplyResult{
-		Success: true,
-		Applied: len(plan.Updates),
+		Manifest: plan.Manifest,
+		Applied:  len(plan.Updates),
 	}, nil
 }
 

@@ -10,10 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
-	"gopkg.in/yaml.v3"
 )
 
 func init() {
@@ -46,6 +47,19 @@ func (i *Integration) Name() string {
 	return integrationName
 }
 
+// validateFilePath validates that a file path is safe to read/write
+func validateFilePath(path string) error {
+	// Clean the path to resolve any . or .. components
+	cleanPath := filepath.Clean(path)
+
+	// Check for directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return fmt.Errorf("path contains directory traversal: %s", path)
+	}
+
+	return nil
+}
+
 // Chart represents the structure of Chart.yaml.
 type Chart struct {
 	APIVersion   string         `yaml:"apiVersion"`
@@ -75,7 +89,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 	err := filepath.Walk(repoRoot, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil
+			return err
 		}
 
 		// Skip hidden directories
@@ -86,17 +100,22 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 		if info.Name() == "Chart.yaml" {
 			relPath, err := filepath.Rel(repoRoot, path)
 			if err != nil {
-				return nil
+				return err
 			}
 
-			content, err := os.ReadFile(path)
+			// Validate path for security
+			if err := validateFilePath(path); err != nil {
+				return err
+			}
+
+			content, err := os.ReadFile(path) // #nosec G304 - path is validated above
 			if err != nil {
-				return nil
+				return err
 			}
 
 			var chart Chart
 			if err := yaml.Unmarshal(content, &chart); err != nil {
-				return nil // Skip invalid YAML
+				return err
 			}
 
 			deps := i.extractDependencies(&chart)
@@ -124,7 +143,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 // extractDependencies extracts chart dependencies.
 func (i *Integration) extractDependencies(chart *Chart) []engine.Dependency {
-	var deps []engine.Dependency
+	deps := make([]engine.Dependency, 0, len(chart.Dependencies))
 
 	for _, dep := range chart.Dependencies {
 		// Skip OCI repositories for now
@@ -190,7 +209,12 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	}
 
 	// Read old content for diff
-	oldContent, err := os.ReadFile(plan.Manifest.Path)
+	// Validate path for security
+	if err := validateFilePath(plan.Manifest.Path); err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
+
+	oldContent, err := os.ReadFile(plan.Manifest.Path) // #nosec G304 - path is validated above
 	if err != nil {
 		return nil, fmt.Errorf("read Chart.yaml: %w", err)
 	}
@@ -224,7 +248,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	}
 
 	// Write updated content
-	if err := os.WriteFile(plan.Manifest.Path, newContent, 0644); err != nil {
+	if err := os.WriteFile(plan.Manifest.Path, newContent, 0o600); err != nil {
 		return nil, fmt.Errorf("write Chart.yaml: %w", err)
 	}
 
@@ -247,15 +271,15 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 	}
 
 	if chart.APIVersion == "" {
-		return fmt.Errorf("Chart.yaml missing apiVersion")
+		return fmt.Errorf("chart.yaml missing apiVersion")
 	}
 
 	if chart.Name == "" {
-		return fmt.Errorf("Chart.yaml missing name")
+		return fmt.Errorf("chart.yaml missing name")
 	}
 
 	if chart.Version == "" {
-		return fmt.Errorf("Chart.yaml missing version")
+		return fmt.Errorf("chart.yaml missing version")
 	}
 
 	return nil

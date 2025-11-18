@@ -33,9 +33,10 @@ SOFTWARE.
 uptool uses the following open-source libraries:
 
 ### Go Standard Library
+
 - **License**: BSD-3-Clause
 - **Copyright**: The Go Authors
-- **URL**: https://golang.org/LICENSE
+- **URL**: <https://golang.org/LICENSE>
 
 ### Third-Party Go Modules
 
@@ -63,7 +64,7 @@ If you use uptool in your project, attribution is appreciated but not required.
 
 You may include a notice like:
 
-```
+```text
 This project uses uptool (https://github.com/santosr2/uptool),
 licensed under the MIT License.
 ```

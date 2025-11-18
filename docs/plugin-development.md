@@ -22,6 +22,7 @@ uptool supports two types of integrations:
 2. **Plugin Integrations** - External shared libraries loaded at runtime
 
 Plugins allow you to:
+
 - Add custom integrations without forking uptool
 - Develop proprietary integrations
 - Experiment with new ecosystems
@@ -39,11 +40,13 @@ Plugins allow you to:
 | **Maintenance** | Part of uptool releases | Independent versioning |
 
 **When to use Built-in**:
+
 - Widely-used ecosystems (npm, Terraform, etc.)
 - Part of uptool's core value proposition
 - Ready for mainline support
 
 **When to use Plugin**:
+
 - Company-specific tools
 - Experimental integrations
 - Niche ecosystems
@@ -100,7 +103,7 @@ go mod init github.com/yourname/uptool-plugin-example
 
 Project structure:
 
-```
+```tree
 uptool-plugin-example/
 ├── go.mod
 ├── go.sum
@@ -322,6 +325,7 @@ file example.so
 ### Installation Locations
 
 #### Local Development
+
 ```bash
 # Project-specific plugins
 mkdir -p plugins
@@ -329,6 +333,7 @@ mv example.so plugins/
 ```
 
 #### User-Level
+
 ```bash
 # User plugins (recommended for personal use)
 mkdir -p ~/.uptool/plugins
@@ -336,6 +341,7 @@ mv example.so ~/.uptool/plugins/
 ```
 
 #### System-Wide
+
 ```bash
 # System-wide plugins (requires sudo)
 sudo mkdir -p /usr/local/lib/uptool/plugins
@@ -343,6 +349,7 @@ sudo mv example.so /usr/local/lib/uptool/plugins/
 ```
 
 #### Custom Location
+
 ```bash
 # Use environment variable
 export UPTOOL_PLUGIN_DIR=/opt/uptool/plugins
@@ -410,36 +417,42 @@ fi
 ```
 
 Usage:
+
 ```bash
 chmod +x build.sh
 ./build.sh          # Build only
 ./build.sh install  # Build and install
 ```
 
-### Makefile
+### mise Tasks
 
-```makefile
-PLUGIN_NAME := example
-BUILD_DIR := .
-INSTALL_DIR := $(HOME)/.uptool/plugins
+```toml
+# mise.toml
+[tasks.build-plugin]
+description = "Build the plugin"
+run = """
+echo "Building example plugin..."
+go build -buildmode=plugin -o example.so .
+echo "✓ Plugin built"
+"""
 
-.PHONY: build install clean test
+[tasks.install-plugin]
+description = "Install plugin to ~/.uptool/plugins"
+depends = ["build-plugin"]
+run = """
+echo "Installing to ~/.uptool/plugins..."
+mkdir -p ~/.uptool/plugins
+cp example.so ~/.uptool/plugins/
+echo "✓ Plugin installed"
+"""
 
-build:
-	@echo "Building $(PLUGIN_NAME) plugin..."
-	go build -buildmode=plugin -o $(PLUGIN_NAME).so .
+[tasks.clean-plugin]
+description = "Clean plugin artifacts"
+run = "rm -f example.so"
 
-install: build
-	@echo "Installing to $(INSTALL_DIR)..."
-	mkdir -p $(INSTALL_DIR)
-	cp $(PLUGIN_NAME).so $(INSTALL_DIR)/
-	@echo "✓ Plugin installed"
-
-clean:
-	rm -f $(PLUGIN_NAME).so
-
-test:
-	go test -v ./...
+[tasks.test-plugin]
+description = "Test the plugin"
+run = "go test -v ./..."
 ```
 
 ## Testing Plugins
@@ -667,7 +680,8 @@ dependencies:
   package1: 1.0.0
   package2: 2.0.0
 ```
-```
+
+```text
 
 ## Example Plugins
 
@@ -729,7 +743,7 @@ echo "✓ Installed ${PLUGIN_NAME} plugin"
 
 ## See Also
 
-- [Integration Development Guide](../CONTRIBUTING.md#adding-a-new-integration) - Built-in integrations
+- [Integration Development Guide](CONTRIBUTING.md#adding-a-new-integration) - Built-in integrations
 - [Engine Interface](../internal/engine/types.go) - Integration interface definition
 - [Example Plugins](../examples/plugins/) - Complete working examples
 - [API Documentation](https://pkg.go.dev/github.com/santosr2/uptool) - Go package docs

@@ -61,12 +61,12 @@ func run() error {
 	}
 
 	// Ensure output directory exists
-	if err := os.MkdirAll(filepath.Dir(outputFile), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(outputFile), 0o750); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
 
 	// Write the generated file
-	if err := os.WriteFile(outputFile, content, 0644); err != nil {
+	if err := os.WriteFile(outputFile, content, 0o600); err != nil {
 		return fmt.Errorf("writing output file: %w", err)
 	}
 
