@@ -14,18 +14,18 @@ import (
 
 // mockIntegration implements Integration for testing
 type mockIntegration struct {
-	name            string
-	detectManifests []*Manifest
 	detectError     error
-	planUpdates     []Update
 	planError       error
-	applyResult     *ApplyResult
 	applyError      error
 	validateError   error
-	mu              sync.Mutex
+	applyResult     *ApplyResult
+	name            string
+	detectManifests []*Manifest
+	planUpdates     []Update
 	detectCalls     int
 	planCalls       int
 	applyCalls      int
+	mu              sync.Mutex
 }
 
 func (m *mockIntegration) Name() string {
@@ -226,10 +226,8 @@ func TestScan(t *testing.T) {
 		// Should record the error
 		if len(result.Errors) != 1 {
 			t.Errorf("Scan() errors count = %d, want 1", len(result.Errors))
-		} else {
-			if !strings.Contains(result.Errors[0], "failing") {
-				t.Errorf("Scan() error = %q, want error mentioning 'failing'", result.Errors[0])
-			}
+		} else if !strings.Contains(result.Errors[0], "failing") {
+			t.Errorf("Scan() error = %q, want error mentioning 'failing'", result.Errors[0])
 		}
 	})
 
@@ -369,10 +367,8 @@ func TestPlan(t *testing.T) {
 
 		if len(result.Errors) != 1 {
 			t.Errorf("Plan() errors count = %d, want 1", len(result.Errors))
-		} else {
-			if !strings.Contains(result.Errors[0], "no integration") {
-				t.Errorf("Plan() error = %q, want error about missing integration", result.Errors[0])
-			}
+		} else if !strings.Contains(result.Errors[0], "no integration") {
+			t.Errorf("Plan() error = %q, want error about missing integration", result.Errors[0])
 		}
 	})
 
@@ -718,9 +714,9 @@ func TestListIntegrations(t *testing.T) {
 
 // slowMockIntegration simulates slow operations and tracks concurrency
 type slowMockIntegration struct {
-	mockIntegration
-	delay              time.Duration
 	concurrencyTracker *concurrencyTracker
+	mockIntegration
+	delay time.Duration
 }
 
 type concurrencyTracker struct {

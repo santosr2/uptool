@@ -2,7 +2,8 @@ name: Documentation
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'docs/**'
       - 'README.md'
@@ -10,8 +11,11 @@ on:
       - 'CHANGELOG.md'
       - '.github/workflows/docs-deploy.yml'
       - '**.go'
+    tags:
+      - 'v*'  # Always deploy versioned docs on release tags
   pull_request:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'docs/**'
       - 'README.md'
@@ -20,7 +24,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # Required for mike to push to gh-pages branch
   pages: write
   id-token: write
   pull-requests: write
@@ -35,8 +39,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      artifact_id: ${{ steps.upload.outputs.artifact-id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -50,18 +52,27 @@ jobs:
         run: |
           pip install --user -r docs/requirements.txt
 
-      - name: Setup Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
-
-      - name: Copy root-level documentation files
+      - name: Determine documentation version
+        id: doc_version
         run: |
-          # Copy root documentation files to docs/ for MkDocs
-          cp CONTRIBUTING.md docs/CONTRIBUTING.md
-          cp CHANGELOG.md docs/CHANGELOG.md
-          cp SECURITY.md docs/SECURITY.md
-          cp GOVERNANCE.md docs/GOVERNANCE.md
-          cp CODE_OF_CONDUCT.md docs/CODE_OF_CONDUCT.md
+          # Determine version for build
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+            echo "uptool_version=v${TAG_VERSION}" >> "$GITHUB_OUTPUT"
+            echo "📌 Release version: v${TAG_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
+            echo "uptool_version=main" >> "$GITHUB_OUTPUT"
+            echo "📌 Development version: main" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "uptool_version=preview" >> "$GITHUB_OUTPUT"
+            echo "📌 Preview build" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Update MkDocs version variable
+        run: |
+          VERSION="${{ steps.doc_version.outputs.uptool_version }}"
+          sed -i "s/uptool_version: .*/uptool_version: ${VERSION}/" mkdocs.yml
+          echo "✅ Updated mkdocs.yml with version: ${VERSION}"
 
       - name: Generate API documentation
         run: |
@@ -72,65 +83,126 @@ jobs:
         run: |
           mkdir -p dist
           go build -o dist/uptool ./cmd/uptool
-
-          # Generate command documentation
           mkdir -p docs/cli
           ./dist/uptool --help > docs/cli/commands.md || echo "# CLI Commands" > docs/cli/commands.md
 
       - name: Build MkDocs site
         run: |
-          # Build the MkDocs site
           mkdocs build --strict
+          {
+            echo "✅ MkDocs site built successfully"
+            echo "**Pages generated:** $(find site -name '*.html' | wc -l)"
+            echo "**Version:** ${{ steps.doc_version.outputs.uptool_version }}"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          # Verify build output
-          echo "✅ MkDocs site built successfully" >> $GITHUB_STEP_SUMMARY
-          echo "**Pages generated:** $(find site -name '*.html' | wc -l)" >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload Pages artifact
-        id: upload
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
-        with:
-          path: site
-
-      - name: Documentation build summary
-        run: |
-          echo "## 📚 Documentation Build Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Ref**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**MkDocs Site**:" >> $GITHUB_STEP_SUMMARY
-          echo "- Material theme with search and navigation" >> $GITHUB_STEP_SUMMARY
-          echo "- Generated API documentation" >> $GITHUB_STEP_SUMMARY
-          echo "- CLI reference" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Sample pages:**" >> $GITHUB_STEP_SUMMARY
-          find site -type f -name "*.html" | head -10 | sed 's|site/||' >> $GITHUB_STEP_SUMMARY
-
-  deploy-production:
-    name: Deploy to GitHub Pages (Production)
+  deploy-docs:
+    name: Deploy Documentation
     needs: build-docs
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
-      pages: write
-      id-token: write
+      contents: write  # Required for mike to push to gh-pages
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: https://santosr2.github.io/uptool/
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
 
-      - name: Deployment summary
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Install MkDocs and plugins
         run: |
-          echo "## 🚀 Documentation Deployed to Production" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📄 **URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "🌍 **Environment:** github-pages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Documentation is now live!" >> $GITHUB_STEP_SUMMARY
+          pip install --user -r docs/requirements.txt
+
+      - name: Determine deployment version
+        id: deploy_version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            # For version tags (e.g., v0.2.0), deploy as "0.2" with "latest" alias
+            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+            MAJOR_MINOR=$(echo "$TAG_VERSION" | cut -d. -f1,2)
+            {
+              echo "version=${MAJOR_MINOR}"
+              echo "alias=latest"
+              echo "is_release=true"
+              echo "uptool_version=v${TAG_VERSION}"
+            } >> "$GITHUB_OUTPUT"
+            echo "📌 Deploying version: ${MAJOR_MINOR} (latest)" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
+            # For main branch, deploy as "main"
+            {
+              echo "version=main"
+              echo "alias=dev"
+              echo "is_release=false"
+              echo "uptool_version=main"
+            } >> "$GITHUB_OUTPUT"
+            echo "📌 Deploying version: main (dev)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Update MkDocs version variable
+        run: |
+          VERSION="${{ steps.deploy_version.outputs.uptool_version }}"
+          sed -i "s/uptool_version: .*/uptool_version: ${VERSION}/" mkdocs.yml
+          echo "✅ Updated mkdocs.yml with version: ${VERSION}"
+
+      - name: Configure Git for mike
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate API documentation
+        run: |
+          mkdir -p docs/api
+          gomarkdoc --output docs/api/README.md ./...
+
+      - name: Build CLI documentation
+        run: |
+          mkdir -p dist
+          go build -o dist/uptool ./cmd/uptool
+          mkdir -p docs/cli
+          ./dist/uptool --help > docs/cli/commands.md || echo "# CLI Commands" > docs/cli/commands.md
+
+      - name: Deploy versioned docs with mike
+        run: |
+          VERSION="${{ steps.deploy_version.outputs.version }}"
+          ALIAS="${{ steps.deploy_version.outputs.alias }}"
+          IS_RELEASE="${{ steps.deploy_version.outputs.is_release }}"
+
+          # Deploy with mike
+          if [ -n "$ALIAS" ]; then
+            echo "🚀 Deploying version: $VERSION (alias: $ALIAS)"
+            mike deploy --push --update-aliases "$VERSION" "$ALIAS"
+          else
+            echo "🚀 Deploying version: $VERSION"
+            mike deploy --push "$VERSION"
+          fi
+
+          # Set default version
+          # - For releases: set the release version as default
+          # - For main branch: set main as default (until a release is made)
+          if [ "$IS_RELEASE" = "true" ]; then
+            echo "📌 Setting $VERSION as default version (stable release)"
+            mike set-default --push "$VERSION"
+          else
+            echo "📌 Setting $VERSION as default version (development)"
+            mike set-default --push "$VERSION"
+          fi
+
+          # Deployment summary
+          {
+            echo "## 🚀 Documentation Deployed"
+            echo ""
+            echo "**Version:** $VERSION"
+            echo "**Alias:** ${ALIAS:-none}"
+            echo "**Default:** true"
+            echo ""
+            echo "🌍 **Live at**: https://santosr2.github.io/uptool/"
+            echo "📖 **All versions**: https://santosr2.github.io/uptool/versions/"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   preview-comment:
     name: Preview Deployment Comment
@@ -223,44 +295,48 @@ jobs:
 
       - name: Validate README
         run: |
-          echo "## 📋 Documentation Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📋 Documentation Validation"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Check README exists
           if [ ! -f README.md ]; then
-            echo "❌ README.md not found" >> $GITHUB_STEP_SUMMARY
+            echo "❌ README.md not found" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
           # Check minimum length
           README_LINES=$(wc -l < README.md)
-          if [ $README_LINES -lt 20 ]; then
-            echo "⚠️ README.md seems too short ($README_LINES lines)" >> $GITHUB_STEP_SUMMARY
+          if [ "$README_LINES" -lt 20 ]; then
+            echo "⚠️ README.md seems too short ($README_LINES lines)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "✅ README.md exists ($README_LINES lines)" >> $GITHUB_STEP_SUMMARY
+            echo "✅ README.md exists ($README_LINES lines)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Check for essential sections
           SECTIONS=("Installation" "Usage" "Features")
           for section in "${SECTIONS[@]}"; do
             if grep -qi "$section" README.md; then
-              echo "✅ Section found: $section" >> $GITHUB_STEP_SUMMARY
+              echo "✅ Section found: $section" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "⚠️ Section missing: $section" >> $GITHUB_STEP_SUMMARY
+              echo "⚠️ Section missing: $section" >> "$GITHUB_STEP_SUMMARY"
             fi
           done
 
       - name: Check documentation completeness
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Documentation Files" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### Documentation Files"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # List all markdown files
           if [ -d docs ]; then
             find docs -name "*.md" -type f | while read -r file; do
-              echo "- 📄 $file" >> $GITHUB_STEP_SUMMARY
+              echo "- 📄 $file" >> "$GITHUB_STEP_SUMMARY"
             done
           else
-            echo "⚠️ docs/ directory not found" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ docs/ directory not found" >> "$GITHUB_STEP_SUMMARY"
           fi

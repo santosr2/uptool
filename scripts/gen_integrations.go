@@ -40,7 +40,8 @@ func run() error {
 	}
 
 	// Change to repository root
-	if err := os.Chdir(repoRoot); err != nil {
+	err = os.Chdir(repoRoot)
+	if err != nil {
 		return fmt.Errorf("changing to repo root: %w", err)
 	}
 

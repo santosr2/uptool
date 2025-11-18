@@ -765,4 +765,4 @@ uptool update --only=npm  # Updates regardless of policy.enabled
 - [Integration Details](overview.md#integration-details)
 - [CLI Reference](overview.md#cli-reference)
 - [GitHub Action Configuration](action-usage.md)
-- [Example Configurations](../examples/uptool.yaml)
+- [Example Configurations](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/uptool.yaml)

@@ -8,12 +8,12 @@ import (
 
 func TestSelectVersion(t *testing.T) {
 	tests := []struct {
+		policy            engine.IntegrationPolicy
 		name              string
 		currentVersion    string
-		availableVersions []string
-		policy            engine.IntegrationPolicy
 		wantVersion       string
 		wantImpact        engine.Impact
+		availableVersions []string
 		wantErr           bool
 	}{
 		{

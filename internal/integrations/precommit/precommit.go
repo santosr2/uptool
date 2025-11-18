@@ -161,7 +161,7 @@ func (i *Integration) detectUpdates(ctx context.Context, manifestPath string) ([
 	if err != nil {
 		return nil, fmt.Errorf("create temp dir: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
+	defer func() { _ = os.RemoveAll(tmpDir) }() //nolint:errcheck // cleanup best effort
 
 	// Copy the config file
 	content, err := secureio.ReadFile(manifestPath)
@@ -223,10 +223,10 @@ func (i *Integration) parseAutoupdateOutput(output string) []engine.Update {
 }
 
 // determineImpact tries to determine the impact of an update.
-func (i *Integration) determineImpact(old, new string) string {
+func (i *Integration) determineImpact(old, newVer string) string {
 	// Simple heuristic: if major version changes (v1 -> v2), it's major
 	oldParts := strings.Split(strings.TrimPrefix(old, "v"), ".")
-	newParts := strings.Split(strings.TrimPrefix(new, "v"), ".")
+	newParts := strings.Split(strings.TrimPrefix(newVer, "v"), ".")
 
 	if len(oldParts) > 0 && len(newParts) > 0 && oldParts[0] != newParts[0] {
 		return "major"
@@ -327,13 +327,13 @@ func (i *Integration) isPreCommitAvailable() bool {
 }
 
 // generateDiff creates a simple diff between old and new content.
-func generateDiff(old, new string) string {
-	if old == new {
+func generateDiff(old, newContent string) string {
+	if old == newContent {
 		return ""
 	}
 
 	oldLines := strings.Split(old, "\n")
-	newLines := strings.Split(new, "\n")
+	newLines := strings.Split(newContent, "\n")
 
 	var diff strings.Builder
 	diff.WriteString("--- .pre-commit-config.yaml\n")

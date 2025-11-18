@@ -24,6 +24,8 @@ func init() {
 	})
 }
 
+const integrationName = "mise"
+
 // Integration implements the engine.Integration interface for mise.
 type Integration struct{}
 
@@ -34,7 +36,7 @@ func New() *Integration {
 
 // Name returns the integration identifier.
 func (i *Integration) Name() string {
-	return "mise"
+	return integrationName
 }
 
 // validateFilePath validates that a file path is safe to read/write
@@ -82,7 +84,6 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("walk repository: %w", err)
 	}
@@ -97,7 +98,7 @@ func (i *Integration) parseManifest(path string) (*engine.Manifest, error) {
 		return nil, err
 	}
 
-	content, err := os.ReadFile(path)
+	content, err := os.ReadFile(path) //nolint:gosec // path validated above
 	if err != nil {
 		return nil, err
 	}

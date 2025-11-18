@@ -14,12 +14,12 @@ import (
 type Metadata struct {
 	DisplayName  string   `yaml:"displayName"`
 	Description  string   `yaml:"description"`
+	URL          string   `yaml:"url"`
+	Category     string   `yaml:"category"`
 	FilePatterns []string `yaml:"filePatterns"`
 	Datasources  []string `yaml:"datasources"`
 	Experimental bool     `yaml:"experimental"`
 	Disabled     bool     `yaml:"disabled"`
-	URL          string   `yaml:"url"`
-	Category     string   `yaml:"category"`
 }
 
 // DatasourceMetadata contains information about a datasource.
@@ -38,10 +38,10 @@ type CategoryMetadata struct {
 
 // RegistryMetadata represents the full integrations.yaml structure.
 type RegistryMetadata struct {
-	Version      string                        `yaml:"version"`
 	Integrations map[string]Metadata           `yaml:"integrations"`
 	Datasources  map[string]DatasourceMetadata `yaml:"datasources"`
 	Categories   map[string]CategoryMetadata   `yaml:"categories"`
+	Version      string                        `yaml:"version"`
 }
 
 var cachedMetadata *RegistryMetadata
@@ -109,7 +109,8 @@ func LoadMetadata() (*RegistryMetadata, error) {
 	}
 
 	// Validate path for security
-	if err := validateFilePath(registryPath); err != nil {
+	err = validateFilePath(registryPath)
+	if err != nil {
 		return nil, fmt.Errorf("invalid registry path: %w", err)
 	}
 

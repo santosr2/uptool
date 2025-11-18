@@ -1,20 +1,18 @@
 # uptool
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/santosr2/uptool)](https://go.dev/)
-[![License](https://img.shields.io/github/license/santosr2/uptool)](LICENSE)
+[![License](https://img.shields.io/github/license/santosr2/uptool)](LICENSE.md)
 [![Latest Release](https://img.shields.io/github/v/release/santosr2/uptool?include_prereleases)](https://github.com/santosr2/uptool/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/santosr2/uptool)](https://goreportcard.com/report/github.com/santosr2/uptool)
 
 [![CI Status](https://github.com/santosr2/uptool/workflows/CI/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/ci.yml)
-[![Documentation](https://github.com/santosr2/uptool/workflows/Documentation/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/docs-deploy.yml)
 [![CodeQL](https://github.com/santosr2/uptool/workflows/CodeQL/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/codeql.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/santosr2/uptool/badge)](https://scorecard.dev/viewer/?uri=github.com/santosr2/uptool)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9999/badge)](https://www.bestpractices.dev/projects/9999)
 [![codecov](https://codecov.io/gh/santosr2/uptool/branch/main/graph/badge.svg)](https://codecov.io/gh/santosr2/uptool)
 
-[![Documentation Site](https://img.shields.io/badge/docs-santosr2.github.io-blue?logo=readthedocs)](https://santosr2.github.io/uptool/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![Security Policy](https://img.shields.io/badge/security-policy-blue)](SECURITY.md)
+[![Security Policy](https://img.shields.io/badge/security-policy-blue)](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 **Universal, Manifest-First Dependency Updater**
@@ -290,7 +288,7 @@ uptool list --experimental            # Include experimental integrations
 
 ## GitHub Action
 
-See [docs/action-usage.md](docs/action-usage.md) for comprehensive GitHub Action documentation.
+See [./action-usage.md](./action-usage.md) for comprehensive GitHub Action documentation.
 
 ### Version Pinning
 
@@ -354,7 +352,7 @@ permissions:
 
 ## Integration Details
 
-**For detailed integration guides, see [docs/integrations/](docs/integrations/)**.
+**For detailed integration guides, see [./integrations/](./integrations/README.md)**.
 
 This section provides a quick overview. For comprehensive documentation including troubleshooting, examples, and best practices, refer to the individual integration guides.
 
@@ -491,7 +489,7 @@ golangci-lint = "2.6"    # Updates to "2.7"
 
 ### Project Structure
 
-```text
+```tree
 uptool/
 ├── cmd/uptool/              # CLI entry point
 │   ├── main.go              # Main entry and integration registration
@@ -533,7 +531,7 @@ uptool/
 │       └── setup-mise/      # mise setup action
 ├── testdata/                # Test fixtures for each integration
 ├── examples/                # Example configuration files
-├── docs/                    # Detailed documentation
+├── ./                    # Detailed documentation
 ├── action.yml               # GitHub Action definition
 ├── mise.toml                # Development tool versions
 └── README.md                # This file
@@ -574,7 +572,7 @@ uptool uses Go's concurrency primitives for performance:
 
 uptool supports optional configuration via a `uptool.yaml` file in your repository root. This allows you to control which integrations run and customize update policies per integration.
 
-See [docs/configuration.md](docs/configuration.md) for complete configuration reference.
+See [./configuration.md](./configuration.md) for complete configuration reference.
 
 ### Quick Configuration Example
 
@@ -624,12 +622,12 @@ integrations:
 
 ### Example Configuration Files
 
-The [`examples/`](examples/) directory contains sample configuration files for various integrations:
+The [`examples/`](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/) directory contains sample configuration files for various integrations:
 
-- **[`uptool.yaml`](examples/uptool.yaml)** - Complete uptool configuration with all integrations
-- **[`.tool-versions`](examples/.tool-versions)** - asdf runtime version manager configuration
-- **[`mise.toml`](examples/mise.toml)** - mise tool version manager configuration (string format)
-- **[`.mise.toml`](examples/.mise.toml)** - mise configuration (hidden file variant with map format)
+- **[`uptool.yaml`](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/uptool.yaml)** - Complete uptool configuration with all integrations
+- **[`.tool-versions`](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/.tool-versions)** - asdf runtime version manager configuration
+- **[`mise.toml`](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/mise.toml)** - mise tool version manager configuration (string format)
+- **[`.mise.toml`](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/.mise.toml)** - mise configuration (hidden file variant with map format)
 
 ---
 
@@ -675,7 +673,7 @@ mise run version-bump-minor   # 0.1.0 → 0.2.0
 mise run version-bump-major   # 0.1.0 → 1.0.0
 ```
 
-See [docs/versioning.md](docs/versioning.md) for complete documentation.
+See [./versioning.md](./versioning.md) for complete documentation.
 
 ---
 
@@ -686,7 +684,7 @@ See [docs/versioning.md](docs/versioning.md) for complete documentation.
 - **Go 1.25** or later
 - Git
 - [mise](https://mise.jdx.dev/) (for task runner and tool management)
-- **VS Code** (recommended) - See [.vscode/README.md](.vscode/README.md) for setup
+- **VS Code** (recommended) - See [.vscode/README.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/.vscode/README.md) for setup
 
 ### Available Tasks
 
@@ -767,7 +765,7 @@ mise run run-update
 
 ### Adding a New Integration
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed instructions.
+See [CONTRIBUTING.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md) for detailed instructions.
 
 Quick overview:
 
@@ -777,14 +775,14 @@ Quick overview:
 4. Register in `internal/integrations/registry.go`
 5. Add test fixtures in `testdata/<name>/`
 6. Add integration tests in `internal/integrations/<name>/<name>_test.go`
-7. Update documentation (README, docs/integrations/<name>.md)
+7. Update documentation (README, ./integrations/<name>.md)
 8. Add example configuration in `examples/`
 
 ---
 
 ## Contributing
 
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+We welcome contributions! Please read [CONTRIBUTING.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md) for:
 
 - Development setup
 - Coding standards
@@ -807,7 +805,7 @@ We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 ## Security
 
-For security concerns, please see [SECURITY.md](SECURITY.md).
+For security concerns, please see [SECURITY.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md).
 
 **tl;dr**: Report vulnerabilities via GitHub Security Advisories, not public issues.
 
@@ -815,7 +813,7 @@ For security concerns, please see [SECURITY.md](SECURITY.md).
 
 ## Governance
 
-See [GOVERNANCE.md](GOVERNANCE.md) for:
+See [GOVERNANCE.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/GOVERNANCE.md) for:
 
 - Maintainer responsibilities
 - Decision-making process
@@ -827,7 +825,7 @@ See [GOVERNANCE.md](GOVERNANCE.md) for:
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/LICENSE) for details.
 
 ---
 
@@ -848,22 +846,22 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ### Documentation
 
-- **[Documentation Portal](docs/overview.md)** - Complete documentation index
-- **[Configuration Guide](docs/configuration.md)** - Complete `uptool.yaml` reference
-- **[Manifest Files Reference](docs/manifests.md)** - All supported manifest types
-- **[Integration Guides](docs/integrations/)** - Detailed guides for each integration
-- **[Examples](examples/)** - Example configurations for all integrations
-- **[Plugin Development](docs/plugin-development.md)** - Create external plugins
-- **[Version Management](docs/versioning.md)** - Automated versioning with conventional commits
-- **[GitHub Environments](docs/environments.md)** - Approval gates for releases
-- **[GitHub Action Usage](docs/action-usage.md)** - Using uptool in CI/CD
+- **[Documentation Portal](./index.md)** - Complete documentation index
+- **[Configuration Guide](./configuration.md)** - Complete `uptool.yaml` reference
+- **[Manifest Files Reference](./manifests.md)** - All supported manifest types
+- **[Integration Guides](./integrations/README.md)** - Detailed guides for each integration
+- **[Examples](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/)** - Example configurations for all integrations
+- **[Plugin Development](./plugin-development.md)** - Create external plugins
+- **[Version Management](./versioning.md)** - Automated versioning with conventional commits
+- **[GitHub Environments](./environments.md)** - Approval gates for releases
+- **[GitHub Action Usage](./action-usage.md)** - Using uptool in CI/CD
 
 ### Community
 
 - **Issues**: [GitHub Issues](https://github.com/santosr2/uptool/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/santosr2/uptool/discussions)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Security**: [SECURITY.md](SECURITY.md)
+- **Changelog**: [CHANGELOG.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CHANGELOG.md)
+- **Contributing**: [CONTRIBUTING.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md)
+- **Security**: [SECURITY.md](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md)
 
 **Questions?** Open a discussion or reach out to the maintainers.

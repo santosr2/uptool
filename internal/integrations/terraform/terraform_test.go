@@ -10,6 +10,8 @@ import (
 	"github.com/santosr2/uptool/internal/engine"
 )
 
+const testVersion = "5.0.0"
+
 func TestNew(t *testing.T) {
 	integration := New()
 	if integration == nil {
@@ -19,15 +21,15 @@ func TestNew(t *testing.T) {
 
 func TestName(t *testing.T) {
 	integration := New()
-	if got := integration.Name(); got != "terraform" {
-		t.Errorf("Name() = %q, want %q", got, "terraform")
+	if got := integration.Name(); got != integrationName {
+		t.Errorf("Name() = %q, want %q", got, integrationName)
 	}
 }
 
 func TestDetect(t *testing.T) {
 	tests := []struct {
-		name      string
 		setup     func(t *testing.T, dir string)
+		name      string
 		wantCount int
 		wantErr   bool
 	}{
@@ -48,7 +50,7 @@ provider "aws" {
   region = "us-east-1"
 }
 `)
-				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -74,10 +76,10 @@ provider "aws" {
   version = "~> 3.0"
 }
 `)
-				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content1, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content1, 0o644); err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(dir, "vpc.tf"), content2, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, "vpc.tf"), content2, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -88,11 +90,11 @@ provider "aws" {
 			name: "skips hidden directories",
 			setup: func(t *testing.T, dir string) {
 				hiddenDir := filepath.Join(dir, ".terraform")
-				if err := os.Mkdir(hiddenDir, 0755); err != nil {
+				if err := os.Mkdir(hiddenDir, 0o755); err != nil {
 					t.Fatal(err)
 				}
 				content := []byte("# terraform file")
-				if err := os.WriteFile(filepath.Join(hiddenDir, "main.tf"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(hiddenDir, "main.tf"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -115,7 +117,7 @@ provider "aws" {
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer os.RemoveAll(tmpDir)
+			defer os.RemoveAll(tmpDir) //nolint:errcheck // test cleanup
 
 			tt.setup(t, tmpDir)
 
@@ -239,8 +241,8 @@ func TestVersionConstraintFalsePositiveFix(t *testing.T) {
 	// Expected: No update should be reported (versions match)
 	// Before fix: Would report update needed (false positive)
 
-	currentVersion := "~> 5.0.0"
-	latestVersion := "5.0.0"
+	currentVersion := "~> " + testVersion
+	latestVersion := testVersion
 
 	// Apply the same normalization as Plan() does
 	currentClean := strings.TrimPrefix(currentVersion, "~> ")
@@ -252,11 +254,11 @@ func TestVersionConstraintFalsePositiveFix(t *testing.T) {
 	currentClean = strings.TrimPrefix(currentClean, "v")
 
 	// After normalization, both should be "5.0.0"
-	if currentClean != "5.0.0" {
-		t.Errorf("Current version normalization failed: got %q, want %q", currentClean, "5.0.0")
+	if currentClean != testVersion {
+		t.Errorf("Current version normalization failed: got %q, want %q", currentClean, testVersion)
 	}
-	if latestClean != "5.0.0" {
-		t.Errorf("Latest version normalization failed: got %q, want %q", latestClean, "5.0.0")
+	if latestClean != testVersion {
+		t.Errorf("Latest version normalization failed: got %q, want %q", latestClean, testVersion)
 	}
 
 	// The fix ensures this comparison is false (no update needed)
@@ -269,8 +271,8 @@ func TestVersionConstraintFalsePositiveFix(t *testing.T) {
 
 func TestPlan(t *testing.T) {
 	tests := []struct {
-		name        string
 		manifest    *engine.Manifest
+		name        string
 		wantUpdates int
 	}{
 		{
@@ -292,7 +294,6 @@ func TestPlan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			integration := New()
 			plan, err := integration.Plan(context.Background(), tt.manifest)
-
 			if err != nil {
 				t.Errorf("Plan() error: %v", err)
 				return

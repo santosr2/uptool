@@ -38,17 +38,17 @@ func NewGitHubClient(token string) *GitHubClient {
 type Release struct {
 	TagName     string `json:"tag_name"`
 	Name        string `json:"name"`
-	Draft       bool   `json:"draft"`
-	Prerelease  bool   `json:"prerelease"`
 	CreatedAt   string `json:"created_at"`
 	PublishedAt string `json:"published_at"`
+	Draft       bool   `json:"draft"`
+	Prerelease  bool   `json:"prerelease"`
 }
 
 // GetLatestRelease fetches the latest non-prerelease release for a repository.
 func (c *GitHubClient) GetLatestRelease(ctx context.Context, owner, repo string) (string, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/releases/latest", c.baseURL, owner, repo)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -62,7 +62,7 @@ func (c *GitHubClient) GetLatestRelease(ctx context.Context, owner, repo string)
 	if err != nil {
 		return "", fmt.Errorf("fetch release: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return "", fmt.Errorf("repository not found: %s/%s", owner, repo)
@@ -91,7 +91,7 @@ func (c *GitHubClient) GetLatestRelease(ctx context.Context, owner, repo string)
 func (c *GitHubClient) GetAllReleases(ctx context.Context, owner, repo string) ([]Release, error) {
 	url := fmt.Sprintf("%s/repos/%s/%s/releases", c.baseURL, owner, repo)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -105,7 +105,7 @@ func (c *GitHubClient) GetAllReleases(ctx context.Context, owner, repo string) (
 	if err != nil {
 		return nil, fmt.Errorf("fetch releases: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("repository not found: %s/%s", owner, repo)

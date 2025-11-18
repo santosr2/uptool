@@ -11,6 +11,11 @@ import (
 	"github.com/santosr2/uptool/internal/engine"
 )
 
+const (
+	integrationName = "npm"
+	packageJSONName = "package.json"
+)
+
 // setupTestDir creates a test directory with root and nested package.json files
 func setupTestDir(t *testing.T, nestedDir, rootContent, nestedContent string) (string, string, string) {
 	t.Helper()
@@ -47,8 +52,8 @@ func TestNew(t *testing.T) {
 
 func TestName(t *testing.T) {
 	integ := New()
-	if integ.Name() != "npm" {
-		t.Errorf("Name() = %q, want %q", integ.Name(), "npm")
+	if integ.Name() != integrationName {
+		t.Errorf("Name() = %q, want %q", integ.Name(), integrationName)
 	}
 }
 
@@ -82,11 +87,11 @@ func TestDetect(t *testing.T) {
 		}
 
 		m := manifests[0]
-		if m.Path != "package.json" {
-			t.Errorf("Detect() path = %q, want %q", m.Path, "package.json")
+		if m.Path != packageJSONName {
+			t.Errorf("Detect() path = %q, want %q", m.Path, packageJSONName)
 		}
-		if m.Type != "npm" {
-			t.Errorf("Detect() type = %q, want %q", m.Type, "npm")
+		if m.Type != integrationName {
+			t.Errorf("Detect() type = %q, want %q", m.Type, integrationName)
 		}
 		if len(m.Dependencies) != 1 {
 			t.Errorf("Detect() dependencies = %d, want 1", len(m.Dependencies))
@@ -151,7 +156,7 @@ func TestDetect(t *testing.T) {
 		}
 	})
 
-	t.Run("skips invalid JSON", func(t *testing.T) {
+	t.Run("returns error for invalid JSON", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		pkgPath := filepath.Join(tmpDir, "package.json")
 
@@ -161,12 +166,9 @@ func TestDetect(t *testing.T) {
 		}
 
 		integ := New()
-		manifests, err := integ.Detect(ctx, tmpDir)
-		if err != nil {
-			t.Fatalf("Detect() error = %v", err)
-		}
-		if len(manifests) != 0 {
-			t.Fatalf("Detect() found %d manifests, want 0 (invalid JSON should be skipped)", len(manifests))
+		_, err := integ.Detect(ctx, tmpDir)
+		if err == nil {
+			t.Fatal("Detect() expected error for invalid JSON, got nil")
 		}
 	})
 }
@@ -601,7 +603,7 @@ func TestUpdateDependency(t *testing.T) {
 			TargetVersion: "18.0.0",
 		}
 
-		updated := integ.updateDependency(pkg, update)
+		updated := integ.updateDependency(pkg, &update)
 		if !updated {
 			t.Error("updateDependency() = false, want true")
 		}
@@ -623,7 +625,7 @@ func TestUpdateDependency(t *testing.T) {
 			TargetVersion: "18.0.0",
 		}
 
-		updated := integ.updateDependency(pkg, update)
+		updated := integ.updateDependency(pkg, &update)
 		if updated {
 			t.Error("updateDependency() = true, want false for non-existent dep")
 		}
@@ -667,9 +669,9 @@ func TestGenerateDiff(t *testing.T) {
 
 	t.Run("generates diff for different content", func(t *testing.T) {
 		old := "line1\nline2\nline3"
-		new := "line1\nmodified\nline3"
+		updated := "line1\nmodified\nline3"
 
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if diff == "" {
 			t.Error("generateDiff() returned empty string, want diff")
 		}
@@ -689,9 +691,9 @@ func TestGenerateDiff(t *testing.T) {
 
 	t.Run("handles different line counts", func(t *testing.T) {
 		old := "line1\nline2"
-		new := "line1\nline2\nline3"
+		updated := "line1\nline2\nline3"
 
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if diff == "" {
 			t.Error("generateDiff() returned empty string, want diff")
 		}

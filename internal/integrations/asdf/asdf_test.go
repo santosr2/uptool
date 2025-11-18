@@ -18,15 +18,15 @@ func TestNew(t *testing.T) {
 
 func TestName(t *testing.T) {
 	integration := New()
-	if got := integration.Name(); got != "asdf" {
-		t.Errorf("Name() = %q, want %q", got, "asdf")
+	if got := integration.Name(); got != integrationName {
+		t.Errorf("Name() = %q, want %q", got, integrationName)
 	}
 }
 
 func TestDetect(t *testing.T) {
 	tests := []struct {
-		name      string
 		setup     func(t *testing.T, dir string)
+		name      string
 		wantCount int
 		wantErr   bool
 	}{
@@ -34,7 +34,7 @@ func TestDetect(t *testing.T) {
 			name: "finds .tool-versions in root",
 			setup: func(t *testing.T, dir string) {
 				content := []byte("nodejs 18.16.0\npython 3.11.0\n")
-				if err := os.WriteFile(filepath.Join(dir, ".tool-versions"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, ".tool-versions"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -47,15 +47,15 @@ func TestDetect(t *testing.T) {
 				content1 := []byte("nodejs 18.16.0\n")
 				content2 := []byte("python 3.11.0\n")
 
-				if err := os.WriteFile(filepath.Join(dir, ".tool-versions"), content1, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, ".tool-versions"), content1, 0o644); err != nil {
 					t.Fatal(err)
 				}
 
 				subdir := filepath.Join(dir, "subproject")
-				if err := os.Mkdir(subdir, 0755); err != nil {
+				if err := os.Mkdir(subdir, 0o755); err != nil {
 					t.Fatal(err)
 				}
-				if err := os.WriteFile(filepath.Join(subdir, ".tool-versions"), content2, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(subdir, ".tool-versions"), content2, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -66,11 +66,11 @@ func TestDetect(t *testing.T) {
 			name: "skips hidden directories",
 			setup: func(t *testing.T, dir string) {
 				hiddenDir := filepath.Join(dir, ".hidden")
-				if err := os.Mkdir(hiddenDir, 0755); err != nil {
+				if err := os.Mkdir(hiddenDir, 0o755); err != nil {
 					t.Fatal(err)
 				}
 				content := []byte("nodejs 18.16.0\n")
-				if err := os.WriteFile(filepath.Join(hiddenDir, ".tool-versions"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(hiddenDir, ".tool-versions"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -81,11 +81,11 @@ func TestDetect(t *testing.T) {
 			name: "skips node_modules",
 			setup: func(t *testing.T, dir string) {
 				nmDir := filepath.Join(dir, "node_modules")
-				if err := os.Mkdir(nmDir, 0755); err != nil {
+				if err := os.Mkdir(nmDir, 0o755); err != nil {
 					t.Fatal(err)
 				}
 				content := []byte("nodejs 18.16.0\n")
-				if err := os.WriteFile(filepath.Join(nmDir, ".tool-versions"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(nmDir, ".tool-versions"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -104,7 +104,7 @@ func TestDetect(t *testing.T) {
 			name: "empty .tool-versions file",
 			setup: func(t *testing.T, dir string) {
 				content := []byte("")
-				if err := os.WriteFile(filepath.Join(dir, ".tool-versions"), content, 0644); err != nil {
+				if err := os.WriteFile(filepath.Join(dir, ".tool-versions"), content, 0o644); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -149,8 +149,8 @@ func TestParseToolVersions(t *testing.T) {
 	tests := []struct {
 		name        string
 		content     string
-		wantDepsLen int
 		wantDeps    []engine.Dependency
+		wantDepsLen int
 		wantErr     bool
 	}{
 		{
@@ -330,7 +330,8 @@ func TestParseManifest(t *testing.T) {
 			defer os.RemoveAll(tmpDir)
 
 			manifestPath := filepath.Join(tmpDir, ".tool-versions")
-			if err := os.WriteFile(manifestPath, []byte(tt.content), 0644); err != nil {
+			err = os.WriteFile(manifestPath, []byte(tt.content), 0o644)
+			if err != nil {
 				t.Fatal(err)
 			}
 
@@ -362,7 +363,7 @@ func TestParseManifest(t *testing.T) {
 				t.Errorf("parseManifest() got %d dependencies, want %d", got, tt.wantDepsLen)
 			}
 
-			if len(manifest.Content) == 0 && len(tt.content) > 0 {
+			if len(manifest.Content) == 0 && tt.content != "" {
 				t.Error("Manifest.Content is empty but should contain file content")
 			}
 		})
@@ -530,7 +531,8 @@ func TestIntegration_EndToEnd(t *testing.T) {
 	// Create .tool-versions file
 	content := []byte("nodejs 18.16.0\npython 3.11.0\nruby 3.2.0\n")
 	toolVersionsPath := filepath.Join(tmpDir, ".tool-versions")
-	if err := os.WriteFile(toolVersionsPath, content, 0644); err != nil {
+	err = os.WriteFile(toolVersionsPath, content, 0o644)
+	if err != nil {
 		t.Fatal(err)
 	}
 

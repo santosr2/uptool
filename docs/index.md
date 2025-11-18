@@ -151,15 +151,14 @@ Ready to get started? Choose your path:
 - **GitHub**: [santosr2/uptool](https://github.com/santosr2/uptool)
 - **Issues**: [Report a bug](https://github.com/santosr2/uptool/issues/new)
 - **Discussions**: [Ask questions](https://github.com/santosr2/uptool/discussions)
-- **Security**: See our [Security Policy](SECURITY.md)
+- **Security**: See our [Security Policy](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md)
 
 ---
 
 ## Project Status
 
-> [!INFO]
-> "Development Status"
-> uptool is under active development. The current focus is on:
+!!! info Development Status
+    uptool is under active development. The current focus is on:
 
 - ✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, asdf, mise)
 - 🚧 Expanding test coverage (target: >70%)

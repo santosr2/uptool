@@ -348,4 +348,4 @@ git push origin main
 - [GitHub Environments Documentation](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
 - [Deployment Protection Rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules)
 - [Version Management Guide](versioning.md)
-- [Contributing Guide](CONTRIBUTING.md)
+- [Contributing Guide](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md)

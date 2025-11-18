@@ -49,8 +49,8 @@ func init() {
 	updateCmd.Flags().StringVar(&updateExclude, "exclude", "", "comma-separated integrations to exclude")
 
 	// Add shell completion for flags
-	_ = updateCmd.RegisterFlagCompletionFunc("only", completeIntegrations)
-	_ = updateCmd.RegisterFlagCompletionFunc("exclude", completeIntegrations)
+	_ = updateCmd.RegisterFlagCompletionFunc("only", completeIntegrations)    //nolint:errcheck // best effort completion
+	_ = updateCmd.RegisterFlagCompletionFunc("exclude", completeIntegrations) //nolint:errcheck // best effort completion
 }
 
 func runUpdate(cmd *cobra.Command, args []string) error {
@@ -88,7 +88,8 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 
 	// Show plan
 	fmt.Printf("Found %d manifests with updates:\n\n", len(planResult.Plans))
-	if err := outputPlanTable(planResult); err != nil {
+	err = outputPlanTable(planResult)
+	if err != nil {
 		return err
 	}
 

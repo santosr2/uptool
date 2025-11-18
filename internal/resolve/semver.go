@@ -104,14 +104,14 @@ func normalizeAndParse(version string) (*semver.Version, error) {
 }
 
 // determineImpact calculates the semver impact between two versions.
-func determineImpact(current, new *semver.Version) engine.Impact {
-	if new.Major() > current.Major() {
+func determineImpact(current, newVer *semver.Version) engine.Impact {
+	if newVer.Major() > current.Major() {
 		return engine.ImpactMajor
 	}
-	if new.Minor() > current.Minor() {
+	if newVer.Minor() > current.Minor() {
 		return engine.ImpactMinor
 	}
-	if new.Patch() > current.Patch() {
+	if newVer.Patch() > current.Patch() {
 		return engine.ImpactPatch
 	}
 	// Prerelease or metadata change

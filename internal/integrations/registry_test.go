@@ -492,7 +492,7 @@ func TestGetPluginDirectories(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer os.RemoveAll(tmpDir) //nolint:errcheck // test cleanup
 
 	os.Setenv("UPTOOL_PLUGIN_DIR", tmpDir)
 	defer os.Unsetenv("UPTOOL_PLUGIN_DIR")
@@ -517,11 +517,11 @@ func TestLoadPluginsFromDir(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer os.RemoveAll(tmpDir) //nolint:errcheck // test cleanup
 
 	// Create some non-plugin files
-	os.WriteFile(filepath.Join(tmpDir, "readme.txt"), []byte("test"), 0644)
-	os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte("test"), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "readme.txt"), []byte("test"), 0o644)
+	os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte("test"), 0o644)
 
 	// loadPluginsFromDir should not error even with no .so files
 	err = loadPluginsFromDir(tmpDir)

@@ -34,10 +34,10 @@ func NewNPMClient() *NPMClient {
 
 // PackageInfo contains npm package metadata.
 type PackageInfo struct {
-	Name     string                            `json:"name"`
-	Versions map[string]map[string]interface{} `json:"versions"` // version -> metadata
+	Versions map[string]map[string]interface{} `json:"versions"`
 	DistTags map[string]string                 `json:"dist-tags"`
 	Time     map[string]string                 `json:"time"`
+	Name     string                            `json:"name"`
 }
 
 // GetLatestVersion fetches the latest version for a package.
@@ -59,7 +59,7 @@ func (c *NPMClient) GetLatestVersion(ctx context.Context, packageName string) (s
 func (c *NPMClient) GetPackageInfo(ctx context.Context, packageName string) (*PackageInfo, error) {
 	url := fmt.Sprintf("%s/%s", c.baseURL, packageName)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -70,7 +70,7 @@ func (c *NPMClient) GetPackageInfo(ctx context.Context, packageName string) (*Pa
 	if err != nil {
 		return nil, fmt.Errorf("fetch package info: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("package not found: %s", packageName)

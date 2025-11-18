@@ -72,6 +72,9 @@ theme:
     - toc.follow
     - toc.integrate
 
+    # Announce version banner (optional, for displaying outdated version warnings)
+    - announce.dismiss
+
 # Plugins
 plugins:
   - search:
@@ -142,6 +145,13 @@ extra:
   version:
     provider: mike
     default: latest
+
+  # Version variable for GitHub URLs in documentation
+  # This should match the git tag (e.g., v0.1.0, v0.2.0)
+  # Usage in docs: {{ extra.uptool_version }}
+  # When deploying with mike, override with: mike deploy --update-aliases <version> -p -F mkdocs.yml -t "uptool_version=v<version>"
+  # This ensures documentation links point to files from the same version
+  uptool_version: v0.1.0
 
 # Navigation structure
 nav:

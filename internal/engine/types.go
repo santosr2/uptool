@@ -10,11 +10,11 @@ import (
 
 // Manifest represents a dependency manifest file.
 type Manifest struct {
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 	Path         string                 `json:"path"`
-	Type         string                 `json:"type"` // npm, pre-commit, terraform, etc.
+	Type         string                 `json:"type"`
 	Dependencies []Dependency           `json:"dependencies"`
 	Content      []byte                 `json:"-"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // Dependency represents a single dependency in a manifest.
@@ -28,23 +28,12 @@ type Dependency struct {
 
 // IntegrationPolicy contains policy settings that apply to a specific integration.
 type IntegrationPolicy struct {
-	// Enabled controls whether this integration is active
-	Enabled bool `yaml:"enabled" json:"enabled"`
-
-	// Update specifies the maximum semver change allowed: none, patch, minor, or major
-	Update string `yaml:"update" json:"update"`
-
-	// AllowPrerelease allows selection of pre-release versions
-	AllowPrerelease bool `yaml:"allow_prerelease" json:"allow_prerelease"`
-
-	// Pin controls whether to write exact versions or ranges
-	Pin bool `yaml:"pin" json:"pin"`
-
-	// Cadence suggests update frequency (daily, weekly, monthly)
-	Cadence string `yaml:"cadence,omitempty" json:"cadence,omitempty"`
-
-	// Custom contains integration-specific policy fields
-	Custom map[string]interface{} `yaml:",inline" json:"custom,omitempty"`
+	Custom          map[string]interface{} `yaml:",inline" json:"custom,omitempty"`
+	Update          string                 `yaml:"update" json:"update"`
+	Cadence         string                 `yaml:"cadence,omitempty" json:"cadence,omitempty"`
+	Enabled         bool                   `yaml:"enabled" json:"enabled"`
+	AllowPrerelease bool                   `yaml:"allow_prerelease" json:"allow_prerelease"`
+	Pin             bool                   `yaml:"pin" json:"pin"`
 }
 
 // Impact describes the severity of an update.
@@ -61,8 +50,8 @@ const (
 // UpdatePlan describes planned updates for a manifest.
 type UpdatePlan struct {
 	Manifest *Manifest `json:"manifest"`
+	Strategy string    `json:"strategy"`
 	Updates  []Update  `json:"updates"`
-	Strategy string    `json:"strategy"` // native_command or custom_rewrite
 }
 
 // Update represents a planned update for a dependency.
@@ -77,11 +66,11 @@ type Update struct {
 // ApplyResult contains the outcome of applying updates.
 type ApplyResult struct {
 	Manifest     *Manifest `json:"manifest"`
-	Applied      int       `json:"applied"`
-	Failed       int       `json:"failed"`
 	ManifestDiff string    `json:"manifest_diff,omitempty"`
 	LockfileDiff string    `json:"lockfile_diff,omitempty"`
 	Errors       []string  `json:"errors,omitempty"`
+	Applied      int       `json:"applied"`
+	Failed       int       `json:"failed"`
 }
 
 // Integration defines the interface for ecosystem integrations.

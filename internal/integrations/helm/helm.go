@@ -62,6 +62,7 @@ func validateFilePath(path string) error {
 
 // Chart represents the structure of Chart.yaml.
 type Chart struct {
+	Raw          map[string]any `yaml:",inline"`
 	APIVersion   string         `yaml:"apiVersion"`
 	Name         string         `yaml:"name"`
 	Description  string         `yaml:"description"`
@@ -69,7 +70,6 @@ type Chart struct {
 	Version      string         `yaml:"version"`
 	AppVersion   string         `yaml:"appVersion"`
 	Dependencies []Dependency   `yaml:"dependencies,omitempty"`
-	Raw          map[string]any `yaml:",inline"`
 }
 
 // Dependency represents a chart dependency.
@@ -79,8 +79,8 @@ type Dependency struct {
 	Repository string `yaml:"repository"`
 	Condition  string `yaml:"condition,omitempty"`
 	Tags       string `yaml:"tags,omitempty"`
-	Enabled    bool   `yaml:"enabled,omitempty"`
 	Alias      string `yaml:"alias,omitempty"`
+	Enabled    bool   `yaml:"enabled,omitempty"`
 }
 
 // Detect finds Chart.yaml files in the repository.
@@ -104,7 +104,8 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			}
 
 			// Validate path for security
-			if err := validateFilePath(path); err != nil {
+			err = validateFilePath(path)
+			if err != nil {
 				return err
 			}
 
@@ -221,13 +222,15 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 
 	// Parse Chart.yaml
 	var chart Chart
-	if err := yaml.Unmarshal(oldContent, &chart); err != nil {
+	err = yaml.Unmarshal(oldContent, &chart)
+	if err != nil {
 		return nil, fmt.Errorf("parse Chart.yaml: %w", err)
 	}
 
 	// Create update map for quick lookup
 	updateMap := make(map[string]string)
-	for _, update := range plan.Updates {
+	for i := range plan.Updates {
+		update := &plan.Updates[i]
 		updateMap[update.Dependency.Name] = update.TargetVersion
 	}
 
@@ -286,10 +289,10 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 }
 
 // determineImpact tries to determine the impact of an update.
-func determineImpact(old, new string) string {
+func determineImpact(old, newVer string) string {
 	// Simple heuristic: if major version changes (v1 -> v2), it's major
 	oldParts := strings.Split(strings.TrimPrefix(old, "v"), ".")
-	newParts := strings.Split(strings.TrimPrefix(new, "v"), ".")
+	newParts := strings.Split(strings.TrimPrefix(newVer, "v"), ".")
 
 	if len(oldParts) > 0 && len(newParts) > 0 && oldParts[0] != newParts[0] {
 		return "major"
@@ -303,13 +306,13 @@ func determineImpact(old, new string) string {
 }
 
 // generateDiff creates a simple diff between old and new content.
-func generateDiff(old, new string) string {
-	if old == new {
+func generateDiff(old, newContent string) string {
+	if old == newContent {
 		return ""
 	}
 
 	oldLines := strings.Split(old, "\n")
-	newLines := strings.Split(new, "\n")
+	newLines := strings.Split(newContent, "\n")
 
 	var diff strings.Builder
 	diff.WriteString("--- Chart.yaml\n")

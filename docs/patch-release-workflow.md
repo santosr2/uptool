@@ -1,6 +1,6 @@
 # Patch Release Workflow Guide
 
-This guide explains how to manage security patches and bug fixes for previous minor versions of uptool, in accordance with our [Security Policy](SECURITY.md).
+This guide explains how to manage security patches and bug fixes for previous minor versions of uptool, in accordance with our [Security Policy](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md).
 
 ## Overview
 
@@ -414,10 +414,10 @@ The workflow automatically updates the minor tag (e.g., `v0.1`). You don't need 
 
 ## Related Documentation
 
-- [Security Policy](SECURITY.md) - Support timelines and reporting
-- [Contributing Guide](CONTRIBUTING.md) - Development workflow
+- [Security Policy](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/SECURITY.md) - Support timelines and reporting
+- [Contributing Guide](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md) - Development workflow
 - [Versioning Guide](versioning.md) - Semantic versioning details
-- [Release Process](CONTRIBUTING.md#release-process) - Main branch releases
+- [Release Process](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md#release-process) - Main branch releases
 
 ## Support
 

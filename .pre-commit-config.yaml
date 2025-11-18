@@ -96,6 +96,17 @@ repos:
       - id: hadolint-docker
         args: [--config, .hadolint.yaml]
 
+  # GitHub Actions workflow linting
+  - repo: local
+    hooks:
+      - id: actionlint
+        name: actionlint
+        description: Lint GitHub Actions workflow files
+        entry: actionlint
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: true
+
   # Documentation validation
   - repo: local
     hooks:

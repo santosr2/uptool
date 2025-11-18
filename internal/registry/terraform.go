@@ -70,7 +70,7 @@ func (c *TerraformClient) GetLatestProviderVersion(ctx context.Context, source s
 
 	url := fmt.Sprintf("%s/v1/providers/%s/%s/versions", c.baseURL, namespace, name)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -81,7 +81,7 @@ func (c *TerraformClient) GetLatestProviderVersion(ctx context.Context, source s
 	if err != nil {
 		return "", fmt.Errorf("fetch provider versions: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return "", fmt.Errorf("provider not found: %s", source)
@@ -97,7 +97,8 @@ func (c *TerraformClient) GetLatestProviderVersion(ctx context.Context, source s
 	}
 
 	var providerVersions ProviderVersions
-	if err := json.Unmarshal(body, &providerVersions); err != nil {
+	err = json.Unmarshal(body, &providerVersions)
+	if err != nil {
 		return "", fmt.Errorf("parse response: %w", err)
 	}
 
@@ -144,7 +145,7 @@ func (c *TerraformClient) GetLatestModuleVersion(ctx context.Context, source str
 
 	url := fmt.Sprintf("%s/v1/modules/%s/%s/%s/versions", c.baseURL, namespace, name, provider)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -155,7 +156,7 @@ func (c *TerraformClient) GetLatestModuleVersion(ctx context.Context, source str
 	if err != nil {
 		return "", fmt.Errorf("fetch module versions: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return "", fmt.Errorf("module not found: %s", source)
@@ -218,7 +219,7 @@ func (c *TerraformClient) GetModuleVersions(ctx context.Context, source string) 
 
 	url := fmt.Sprintf("%s/v1/modules/%s/%s/%s/versions", c.baseURL, namespace, name, provider)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
@@ -229,7 +230,7 @@ func (c *TerraformClient) GetModuleVersions(ctx context.Context, source string) 
 	if err != nil {
 		return nil, fmt.Errorf("fetch module versions: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, fmt.Errorf("module not found: %s", source)
@@ -268,7 +269,7 @@ func (c *TerraformClient) FindBestProviderVersion(ctx context.Context, source, c
 
 	url := fmt.Sprintf("%s/v1/providers/%s/%s/versions", c.baseURL, namespace, name)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, http.NoBody)
 	if err != nil {
 		return "", fmt.Errorf("create request: %w", err)
 	}
@@ -279,7 +280,7 @@ func (c *TerraformClient) FindBestProviderVersion(ctx context.Context, source, c
 	if err != nil {
 		return "", fmt.Errorf("fetch provider versions: %w", err)
 	}
-	defer func() { _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }() //nolint:errcheck // HTTP cleanup best effort
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("unexpected status: %d", resp.StatusCode)
@@ -291,7 +292,8 @@ func (c *TerraformClient) FindBestProviderVersion(ctx context.Context, source, c
 	}
 
 	var providerVersions ProviderVersions
-	if err := json.Unmarshal(body, &providerVersions); err != nil {
+	err = json.Unmarshal(body, &providerVersions)
+	if err != nil {
 		return "", fmt.Errorf("parse response: %w", err)
 	}
 

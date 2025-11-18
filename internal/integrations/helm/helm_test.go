@@ -46,13 +46,12 @@ func TestDetect(t *testing.T) {
 		}
 
 		data, _ := yaml.Marshal(chart)
-		if err := os.WriteFile(chartPath, data, 0644); err != nil {
+		if err := os.WriteFile(chartPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -77,23 +76,22 @@ func TestDetect(t *testing.T) {
 
 		// Root Chart.yaml
 		rootChart := filepath.Join(tmpDir, "Chart.yaml")
-		if err := os.WriteFile(rootChart, []byte("apiVersion: v2\nname: root\nversion: 1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(rootChart, []byte("apiVersion: v2\nname: root\nversion: 1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Nested Chart.yaml
 		nestedDir := filepath.Join(tmpDir, "charts", "subchart")
-		if err := os.MkdirAll(nestedDir, 0755); err != nil {
+		if err := os.MkdirAll(nestedDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		nestedChart := filepath.Join(nestedDir, "Chart.yaml")
-		if err := os.WriteFile(nestedChart, []byte("apiVersion: v2\nname: subchart\nversion: 1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(nestedChart, []byte("apiVersion: v2\nname: subchart\nversion: 1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -107,23 +105,22 @@ func TestDetect(t *testing.T) {
 
 		// Root Chart.yaml
 		rootChart := filepath.Join(tmpDir, "Chart.yaml")
-		if err := os.WriteFile(rootChart, []byte("apiVersion: v2\nname: root\nversion: 1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(rootChart, []byte("apiVersion: v2\nname: root\nversion: 1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		// Hidden directory Chart.yaml (should be skipped)
 		hiddenDir := filepath.Join(tmpDir, ".hidden")
-		if err := os.MkdirAll(hiddenDir, 0755); err != nil {
+		if err := os.MkdirAll(hiddenDir, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		hiddenChart := filepath.Join(hiddenDir, "Chart.yaml")
-		if err := os.WriteFile(hiddenChart, []byte("apiVersion: v2\nname: hidden\nversion: 1.0.0"), 0644); err != nil {
+		if err := os.WriteFile(hiddenChart, []byte("apiVersion: v2\nname: hidden\nversion: 1.0.0"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
 		manifests, err := integ.Detect(ctx, tmpDir)
-
 		if err != nil {
 			t.Fatalf("Detect() error = %v", err)
 		}
@@ -132,23 +129,20 @@ func TestDetect(t *testing.T) {
 		}
 	})
 
-	t.Run("skips invalid YAML", func(t *testing.T) {
+	t.Run("returns error for invalid YAML", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		chartPath := filepath.Join(tmpDir, "Chart.yaml")
 
 		// Invalid YAML
-		if err := os.WriteFile(chartPath, []byte("invalid: yaml: content:"), 0644); err != nil {
+		if err := os.WriteFile(chartPath, []byte("invalid: yaml: content:"), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
 		integ := New()
-		manifests, err := integ.Detect(ctx, tmpDir)
+		_, err := integ.Detect(ctx, tmpDir)
 
-		if err != nil {
-			t.Fatalf("Detect() error = %v", err)
-		}
-		if len(manifests) != 0 {
-			t.Fatalf("Detect() found %d manifests, want 0 (invalid YAML should be skipped)", len(manifests))
+		if err == nil {
+			t.Fatal("Detect() expected error for invalid YAML, got nil")
 		}
 	})
 
@@ -167,7 +161,7 @@ func TestDetect(t *testing.T) {
 		}
 
 		data, _ := yaml.Marshal(chart)
-		if err := os.WriteFile(chartPath, data, 0644); err != nil {
+		if err := os.WriteFile(chartPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -325,7 +319,7 @@ func TestApply(t *testing.T) {
 		}
 
 		data, _ := yaml.Marshal(chart)
-		if err := os.WriteFile(chartPath, data, 0644); err != nil {
+		if err := os.WriteFile(chartPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -386,7 +380,7 @@ func TestApply(t *testing.T) {
 		}
 
 		data, _ := yaml.Marshal(chart)
-		if err := os.WriteFile(chartPath, data, 0644); err != nil {
+		if err := os.WriteFile(chartPath, data, 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -552,9 +546,9 @@ func TestGenerateDiff(t *testing.T) {
 
 	t.Run("generates diff for version changes", func(t *testing.T) {
 		old := "name: myapp\nversion: 1.0.0\ndependencies:\n  - version: 1.0.0"
-		new := "name: myapp\nversion: 1.0.0\ndependencies:\n  - version: 2.0.0"
+		updated := "name: myapp\nversion: 1.0.0\ndependencies:\n  - version: 2.0.0"
 
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if diff == "" {
 			t.Error("generateDiff() returned empty string, want diff")
 		}
@@ -571,9 +565,9 @@ func TestGenerateDiff(t *testing.T) {
 
 	t.Run("only includes version changes", func(t *testing.T) {
 		old := "name: myapp\nversion: 1.0.0\ndescription: My app"
-		new := "name: myapp\nversion: 2.0.0\ndescription: My app"
+		updated := "name: myapp\nversion: 2.0.0\ndescription: My app"
 
-		diff := generateDiff(old, new)
+		diff := generateDiff(old, updated)
 		if !strings.Contains(diff, "version:") {
 			t.Error("generateDiff() missing version line in diff")
 		}
