@@ -1,0 +1,69 @@
+name: 📚 Documentation Issue
+description: Report an issue with the documentation
+title: "[docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation issue is this?
+      options:
+        - Missing documentation
+        - Outdated documentation
+        - Incorrect information
+        - Typo or formatting
+        - Unclear explanation
+        - Missing code example
+        - Broken link
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: doc-location
+    attributes:
+      label: Documentation Location
+      description: Where is the documentation issue? (URL or file path)
+      placeholder: "https://santosr2.github.io/uptool/... or docs/..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: What's wrong?
+      description: Describe the documentation issue
+      placeholder: "The installation instructions are missing..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-fix
+    attributes:
+      label: Suggested Fix
+      description: How should it be improved?
+      placeholder: "It should include..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that might be helpful
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to submit a PR to fix this
+          required: false

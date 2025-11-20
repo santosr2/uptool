@@ -1,0 +1,182 @@
+name: 🔌 Integration Request
+description: Request support for a new package ecosystem
+title: "[integration]: "
+labels: ["integration", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new integration!
+
+  - type: input
+    id: ecosystem-name
+    attributes:
+      label: Package Ecosystem
+      description: What package ecosystem should uptool support?
+      placeholder: "e.g., Poetry, Cargo, Gemfile"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: language
+    attributes:
+      label: Programming Language
+      description: What language is this ecosystem for?
+      options:
+        - Python
+        - Ruby
+        - Rust
+        - Java/Kotlin
+        - PHP
+        - .NET/C#
+        - Elixir
+        - Scala
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: manifest-files
+    attributes:
+      label: Manifest Files
+      description: What files does this ecosystem use?
+      placeholder: |
+        - pyproject.toml
+        - Pipfile
+        - requirements.txt
+    validations:
+      required: true
+
+  - type: textarea
+    id: registry-info
+    attributes:
+      label: Package Registry
+      description: Where are packages hosted?
+      placeholder: |
+        - Registry URL: https://pypi.org
+        - API Documentation: https://warehouse.pypa.io/api-reference/
+    validations:
+      required: true
+
+  - type: dropdown
+    id: native-command
+    attributes:
+      label: Native Update Command
+      description: Does the ecosystem have a native command to update dependencies?
+      options:
+        - "Yes - updates manifest directly"
+        - "Yes - updates lockfile only"
+        - "No native command"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: native-command-example
+    attributes:
+      label: Native Command Example
+      description: If yes, provide an example command
+      placeholder: |
+        poetry update
+        bundle update
+        cargo update
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: example-manifest
+    attributes:
+      label: Example Manifest
+      description: Provide an example manifest file
+      placeholder: |
+        [tool.poetry.dependencies]
+        python = "^3.9"
+        requests = "^2.28.0"
+      render: toml
+    validations:
+      required: true
+
+  - type: textarea
+    id: version-format
+    attributes:
+      label: Version Constraints
+      description: How are version constraints expressed?
+      placeholder: |
+        - Exact: requests==2.28.0
+        - Compatible: requests~=2.28
+        - Greater than: requests>=2.28
+        - Caret: requests^2.28
+    validations:
+      required: true
+
+  - type: dropdown
+    id: file-format
+    attributes:
+      label: File Format
+      description: What format is the manifest file?
+      options:
+        - YAML
+        - JSON
+        - TOML
+        - HCL
+        - Plain text
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: complexity
+    attributes:
+      label: Special Considerations
+      description: Anything complex or unique about this ecosystem?
+      placeholder: |
+        - Workspaces/monorepos
+        - Private registries
+        - Platform-specific dependencies
+        - Lock file behavior
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this integration to you?
+      options:
+        - Critical - blocking my adoption
+        - High - would use immediately
+        - Medium - nice to have
+        - Low - interesting idea
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: How would you use this integration?
+      placeholder: "I manage Python projects with Poetry and need to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current Alternatives
+      description: How do you currently handle updates for this ecosystem?
+      placeholder: "I use Dependabot/Renovate/manual updates..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to help implement this integration
+          required: false
+        - label: I can provide test cases and examples
+          required: false
+        - label: I can help with documentation
+          required: false
