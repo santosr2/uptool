@@ -1,706 +1,203 @@
-# Architecture Overview
+# Architecture
 
-This document provides a comprehensive overview of uptool's architecture, design decisions, and internal components.
-
-## Table of Contents
-
-- [Design Principles](#design-principles)
-- [System Architecture](#system-architecture)
-- [Core Components](#core-components)
-- [Data Flow](#data-flow)
-- [Integration Architecture](#integration-architecture)
-- [Datasource Abstraction](#datasource-abstraction)
-- [Manifest Rewriting](#manifest-rewriting)
-- [Error Handling](#error-handling)
-- [Performance Considerations](#performance-considerations)
-
----
+uptool's design, components, and data flow.
 
 ## Design Principles
 
-### 1. Manifest-First Philosophy
+1. **Manifest-First**: Update config files directly, not just lockfiles
+2. **Format Preservation**: Maintain YAML comments, indentation, structure
+3. **Extensibility**: Plugin-based integration architecture
 
-**Core Tenet**: Always update configuration files (manifests) directly, never rely solely on lockfile updates.
+## System Overview
 
-**Rationale**:
-
-- Lockfiles can drift from manifests
-- Manifests are the source of truth
-- Better auditability and version control
-- Consistent with developer workflows
-
-**Implementation**:
-
-- Integrations parse and rewrite manifest files
-- Native commands used only when they update manifests
-- Manual rewriting when native tools don't support manifest updates
-
-### 2. Format Preservation
-
-**Goal**: Maintain YAML comments, indentation, and structure when updating manifests.
-
-**Challenges**:
-
-- Standard YAML parsers lose comments
-- Indentation styles vary
-- Custom formatting preferences
-
-**Solution**:
-
-- Custom YAML rewriter in `internal/rewrite/yaml.go`
-- Line-by-line processing
-- Preserves everything except the version string
-
-### 3. Extensibility
-
-**Design**: Plugin-based architecture for integrations.
-
-**Benefits**:
-
-- Easy to add new package ecosystems
-- Integrations are isolated
-- Clear interfaces for testing
-
-**Structure**:
-
-```tree
-internal/integrations/
-├── registry.go          # Integration registration system
-├── npm/
-│   └── npm.go          # npm implementation
-├── helm/
-│   └── helm.go         # Helm implementation
-└── ...
-
-internal/engine/
-└── types.go            # Integration interface definition
 ```
-
----
-
-## System Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                         CLI Layer                           │
-│                     (cmd/uptool)                            │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-                     ▼
-┌───────────────────────────────────────────────────────────┐
-│                      Engine Layer                         │
-│                   (internal/engine)                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   Scan       │  │    Plan      │  │   Update     │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-└────────────────────┬──────────────────────────────────────┘
-                     │
-        ┌────────────┼─────────────────┐
-        │            │                 │
-        ▼            ▼                 ▼
-┌───────────┐  ┌────────────┐  ┌──────────┐
-│Integration│  │ Datasource │  │ Rewrite  │
-│  Layer    │  │   Layer    │  │  Layer   │
-└───────────┘  └────────────┘  └──────────┘
-                     │
-                     ▼
-             ┌──────────────┐
-             │  Registry    │
-             │   Clients    │
-             └──────────────┘
-                     │
-                     ▼
-┌──────────────────────────────────────┐
-│        External Systems              │
-│  ┌────┐ ┌────┐ ┌────┐ ┌────┐         │
-│  │npm │ │PyPI│ │Helm│ │etc.│         │
-│  └────┘ └────┘ └────┘ └────┘         │
-└──────────────────────────────────────┘
+CLI (cmd/uptool)
+  ↓
+Engine (Scan/Plan/Update)
+  ↓
+Integrations (npm, helm, terraform, etc.)
+  ↓
+Datasources (registries) + Rewrite (manifest updates)
 ```
-
----
 
 ## Core Components
 
-### 1. CLI Layer (`cmd/uptool`)
+### CLI Layer (`cmd/uptool`)
 
-**Responsibility**: Command-line interface and user interaction.
+Command handlers using Cobra:
+- `scan` - Find and parse manifests
+- `plan` - Query registries for updates
+- `update` - Apply changes to manifests
+- `list` - Show available integrations
 
-**Components**:
+### Engine Layer (`internal/engine`)
 
-- Command parsing (Cobra)
-- Flag validation
-- Output formatting (table, JSON)
-- Error display
+Orchestration logic:
+- **Scan**: Parallel integration detection, manifest parsing
+- **Plan**: Registry queries, version resolution, update policy
+- **Update**: Manifest rewriting, validation, diff generation
 
-**Files**:
+### Integration Layer (`internal/integrations`)
 
-- `cmd/uptool/main.go` - Entry point
-- `cmd/uptool/cmd/root.go` - Root command
-- `cmd/uptool/cmd/scan.go` - Scan command
-- `cmd/uptool/cmd/plan.go` - Plan command
-- `cmd/uptool/cmd/update.go` - Update command
-
-### 2. Engine Layer (`internal/engine`)
-
-**Responsibility**: Orchestrate the update workflow.
-
-**Core Functions**:
-
-```go
-// Scan discovers available updates
-func (e *Engine) Scan(ctx context.Context, opts ScanOptions) ([]Update, error)
-
-// Plan shows what would be updated
-func (e *Engine) Plan(ctx context.Context, opts PlanOptions) ([]Change, error)
-
-// Apply executes the updates
-func (e *Engine) Apply(ctx context.Context, opts ApplyOptions) error
-```
-
-**Workflow**:
-
-1. Load configuration from `uptool.yaml`
-2. Discover integrations (auto-detect manifest files)
-3. Query registries for available versions
-4. Apply policy rules (allow major/minor/patch)
-5. Generate update plan
-6. Execute updates (if not dry-run)
-
-### 3. Integration Layer (`internal/integrations`)
-
-**Responsibility**: Implement package ecosystem logic.
-
-**Interface**:
+Each integration implements:
 
 ```go
 type Integration interface {
-    // Name returns the integration identifier
     Name() string
-
-    // Detect finds manifest files for this integration
     Detect(ctx context.Context, repoRoot string) ([]*Manifest, error)
-
-    // Plan determines available updates for a manifest
     Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error)
-
-    // Apply executes the update plan
     Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error)
-
-    // Validate checks if changes are valid (optional)
     Validate(ctx context.Context, manifest *Manifest) error
 }
 ```
 
-**Implementations**:
+**Types**:
+1. **Manifest Rewriting** (npm, Helm, asdf, mise) - Parse and rewrite files
+2. **Native Command** (pre-commit) - Execute tool's update command
+3. **Hybrid** (Terraform) - Parse HCL, query registry, rewrite
 
-- `npm` - package.json
-- `helm` - Chart.yaml
-- `terraform` - versions.tf, *.tf
-- `tflint` - .tflint.hcl
-- `precommit` - .pre-commit-config.yaml (native command)
-- `asdf` - .tool-versions
-- `mise` - mise.toml, .mise.toml
+### Datasource Layer (`internal/datasource`)
 
-### 4. Datasource Layer (`internal/datasource`)
+Registry abstraction:
+- npm Registry API
+- Helm/Artifact Hub
+- Terraform Registry
+- GitHub Releases (for tflint, asdf, mise)
 
-**Responsibility**: Query package registries for available versions.
+### Rewrite Layer (`internal/rewrite`)
 
-**Interface**:
+Format-preserving updates:
+- **YAML**: Line-by-line rewriting, preserves comments
+- **JSON**: Structured rewriting with indentation
+- **TOML**: gopkg.in/toml-based updates
+- **HCL**: hashicorp/hcl parser
 
-```go
-type Datasource interface {
-    // Name returns the datasource identifier
-    Name() string
+### Resolve Layer (`internal/resolve`)
 
-    // GetLatestVersion returns the latest stable version for a package
-    GetLatestVersion(ctx context.Context, pkg string) (string, error)
+Semantic version resolution:
+- Parse version constraints (`^4.0.0`, `~1.2.3`, `>=2.0.0`)
+- Find compatible versions
+- Handle pre-release tags
 
-    // GetVersions returns all available versions for a package
-    GetVersions(ctx context.Context, pkg string) ([]string, error)
+### Policy Layer (`internal/policy`)
 
-    // GetPackageInfo returns detailed information about a package
-    GetPackageInfo(ctx context.Context, pkg string) (*PackageInfo, error)
-}
-```
-
-**Implementations**:
-
-- `npm` - npm registry API
-- `helm` - Artifact Hub / Helm repository
-- `terraform` - Terraform Registry API
-- `github` - GitHub Releases API (for tools like pre-commit, tflint)
-
-**Architecture**: The datasource layer provides high-level abstractions that wrap low-level HTTP clients in `internal/registry/`. Each datasource (e.g., `internal/datasource/npm.go`) implements the `Datasource` interface by delegating to a registry client (e.g., `internal/registry/npm.go` with `NPMClient`).
-
-**Caching**: Future enhancement (not yet implemented).
-
-### 5. Rewrite Layer (`internal/rewrite`)
-
-**Responsibility**: Preserve formatting while updating files.
-
-**Key Features**:
-
-- YAML comment preservation
-- Line-by-line processing
-- Minimal changes to file structure
-- Diff generation
-
-**Files**:
-
-- `internal/rewrite/yaml.go` - YAML rewriter
-- `internal/rewrite/diff.go` - Diff generator
-
-### 6. Resolve Layer (`internal/resolve`)
-
-**Responsibility**: Semantic version resolution and comparison.
-
-**Functions**:
-
-- Parse semantic versions
-- Compare versions
-- Filter by constraints (^1.0.0, ~2.3.0)
-- Classify impact (major, minor, patch)
-
-**Files**:
-
-- `internal/resolve/semver.go`
-
-### 7. Policy Layer (`internal/policy`)
-
-**Responsibility**: Load and apply update policies.
-
-**Configuration Example**:
-
-```yaml
-# uptool.yaml
-version: 1
-
-org_policy:
-  signing:
-    cosign_verify: false
-  auto_merge:
-    enabled: false
-    guards: []
-  require_signoff_from: []
-
-integrations:
-  - id: npm
-    enabled: true
-    policy:
-      enabled: true
-      update: minor  # none, patch, minor, major
-      allow_prerelease: false
-      pin: true
-      cadence: weekly  # daily, weekly, monthly
-
-  - id: terraform
-    enabled: true
-    policy:
-      enabled: true
-      update: patch
-      allow_prerelease: false
-      pin: true
-```
-
-**Files**:
-
-- `internal/policy/config.go`
-
----
+Update policies from `uptool.yaml`:
+- Maximum update level (none/patch/minor/major)
+- Pre-release inclusion
+- Pin vs range versions
 
 ## Data Flow
 
-### Scan Command Flow
+### Scan
 
-```text
-User runs: uptool scan
-    │
-    ▼
-┌────────────────────┐
-│ 1. Load Config     │  Read uptool.yaml
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 2. Detect Manifests│  Find package.json, Chart.yaml, etc.
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 3. Parse Manifests │  Extract dependencies
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 4. Query Registries│  Get latest versions (parallel)
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 5. Apply Policy    │  Filter by update rules
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 6. Format Output   │  Table or JSON
-└────────────────────┘
-```
+1. CLI receives `scan` command
+2. Engine loads integrations
+3. Each integration detects manifests (parallel)
+4. Parse manifests, extract dependencies
+5. Return list of manifests with dependency counts
 
-### Update Command Flow
+### Plan
 
-```text
-User runs: uptool update
-    │
-    ▼
-┌────────────────────┐
-│ 1. Scan (above)    │  Get available updates
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 2. Generate Plan   │  What will change
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 3. Backup Manifests│  Create .bak files
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 4. Rewrite Files   │  Update versions
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 5. Validate        │  Check syntax
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────┐
-│ 6. Run Native Cmds │  npm install, etc. (if configured)
-└────────────────────┘
-```
+1. For each manifest, query datasources
+2. Resolve latest compatible versions
+3. Apply update policy filters
+4. Generate UpdatePlan with current → target versions
+5. Return plans (shows what would change)
 
----
+### Update
 
-## Integration Architecture
+1. Execute Plan for each manifest
+2. Integration rewrites manifest file
+3. Generate diff (before/after)
+4. Validate updated manifest
+5. Return ApplyResult with changes
 
-### Integration Lifecycle
+## Integration Patterns
 
-1. **Detection**: Integration discovers manifest files and extracts dependencies (via `Detect()`)
-2. **Datasource Query**: Fetch available versions from registries (via datasource layer)
-3. **Planning**: Determine what to update based on policy (via `Plan()`)
-4. **Application**: Rewrite manifests with new versions (via `Apply()`)
-5. **Validation**: Ensure updated manifests are valid (via `Validate()`)
-6. **Post-Update**: Run native commands (optional, integration-specific)
+### Pattern 1: Manifest Rewriting (npm)
 
-### Integration Types
+```go
+func (i *Integration) Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error) {
+    data, _ := os.ReadFile(plan.Manifest.Path)
+    var pkg PackageJSON
+    json.Unmarshal(data, &pkg)
 
-#### Type 1: Manifest Rewriting (npm, Helm, asdf, mise)
+    // Update versions
+    for dep, newVer := range plan.Updates {
+        pkg.Dependencies[dep] = newVer
+    }
 
-**Strategy**: Parse manifest, rewrite in-place, preserve formatting.
-
-**Example (npm)**:
-
-```javascript
-// Before
-{
-  "dependencies": {
-    "react": "^18.2.0"  // Keep this comment
-  }
-}
-
-// After
-{
-  "dependencies": {
-    "react": "^18.3.1"  // Keep this comment
-  }
+    // Write back with formatting
+    output, _ := json.MarshalIndent(pkg, "", "  ")
+    os.WriteFile(plan.Manifest.Path, output, 0644)
+    return &ApplyResult{Updated: len(plan.Updates)}, nil
 }
 ```
 
-#### Type 2: Native Command (pre-commit)
+### Pattern 2: Native Command (pre-commit)
 
-**Strategy**: Delegate to native tool when it updates manifests.
-
-**Example**:
-
-```bash
-# pre-commit updates .pre-commit-config.yaml
-pre-commit autoupdate
-```
-
-**When to Use**:
-
-- Tool already updates manifests correctly
-- Format preservation is guaranteed
-- No need for custom parsing
-
-#### Type 3: Hybrid (Terraform)
-
-**Strategy**: Parse HCL, rewrite with custom logic, validate with `terraform fmt`.
-
-**Challenges**:
-
-- HCL has complex syntax
-- Multiple file locations (versions.tf, main.tf)
-- Version constraints vary
-
----
-
-## Datasource Abstraction
-
-### Design Pattern
-
-Each datasource implements a common interface, allowing integrations to be registry-agnostic. Datasources wrap low-level HTTP registry clients to provide a unified API.
-
-**Benefits**:
-
-- Support for private registries
-- Caching at datasource level
-- Consistent error handling
-- Separation of concerns (high-level datasource logic vs low-level HTTP details)
-
-### Datasource Implementations
-
-#### npm Registry
-
-**Endpoint**: `https://registry.npmjs.org/<package>`
-
-**Response**:
-
-```json
-{
-  "versions": {
-    "1.0.0": {},
-    "2.0.0": {}
-  },
-  "dist-tags": {
-    "latest": "2.0.0"
-  }
+```go
+func (i *Integration) Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error) {
+    cmd := exec.CommandContext(ctx, "pre-commit", "autoupdate")
+    output, err := cmd.CombinedOutput()
+    // Native command updates .pre-commit-config.yaml
+    return &ApplyResult{Updated: countUpdates(output)}, err
 }
 ```
-
-#### Helm (Artifact Hub)
-
-**Endpoint**: `https://artifacthub.io/api/v1/packages/helm/<repo>/<chart>`
-
-**Challenge**: Helm repositories are decentralized, need to query specific repos.
-
-#### Terraform Registry
-
-**Endpoint**: `https://registry.terraform.io/v1/providers/<namespace>/<name>/versions`
-
-**Response**:
-
-```json
-{
-  "versions": [
-    {"version": "1.0.0"},
-    {"version": "2.0.0"}
-  ]
-}
-```
-
----
-
-## Manifest Rewriting
-
-### YAML Rewriter Algorithm
-
-**Goal**: Update version strings while preserving everything else.
-
-**Algorithm**:
-
-```text
-1. Read file line-by-line
-2. For each line:
-   a. Check if it contains a dependency key
-   b. If yes, extract current version
-   c. Replace with new version (exact string match)
-   d. Preserve indentation, comments, quotes
-3. Write modified lines to file
-```
-
-**Example**:
-
-```yaml
-# Input
-dependencies:
-  - name: nginx
-    version: 1.24.0  # Production version
-    repository: https://...
-
-# Update nginx to 1.25.0
-
-# Output (only version changed)
-dependencies:
-  - name: nginx
-    version: 1.25.0  # Production version
-    repository: https://...
-```
-
-### Diff Generation
-
-**Purpose**: Show users exactly what will change.
-
-**Implementation**:
-
-- Unified diff format
-- Color coding (green = additions, red = deletions)
-- Context lines (3 before/after)
-
-**Example**:
-
-```diff
---- Chart.yaml
-+++ Chart.yaml
-@@ -3,7 +3,7 @@
- name: myapp
- description: My application
--version: 1.0.0
-+version: 1.1.0
- dependencies:
-   - name: postgresql
--    version: 12.0.0
-+    version: 13.0.0
-```
-
----
 
 ## Error Handling
 
-### Error Categories
+Errors categorized by severity:
+- **Fatal**: Stop execution (invalid config, missing binary)
+- **Retryable**: Temporary failures (network timeout, rate limit)
+- **Skippable**: Non-critical (single integration failure)
 
-1. **User Errors** (exit code 1)
-   - Invalid configuration
-   - Missing manifest files
-   - Invalid version constraints
+## Performance
 
-2. **Registry Errors** (exit code 2)
-   - Network failures
-   - API rate limits
-   - Package not found
+**Current**:
+- Parallel integration detection
+- Sequential registry queries (network bound)
+- Single-threaded manifest rewriting
 
-3. **Update Errors** (exit code 3)
-   - Manifest syntax errors after update
-   - Native command failures
-   - Permission issues
+**Future**:
+- Registry response caching
+- Parallel registry queries with semaphore
+- Batch updates for monorepos
 
-### Error Recovery
+## Testing Strategy
 
-**Strategy**: Fail-safe operations.
+- **Unit tests**: Per-integration testing with testdata fixtures
+- **Integration tests**: End-to-end with real registries
+- **Golden file tests**: Manifest rewriting verification
+- **Target coverage**: >70% overall, >80% for core engine
 
-**Mechanisms**:
+## File Structure
 
-- Automatic backups before updates
-- Atomic file writes (write to temp, then rename)
-- Rollback on validation failure
-- Detailed error messages with recovery suggestions
-
----
-
-## Performance Considerations
-
-### Current State
-
-- **Sequential processing**: One integration at a time
-- **No caching**: Every run queries registries
-- **Blocking I/O**: File operations are synchronous
-
-### Future Optimizations
-
-1. **Parallel Registry Queries**
-   - Use goroutines for concurrent queries
-   - Target: 5-10x speedup for large projects
-
-2. **Caching Layer**
-   - In-memory cache for registry responses
-   - Disk cache with TTL
-   - Target: 90% cache hit rate on repeated scans
-
-3. **Incremental Scanning**
-   - Only check changed manifests
-   - Use file modification times
-   - Target: Skip 80% of unchanged files
-
-4. **Connection Pooling**
-   - Reuse HTTP connections to registries
-   - Target: Reduce connection overhead by 50%
-
----
-
-## Testing Architecture
-
-### Test Strategy
-
-1. **Unit Tests**: Individual functions (target: 70% coverage)
-2. **Integration Tests**: End-to-end workflows with real files
-3. **Golden File Tests**: Compare output against expected results
-4. **Benchmark Tests**: Performance regression detection
-
-### Test Fixtures
-
-Located in `testdata/`:
-
-- Sample manifest files for each integration
-- Expected outputs (golden files)
-- Mock registry responses
-
----
-
-## Security Considerations
-
-### Threat Model
-
-1. **Supply Chain Attacks**
-   - Compromised registries
-   - Malicious package versions
-   - MITM attacks
-
-2. **File System Access**
-   - Permission issues
-   - Symlink attacks
-   - Path traversal
-
-### Mitigations
-
-- HTTPS for all registry communications
-- Certificate pinning (future)
-- File permission checks
-- Input validation
-- Dependency signing verification (future)
-
----
+```
+uptool/
+├── cmd/uptool/              # CLI entry point
+│   ├── main.go
+│   └── cmd/                 # Command handlers
+├── internal/
+│   ├── engine/              # Core orchestration
+│   ├── integrations/        # npm, helm, terraform, etc.
+│   ├── datasource/          # Registry clients
+│   ├── rewrite/             # Format-preserving updates
+│   ├── resolve/             # Version resolution
+│   └── policy/              # Update policy engine
+├── testdata/                # Test fixtures
+└── examples/                # Sample configs
+```
 
 ## Extension Points
 
-Want to add a new integration? See:
+1. **New Integration**: Implement `Integration` interface in `internal/integrations/`
+2. **New Datasource**: Add client in `internal/datasource/`
+3. **New Format**: Add rewriter in `internal/rewrite/`
+4. **Plugin**: External `.so` implementing integration interface
 
-- [Plugin Development Guide](plugin-development.md)
-- [Integration Interface](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/engine/types.go) - Core types and Integration interface
-- [Integration Registry](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/integrations/registry.go) - Integration registration
+## See Also
 
-Want to add a new datasource? See:
-
-- [NPM Datasource](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/datasource/npm.go) - Example datasource implementation
-- [NPM Registry Client](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/registry/npm.go) - Example low-level HTTP client
-- [Datasource Package](https://github.com/santosr2/uptool/tree/{{ extra.uptool_version }}/internal/datasource/) - All datasources
-- [Registry Package](https://github.com/santosr2/uptool/tree/{{ extra.uptool_version }}/internal/registry/) - All registry HTTP clients
-
----
-
-## Glossary
-
-- **Manifest**: Configuration file (package.json, Chart.yaml, etc.)
-- **Integration**: Package ecosystem support (npm, Helm, etc.)
-- **Datasource**: High-level abstraction for querying package versions
-- **Registry**: Package repository (npm registry, Artifact Hub, etc.) or low-level HTTP client
-- **Dependency**: External package required by the project
-- **Update**: Changing a dependency version
-- **Policy**: Rules controlling which updates are allowed
-
----
-
-Last updated: 2025-01-19
+- [Plugin Development](plugin-development.md) - Create custom integrations
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guidelines
+- [Integration Examples](../internal/integrations/) - Source code examples

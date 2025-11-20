@@ -117,15 +117,15 @@ org_policy:
       - "ci-green"       # All CI checks must pass
       - "codeowners-approve"  # CODEOWNERS must approve
 
-# Optional: Notification settings (future feature)
-notifications:
-  slack:
-    enabled: false
-    webhook_url: ""
-    channels:
-      - "#platform-updates"
-
-  email:
-    enabled: false
-    recipients:
-      - "platform-team@company.com"
+# Optional: Notification settings (NOT IMPLEMENTED YET - placeholder for future feature)
+# notifications:
+#   slack:
+#     enabled: false
+#     webhook_url: ""
+#     channels:
+#       - "#platform-updates"
+#
+#   email:
+#     enabled: false
+#     recipients:
+#       - "platform-team@company.com"

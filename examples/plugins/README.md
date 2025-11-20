@@ -383,7 +383,7 @@ Found a bug or want to improve the examples?
 
 ## License
 
-Same as uptool - Apache License 2.0
+Same as uptool - MIT License
 
 ---
 

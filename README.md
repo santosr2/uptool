@@ -12,7 +12,6 @@
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9999/badge)](https://www.bestpractices.dev/projects/9999)
 [![codecov](https://codecov.io/gh/santosr2/uptool/branch/main/graph/badge.svg)](https://codecov.io/gh/santosr2/uptool)
 
-[![Documentation Site](https://img.shields.io/badge/docs-santosr2.github.io-blue?logo=readthedocs)](https://santosr2.github.io/uptool/)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Security Policy](https://img.shields.io/badge/security-policy-blue)](SECURITY.md)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
@@ -27,27 +26,15 @@ Unlike traditional dependency updaters that focus on lockfiles, uptool updates *
 
 ## Why uptool?
 
-**The Problem**: Modern projects use dozens of tools across multiple ecosystems:
-
-- Language dependencies (npm, pip, go modules)
-- Infrastructure tools (Terraform, Helm)
-- Development tools (pre-commit, tflint)
-- Runtime version managers (asdf with `.tool-versions`, mise with `mise.toml`)
-
-Each ecosystem has its own update mechanism. Keeping them all current is tedious and error-prone.
-
-**The Solution**: uptool provides a **unified interface** to scan, plan, and update dependencies across all your manifest files, whether you're managing JavaScript packages, Kubernetes charts, or Terraform modules.
+Modern projects span multiple ecosystems—npm, Helm, Terraform, pre-commit, runtime managers. Each has its own update mechanism. uptool provides a **unified interface** to scan, plan, and update all dependencies from one tool.
 
 ### Manifest-First Philosophy
 
-uptool updates **manifests** (source of truth), not just lockfiles:
+1. Update **manifests** (package.json, Chart.yaml, *.tf) first
+2. Use native commands only when they update manifests
+3. Then run lockfile updates (npm install, terraform init)
 
-1. **Update manifests first**: package.json, Chart.yaml, *.tf files
-2. **Use native commands when they update manifests**: `pre-commit autoupdate` updates .pre-commit-config.yaml ✅
-3. **Don't use commands that only update lockfiles**: `npm update` only touches package-lock.json ❌
-4. **Then optionally run native lockfile updates**: `npm install`, `terraform init`, etc.
-
-This ensures your **declared dependencies** stay current, not just resolved versions.
+This ensures **declared dependencies** stay current, not just resolved versions.
 
 ---
 
@@ -74,8 +61,8 @@ This ensures your **declared dependencies** stay current, not just resolved vers
 | **pre-commit** | ✅ Stable | `.pre-commit-config.yaml` | Native `pre-commit autoupdate` | GitHub Releases |
 | **Terraform** | ✅ Stable | `*.tf` | HCL parsing/rewriting | Terraform Registry API |
 | **tflint** | ✅ Stable | `.tflint.hcl` | HCL parsing/rewriting | GitHub Releases |
-| **asdf** | ✅ Stable | `.tool-versions` | Line-based parsing/rewriting | GitHub Releases (per tool) |
-| **mise** | ✅ Stable | `mise.toml`, `.mise.toml` | TOML parsing/rewriting | GitHub Releases (per tool) |
+| **asdf** | ⚠️ Experimental | `.tool-versions` | Detection only (updates not implemented) | GitHub Releases (per tool) |
+| **mise** | ⚠️ Experimental | `mise.toml`, `.mise.toml` | Detection only (updates not implemented) | GitHub Releases (per tool) |
 
 ### Roadmap
 
@@ -198,93 +185,18 @@ jobs:
 
 ---
 
-## CLI Reference
+## Commands
 
-### Global Flags
+**Global flags**: `-v/--verbose`, `-q/--quiet`, `--help`
 
-All commands support these global flags:
+| Command | Purpose | Key Flags |
+|---------|---------|-----------|
+| `uptool scan` | Discover manifest files | `--only`, `--exclude`, `--format` |
+| `uptool plan` | Generate update plan | `--only`, `--exclude`, `--out` |
+| `uptool update` | Apply updates | `--dry-run`, `--diff`, `--only` |
+| `uptool list` | List integrations | `--category`, `--experimental` |
 
-```bash
--h, --help       Show help for command
--v, --verbose    Enable verbose debug output
--q, --quiet      Suppress informational output (errors only)
---version        Show uptool version
-```
-
-### `uptool scan`
-
-Discover manifest files and extract current dependency versions.
-
-```bash
-uptool scan                      # Table output
-uptool scan --format=json        # JSON output for scripting
-uptool scan --only=npm,helm      # Only specific integrations
-uptool scan --exclude=terraform  # Exclude integrations
-```
-
-**Flags**:
-
-- `--format=FORMAT`: Output format (`table` or `json`)
-- `--only=INTEGRATIONS`: Comma-separated list of integrations to run
-- `--exclude=INTEGRATIONS`: Comma-separated list to skip
-
-**Output**: List of manifests with dependency counts
-
-### `uptool plan`
-
-Query upstream registries and generate an update plan.
-
-```bash
-uptool plan                      # Show available updates
-uptool plan --format=json        # JSON output
-uptool plan --out=plan.json      # Save to file
-uptool plan --only=npm           # Specific integrations
-```
-
-**Flags**:
-
-- `--format=FORMAT`: Output format (`table` or `json`)
-- `--out=FILE`: Save output to file
-- `--only=INTEGRATIONS`: Comma-separated integrations
-- `--exclude=INTEGRATIONS`: Comma-separated integrations to skip
-
-**Output**: Update plans showing current → target versions with impact assessment
-
-### `uptool update`
-
-Apply updates to manifest files.
-
-```bash
-uptool update --dry-run --diff   # Preview changes without applying
-uptool update --diff             # Apply with diff output
-uptool update --only=npm,helm    # Update specific ecosystems
-uptool update --exclude=precommit
-```
-
-**Flags**:
-
-- `--dry-run`: Show what would change without modifying files
-- `--diff`: Display unified diffs of changes
-- `--only=INTEGRATIONS`: Comma-separated list of integrations to run
-- `--exclude=INTEGRATIONS`: Comma-separated list to skip
-- `--format=FORMAT`: Output format (`table` or `json`)
-
-### `uptool list`
-
-List all available integrations and their status.
-
-```bash
-uptool list                          # List all integrations
-uptool list --category package-manager  # Filter by category
-uptool list --experimental            # Include experimental integrations
-```
-
-**Flags**:
-
-- `--category=CATEGORY`: Filter by category (e.g., `package-manager`, `infrastructure`, `tooling`)
-- `--experimental`: Include experimental integrations
-
-**Output**: Table showing integration ID, name, description, and status
+See [CLI Reference](docs/cli/commands.md) for complete documentation.
 
 ---
 
@@ -354,474 +266,98 @@ permissions:
 
 ## Integration Details
 
-**For detailed integration guides, see [docs/integrations/](docs/integrations/)**.
+See [docs/integrations/](docs/integrations/) for detailed guides.
 
-This section provides a quick overview. For comprehensive documentation including troubleshooting, examples, and best practices, refer to the individual integration guides.
-
-### npm
-
-**Files**: `package.json`
-**Strategy**: Custom JSON rewriting with constraint preservation
-**Registry**: npm Registry API (`https://registry.npmjs.org`)
-
-Updates all dependency types:
-
-- `dependencies`
-- `devDependencies`
-- `peerDependencies`
-- `optionalDependencies`
-
-Preserves version constraint prefixes (`^`, `~`, `>=`, etc.).
-
-**Example**:
-
-```json
-{
-  "dependencies": {
-    "express": "^4.18.0",  // Updates to "^4.19.2"
-    "lodash": "~4.17.20"   // Updates to "~4.17.21"
-  }
-}
-```
-
-### Helm
-
-**Files**: `Chart.yaml`
-**Strategy**: YAML rewriting
-**Registry**: Helm chart repositories (index.yaml)
-
-Updates chart dependencies while preserving structure and comments.
-
-**Example**:
-
-```yaml
-dependencies:
-  - name: postgresql
-    version: 12.0.0  # Updates to 18.1.8
-    repository: https://charts.bitnami.com/bitnami
-```
-
-### pre-commit
-
-**Files**: `.pre-commit-config.yaml`
-**Strategy**: Native `pre-commit autoupdate` command
-**Registry**: GitHub Releases (for hook repositories)
-
-Leverages pre-commit's built-in update mechanism since it updates the manifest directly.
-
-**Example**:
-
-```yaml
-repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0  # Updates to v6.0.0
-```
-
-### Terraform
-
-**Files**: `*.tf`
-**Strategy**: HCL parsing and rewriting
-**Registry**: Terraform Registry API (`https://registry.terraform.io`)
-
-Updates module versions in `module` blocks. Provider updates coming soon.
-
-**Example**:
-
-```hcl
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "3.0.0"  # Updates to "5.8.1"
-}
-```
-
-### tflint
-
-**Files**: `.tflint.hcl`
-**Strategy**: HCL parsing and rewriting
-**Registry**: GitHub Releases (for plugins)
-
-Updates tflint plugin versions.
-
-**Example**:
-
-```hcl
-plugin "aws" {
-  enabled = true
-  version = "0.21.0"  # Updates to "0.44.0"
-  source  = "github.com/terraform-linters/tflint-ruleset-aws"
-}
-```
-
-### asdf
-
-**Files**: `.tool-versions`
-**Strategy**: Line-based parsing and rewriting
-**Registry**: GitHub Releases (per tool via asdf plugin mapping)
-
-Updates tool versions managed by asdf. Currently supports detection and parsing. Version resolution and updates in active development.
-
-**Example**:
-
-```text
-go 1.23.0        # Updates to 1.25.0
-nodejs 20.10.0   # Updates to 22.0.0
-terraform 1.5.0  # Updates to 1.10.5
-```
-
-### mise
-
-**Files**: `mise.toml`, `.mise.toml`
-**Strategy**: TOML parsing and rewriting
-**Registry**: GitHub Releases (per tool)
-
-Updates tool versions managed by mise (formerly rtx). Supports both string format (`go = "1.23"`) and map format (`go = { version = "1.23" }`).
-
-**Example**:
-
-```toml
-[tools]
-go = "1.23"              # Updates to "1.25"
-node = "20"              # Updates to "22"
-golangci-lint = "2.6"    # Updates to "2.7"
-```
+**Quick examples**:
+- **npm**: Updates `package.json`, preserves constraints (`^`, `~`)
+- **Helm**: Updates `Chart.yaml` dependencies
+- **Terraform**: Updates module versions in `*.tf` files
+- **tflint**: Updates plugin versions in `.tflint.hcl`
+- **pre-commit**: Uses native `pre-commit autoupdate`
+- **asdf/mise**: Updates runtime tool versions (experimental)
 
 ---
 
 ## Architecture
 
-### Project Structure
-
-```text
-uptool/
-├── cmd/uptool/              # CLI entry point
-│   ├── main.go              # Main entry and integration registration
-│   └── cmd/                 # Cobra command handlers
-│       ├── root.go          # Root command and global flags
-│       ├── scan.go          # Scan command
-│       ├── plan.go          # Plan command
-│       └── update.go        # Update command
-├── internal/
-│   ├── version/             # Version embedding
-│   │   ├── VERSION          # Single source of truth for version
-│   │   └── version.go       # Version package
-│   ├── engine/              # Core orchestration
-│   │   ├── types.go         # Core types (Manifest, UpdatePlan, etc.)
-│   │   └── engine.go        # Scan/Plan/Update orchestration
-│   ├── registry/            # Registry API clients
-│   │   ├── npm.go           # npm Registry client
-│   │   ├── terraform.go     # Terraform Registry client
-│   │   ├── github.go        # GitHub Releases client
-│   │   └── helm.go          # Helm repository client
-│   ├── datasource/          # Version data sources
-│   ├── policy/              # Update policy engine
-│   ├── rewrite/             # Manifest rewriting
-│   ├── resolve/             # Version resolution
-│   └── integrations/        # Ecosystem integrations
-│       ├── npm/             # npm package.json
-│       ├── helm/            # Helm Chart.yaml
-│       ├── precommit/       # pre-commit hooks
-│       ├── terraform/       # Terraform modules
-│       ├── tflint/          # tflint plugins
-│       ├── asdf/            # asdf .tool-versions
-│       └── mise/            # mise mise.toml
-├── .github/
-│   ├── workflows/           # GitHub Actions CI/CD
-│   │   ├── ci.yml           # Continuous Integration
-│   │   ├── pre-release.yml  # Automated pre-release creation
-│   │   └── promote-release.yml  # Stable release promotion
-│   └── actions/             # Reusable actions
-│       └── setup-mise/      # mise setup action
-├── testdata/                # Test fixtures for each integration
-├── examples/                # Example configuration files
-├── docs/                    # Detailed documentation
-├── action.yml               # GitHub Action definition
-├── mise.toml                # Development tool versions
-└── README.md                # This file
-```
-
-### Integration Interface
-
-All integrations implement the same interface:
+uptool uses a clean integration interface:
 
 ```go
 type Integration interface {
-    Name() string
     Detect(ctx context.Context, repoRoot string) ([]*Manifest, error)
     Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error)
     Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error)
-    Validate(ctx context.Context, manifest *Manifest) error
 }
 ```
 
-**Workflow**:
+**Workflow**: Detect manifests → Query registries → Update files → Validate
 
-1. **Detect**: Scan repository tree for manifest files
-2. **Plan**: Query registries for available updates
-3. **Apply**: Rewrite manifests with new versions
-4. **Validate**: Check syntax and optionally run tool-specific validation
-
-### Concurrent Execution
-
-uptool uses Go's concurrency primitives for performance:
-
-- Concurrent scanning across integrations
-- Parallel planning with semaphore-controlled worker pools
-- Atomic file updates with diffs
+See [docs/architecture.md](docs/architecture.md) for complete system design.
 
 ---
 
 ## Configuration
 
-uptool supports optional configuration via a `uptool.yaml` file in your repository root. This allows you to control which integrations run and customize update policies per integration.
-
-See [docs/configuration.md](docs/configuration.md) for complete configuration reference.
-
-### Quick Configuration Example
-
-Create a `uptool.yaml` file:
+Optional `uptool.yaml` in your repository root:
 
 ```yaml
 version: 1
-
 integrations:
   - id: npm
     enabled: true
     policy:
       update: minor              # none, patch, minor, major
       allow_prerelease: false
-      pin: true
-
-  - id: helm
-    enabled: true
-    policy:
-      update: minor
-      allow_prerelease: false
-
-  - id: terraform
-    enabled: true
-    policy:
-      update: minor
-      allow_prerelease: false
-
-  - id: precommit
-    enabled: true
-    policy:
-      update: minor
-      allow_prerelease: false
-
-  - id: tflint
-    enabled: false             # Disable specific integrations
-    policy:
-      update: none
 ```
 
-### Behavior
-
-- If `uptool.yaml` exists, only enabled integrations will run
-- If no config file exists, all integrations run by default
-- CLI flags (`--only`, `--exclude`) override configuration
-- Invalid configuration will log a warning and use defaults
-
-### Example Configuration Files
-
-The [`examples/`](examples/) directory contains sample configuration files for various integrations:
-
-- **[`uptool.yaml`](examples/uptool.yaml)** - Complete uptool configuration with all integrations
-- **[`.tool-versions`](examples/.tool-versions)** - asdf runtime version manager configuration
-- **[`mise.toml`](examples/mise.toml)** - mise tool version manager configuration (string format)
-- **[`.mise.toml`](examples/.mise.toml)** - mise configuration (hidden file variant with map format)
+See [docs/configuration.md](docs/configuration.md) and [`examples/`](examples/) for complete reference.
 
 ---
 
 ## Version Management
 
-uptool uses **automated semantic versioning** based on conventional commits. This eliminates manual version management and ensures consistent, predictable releases.
+Automated semantic versioning via conventional commits:
+- `feat:` → minor bump (0.1.0 → 0.2.0)
+- `fix:` → patch bump (0.1.0 → 0.1.1)
+- `BREAKING CHANGE:` → major bump (0.1.0 → 1.0.0)
 
-### How It Works
-
-1. **Commits determine version bumps**:
-   - `feat:` commits → minor version bump (0.1.0 → 0.2.0)
-   - `fix:` commits → patch version bump (0.1.0 → 0.1.1)
-   - `BREAKING CHANGE:` → major version bump (0.1.0 → 1.0.0)
-   - Other types (`chore:`, `docs:`, etc.) → no version bump
-
-2. **Pre-release workflow** (automated with approval):
-   - Trigger workflow with pre-release type (rc/beta/alpha)
-   - System calculates next version from commits
-   - Tests run automatically
-   - **Approval gate**: Designated reviewers must approve
-   - Creates pre-release (e.g., `v0.2.0-rc.1`)
-   - Updates VERSION file across codebase
-   - Builds and publishes artifacts
-
-3. **Stable release workflow** (automated with approval):
-   - Provide pre-release tag to promote
-   - System auto-detects stable version (v0.2.0-rc.1 → v0.2.0)
-   - Tests run automatically
-   - **Approval gate**: Multiple reviewers must approve
-   - Updates VERSION file
-   - Promotes artifacts
-   - Updates CHANGELOG
-
-### Local Development
-
-```bash
-# Show current version
-mise run version-show
-
-# Manually bump versions (for local testing only)
-mise run version-bump-patch   # 0.1.0 → 0.1.1
-mise run version-bump-minor   # 0.1.0 → 0.2.0
-mise run version-bump-major   # 0.1.0 → 1.0.0
-```
-
-See [docs/versioning.md](docs/versioning.md) for complete documentation.
+GitHub Actions handle releases with approval gates. See [docs/versioning.md](docs/versioning.md).
 
 ---
 
 ## Development
 
-### Prerequisites
-
-- **Go 1.25** or later
-- Git
-- [mise](https://mise.jdx.dev/) (for task runner and tool management)
-- **VS Code** (recommended) - See [.vscode/README.md](.vscode/README.md) for setup
-
-### Available Tasks
-
-All development tasks are managed through mise. To see all available tasks:
-
-```bash
-mise tasks ls
-```
-
-Common tasks:
-
-- `mise run build` - Build the binary
-- `mise run test` - Run tests
-- `mise run check` - Run all quality checks
-- `mise run fmt` - Format code
-- `mise run lint` - Run linter
-- `mise run clean` - Clean build artifacts
-
-See `mise.toml` for the complete list of tasks.
-
-### Build from Source
-
-```bash
-git clone https://github.com/santosr2/uptool.git
-cd uptool
-
-# Install tools and build (recommended)
-mise install
-mise run build
-
-# Built binary will be in dist/uptool
-```
-
-### Run Tests
-
-```bash
-# Run all tests
-mise run test
-
-# Run with coverage
-mise run test-coverage
-
-# Run specific package tests
-go test ./internal/integrations/npm/...
-
-# Run with race detector
-go test -race ./...
-```
-
-### Code Quality
-
-```bash
-# Format code
-mise run fmt
-
-# Run linter
-mise run lint
-
-# Run all checks (fmt + vet + complexity + lint + test)
-mise run check
-```
-
-### Run Locally on This Repository
+**Prerequisites**: Go 1.25+, [mise](https://mise.jdx.dev/)
 
 ```bash
 # Build
 mise run build
 
-# Scan this repository
-mise run run-scan
+# Test
+mise run test
 
-# Plan updates
-mise run run-plan
-
-# Dry-run
-mise run run-update
+# Quality checks
+mise run check  # fmt + vet + lint + test
 ```
 
-### Adding a New Integration
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed instructions.
-
-Quick overview:
-
-1. Create `internal/integrations/<name>/<name>.go`
-2. Implement the `engine.Integration` interface
-3. Add registry client in `internal/registry/<name>.go` if needed
-4. Register in `internal/integrations/registry.go`
-5. Add test fixtures in `testdata/<name>/`
-6. Add integration tests in `internal/integrations/<name>/<name>_test.go`
-7. Update documentation (README, docs/integrations/<name>.md)
-8. Add example configuration in `examples/`
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and [.vscode/README.md](.vscode/README.md) for VS Code setup.
 
 ---
 
 ## Contributing
 
-We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-- Development setup
-- Coding standards
-- Testing requirements
-- Trunk-based workflow
-- Conventional commit guidelines
-- Version management process
+**Quick start**: Fork → Create branch → Add tests → Run `mise run check` → Open PR
 
-**Quick Start**:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with tests
-4. Run `mise run check` to validate
-5. Commit using conventional commits (`git commit -m 'feat: add amazing feature'`)
-6. Push (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+Use conventional commits: `feat:`, `fix:`, `docs:`, `chore:`
 
 ---
 
-## Security
+## Security & Governance
 
-For security concerns, please see [SECURITY.md](SECURITY.md).
-
-**tl;dr**: Report vulnerabilities via GitHub Security Advisories, not public issues.
-
----
-
-## Governance
-
-See [GOVERNANCE.md](GOVERNANCE.md) for:
-
-- Maintainer responsibilities
-- Decision-making process
-- PR review expectations
-
-**Workflow**: Trunk-based development (no Git Flow). All changes merge directly to `main` after review.
+- **Security**: Report vulnerabilities via [GitHub Security Advisories](https://github.com/santosr2/uptool/security/advisories), not public issues
+- **Governance**: Trunk-based development. See [GOVERNANCE.md](GOVERNANCE.md)
 
 ---
 
@@ -831,39 +367,10 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ---
 
-## Acknowledgments
+## Documentation & Support
 
-- Inspired by [Topgrade](https://github.com/topgrade-rs/topgrade), [Dependabot](https://github.com/dependabot/dependabot-core), and [Renovate](https://github.com/renovatebot/renovate)
-- Built with ❤️ in Go
-- Uses excellent libraries:
-  - [semver](https://github.com/Masterminds/semver) for version comparison
-  - [yaml.v3](https://gopkg.in/yaml.v3) for YAML parsing
-  - [HCL](https://github.com/hashicorp/hcl) for Terraform/tflint parsing
-  - [Cobra](https://github.com/spf13/cobra) for CLI interface
-  - [go-toml](https://github.com/pelletier/go-toml) for TOML parsing
+**Docs**: [Overview](docs/overview.md) • [Quick Start](docs/quickstart.md) • [Configuration](docs/configuration.md) • [Integrations](docs/integrations/) • [Examples](examples/)
 
----
+**Community**: [Issues](https://github.com/santosr2/uptool/issues) • [Discussions](https://github.com/santosr2/uptool/discussions) • [Changelog](CHANGELOG.md)
 
-## Support & Community
-
-### Documentation
-
-- **[Documentation Portal](docs/overview.md)** - Complete documentation index
-- **[Configuration Guide](docs/configuration.md)** - Complete `uptool.yaml` reference
-- **[Manifest Files Reference](docs/manifests.md)** - All supported manifest types
-- **[Integration Guides](docs/integrations/)** - Detailed guides for each integration
-- **[Examples](examples/)** - Example configurations for all integrations
-- **[Plugin Development](docs/plugin-development.md)** - Create external plugins
-- **[Version Management](docs/versioning.md)** - Automated versioning with conventional commits
-- **[GitHub Environments](docs/environments.md)** - Approval gates for releases
-- **[GitHub Action Usage](docs/action-usage.md)** - Using uptool in CI/CD
-
-### Community
-
-- **Issues**: [GitHub Issues](https://github.com/santosr2/uptool/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/santosr2/uptool/discussions)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
-- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
-- **Security**: [SECURITY.md](SECURITY.md)
-
-**Questions?** Open a discussion or reach out to the maintainers.
+Built with Go, inspired by Topgrade, Dependabot, and Renovate.

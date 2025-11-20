@@ -15,12 +15,6 @@ integrations:
     policy:
       update: minor
       allow_prerelease: false
-
-  - id: helm
-    enabled: true
-    policy:
-      update: minor
-      allow_prerelease: false
 ```
 
 ## Configuration Schema
@@ -36,111 +30,55 @@ integrations:                 # List of integration configurations
     match:                    # Optional: File matching rules
       files: [...]            # List of file patterns
     policy:                   # Update policy for this integration
-      enabled: true|false
       update: none|patch|minor|major
       allow_prerelease: true|false
       pin: true|false
-      cadence: daily|weekly|monthly
+      cadence: daily|weekly|monthly  # Update frequency (optional)
 
-org_policy:                   # Optional: Organization-wide settings
-  # Advanced settings (future)
+org_policy:                   # Optional: Organization-level policies
+  require_signoff_from: [...]  # List of required approvers
+  signing:                    # Artifact signing verification
+    cosign_verify: true|false
+  auto_merge:                 # Automatic PR merging
+    enabled: true|false
+    guards: [...]             # Required conditions
 ```
 
-## version
+## Configuration Fields
 
-**Type**: `integer`
-**Required**: Yes
-**Default**: N/A
+### version
+
+**Type**: `integer` | **Required**: Yes | **Default**: N/A
 
 The configuration format version. Currently only `1` is supported.
 
-```yaml
-version: 1
-```
+### integrations
 
-Future versions may introduce breaking changes to the configuration schema.
+**Type**: `array` | **Required**: No | **Default**: All integrations enabled
 
-## integrations
+List of integration configurations.
 
-**Type**: `array`
-**Required**: No
-**Default**: All integrations enabled with default policies
+#### id
 
-List of integration configurations. Each integration can be individually configured.
+**Type**: `string` | **Required**: Yes
 
-### Integration Object
-
-```yaml
-- id: npm                     # Integration identifier
-  enabled: true               # Enable this integration
-  match:                      # File matching (optional)
-    files:
-      - "package.json"
-      - "apps/*/package.json"
-  policy:                     # Update policy
-    enabled: true
-    update: minor
-    allow_prerelease: false
-    pin: true
-    cadence: weekly
-```
-
-### id
-
-**Type**: `string`
-**Required**: Yes
 **Allowed values**: `npm`, `helm`, `terraform`, `tflint`, `precommit`, `asdf`, `mise`
 
-The integration identifier. Must match a registered integration.
+The integration identifier.
 
-**Example**:
+#### enabled
 
-```yaml
-integrations:
-  - id: npm
-  - id: helm
-  - id: terraform
-```
+**Type**: `boolean` | **Required**: No | **Default**: `true`
 
-### enabled
+Whether this integration should run. CLI flags `--only` and `--exclude` override this setting.
 
-**Type**: `boolean`
-**Required**: No
-**Default**: `true`
+#### match
 
-Whether this integration should run.
+**Type**: `object` | **Required**: No
 
-**Example**:
+File matching rules for this integration.
 
-```yaml
-# Enable npm updates
-- id: npm
-  enabled: true
-
-# Disable terraform updates
-- id: terraform
-  enabled: false
-```
-
-**Note**: CLI flags `--only` and `--exclude` override this setting.
-
-### match
-
-**Type**: `object`
-**Required**: No
-**Default**: Integration-specific defaults
-
-File matching rules for this integration. Overrides integration defaults.
-
-#### match.files
-
-**Type**: `array` of `string`
-**Required**: No
-**Default**: Integration-specific patterns
-
-Glob patterns for files to include.
-
-**Example**:
+**match.files** - Array of glob patterns:
 
 ```yaml
 - id: npm
@@ -151,7 +89,7 @@ Glob patterns for files to include.
       - "packages/*/package.json"
 ```
 
-**Default Patterns by Integration**:
+**Default patterns by integration**:
 
 | Integration | Default Patterns |
 |-------------|------------------|
@@ -163,206 +101,93 @@ Glob patterns for files to include.
 | asdf | `.tool-versions` |
 | mise | `mise.toml`, `.mise.toml` |
 
-### policy
+#### policy
 
-**Type**: `object`
-**Required**: No
-**Default**: See defaults below
+**Type**: `object` | **Required**: No
 
 Update policy for this integration.
 
-```yaml
-policy:
-  enabled: true
-  update: minor
-  allow_prerelease: false
-  pin: true
-  cadence: weekly
-```
+**policy.update** - Maximum version bump to allow:
 
-#### policy.enabled
+| Value | Allows | Example |
+|-------|--------|---------|
+| `none` | No updates | Scan/plan only |
+| `patch` | Patch updates only | 1.2.3 → 1.2.4 |
+| `minor` | Patch + minor | 1.2.3 → 1.3.0 |
+| `major` | All updates | 1.2.3 → 2.0.0 |
 
-**Type**: `boolean`
-**Required**: No
-**Default**: `true`
-
-Whether to apply updates for this integration.
-
-```yaml
-# Scan and plan, but don't update
-- id: terraform
-  policy:
-    enabled: false
-```
-
-#### policy.update
-
-**Type**: `string`
-**Required**: No
 **Default**: `minor`
-**Allowed values**: `none`, `patch`, `minor`, `major`
 
-Maximum version bump to allow.
+**policy.allow_prerelease** - Include pre-release versions:
 
-**Values**:
+**Type**: `boolean` | **Default**: `false`
 
-- **`none`**: No updates (scan/plan only)
-- **`patch`**: Only patch updates (1.2.3 → 1.2.4)
-- **`minor`**: Patch and minor updates (1.2.3 → 1.3.0)
-- **`major`**: All updates including major (1.2.3 → 2.0.0)
+When `true`, considers versions like `1.2.3-alpha.1`, `1.2.3-beta.2`, `1.2.3-rc.1`.
 
-**Example**:
+**policy.pin** - Write exact versions or ranges:
 
-```yaml
-integrations:
-  # Conservative: only patch updates for runtime tools
-  - id: mise
-    policy:
-      update: patch
-
-  # Standard: minor updates for libraries
-  - id: npm
-    policy:
-      update: minor
-
-  # Aggressive: major updates for development tools
-  - id: precommit
-    policy:
-      update: major
-```
-
-**Semantic Versioning Rules**:
-
-| Current | Patch Allows | Minor Allows | Major Allows |
-|---------|--------------|--------------|--------------|
-| 1.2.3 | 1.2.4 | 1.3.0 | 2.0.0 |
-| 0.5.2 | 0.5.3 | 0.6.0 | 1.0.0 |
-| 2.0.0 | 2.0.1 | 2.1.0 | 3.0.0 |
-
-#### policy.allow_prerelease
-
-**Type**: `boolean`
-**Required**: No
-**Default**: `false`
-
-Whether to consider pre-release versions (alpha, beta, rc).
-
-**Example**:
-
-```yaml
-# Stable versions only
-- id: terraform
-  policy:
-    allow_prerelease: false
-
-# Include pre-releases for testing new features
-- id: helm
-  policy:
-    allow_prerelease: true
-```
-
-**Pre-release formats recognized**:
-
-- `1.2.3-alpha.1`
-- `1.2.3-beta.2`
-- `1.2.3-rc.1`
-- `1.2.3-pre`
-
-#### policy.pin
-
-**Type**: `boolean`
-**Required**: No
-**Default**: Depends on integration
-
-Whether to write exact versions or ranges.
-
-**Example**:
-
-```yaml
-# Write exact versions
-- id: terraform
-  policy:
-    pin: true
-# Result: version = "5.8.1"
-
-# Write version ranges (where supported)
-- id: npm
-  policy:
-    pin: false
-# Result: "express": "^4.19.2"
-```
-
-**Integration Support**:
+**Type**: `boolean` | **Default**: Depends on integration
 
 | Integration | pin: true | pin: false |
 |-------------|-----------|------------|
 | npm | `"4.19.2"` | `"^4.19.2"` (preserves constraint) |
 | helm | `12.0.0` | `12.0.0` (always pinned) |
-| terraform | `"5.8.1"` | `">= 5.8.1"` (not yet implemented) |
-| tflint | `"0.44.0"` | `"0.44.0"` (always pinned) |
-| precommit | `v6.0.0` | `v6.0.0` (always pinned) |
-| asdf | `1.25.0` | `1.25.0` (always pinned) |
+| terraform | `"5.8.1"` | `"5.8.1"` (always pinned) |
 | mise | `"1.25"` | `"1.25"` (always pinned) |
 
-#### policy.cadence
+**policy.cadence** - Update frequency for scheduled runs:
 
-**Type**: `string`
-**Required**: No
-**Default**: Not enforced
-**Allowed values**: `daily`, `weekly`, `monthly`
-**Status**: ⚠️ **Planned feature** (not yet implemented)
+**Type**: `string` | **Default**: None
 
-Recommended update frequency for CI/CD automation.
+**Values**: `daily`, `weekly`, `monthly`
 
-**Example**:
+Controls how often to check for updates in automated scenarios (primarily for GitHub Actions integration).
 
-```yaml
-- id: mise
-  policy:
-    cadence: weekly  # Update runtime tools weekly
+### org_policy
 
-- id: npm
-  policy:
-    cadence: daily   # Update dependencies daily
-```
+**Type**: `object` | **Required**: No
 
-This field is currently for documentation only. Future versions may enforce cadence in GitHub Actions.
+Organization-level policies for governance and automation.
 
-## org_policy
+**org_policy.require_signoff_from** - Required approvers:
 
-**Type**: `object`
-**Required**: No
-**Default**: None
-**Status**: ⚠️ **Planned feature** (not yet implemented)
+**Type**: `array of strings` | **Default**: None
 
-Organization-wide policy settings for enterprise use.
-
-**Planned features**:
+List of email addresses or team identifiers that must approve changes.
 
 ```yaml
 org_policy:
-  # Require sign-off for certain update types
   require_signoff_from:
     - "platform-team@company.com"
     - "security-team@company.com"
+```
 
-  # Artifact signing verification
+**org_policy.signing** - Artifact signing verification:
+
+**Type**: `object` | **Default**: None
+
+```yaml
+org_policy:
   signing:
-    cosign_verify: true
-    policy_url: "https://company.com/signing-policy.json"
+    cosign_verify: true  # Verify signatures with Cosign
+```
 
-  # Auto-merge settings for GitHub Actions
+**org_policy.auto_merge** - Automatic PR merging:
+
+**Type**: `object` | **Default**: None
+
+```yaml
+org_policy:
   auto_merge:
     enabled: true
     guards:
-      - "ci-green"
-      - "codeowners-approve"
-      - "security-scan-pass"
+      - "ci-green"           # All CI checks must pass
+      - "codeowners-approve"  # CODEOWNERS must approve
 ```
 
 ## Complete Examples
 
-### Conservative Configuration
+### Conservative (Production)
 
 For production systems requiring stability:
 
@@ -372,86 +197,26 @@ version: 1
 integrations:
   # Only patch updates for runtime dependencies
   - id: mise
-    enabled: true
     policy:
       update: patch
-      allow_prerelease: false
 
   - id: npm
-    enabled: true
     policy:
       update: patch
-      allow_prerelease: false
 
   # Minor updates for infrastructure
   - id: terraform
-    enabled: true
     policy:
       update: minor
-      allow_prerelease: false
 
   - id: helm
-    enabled: true
     policy:
       update: minor
-      allow_prerelease: false
-
-  # Disable dev tools updates
-  - id: precommit
-    enabled: false
-
-  - id: tflint
-    enabled: false
 ```
 
-### Aggressive Configuration
+### Comprehensive (All Features)
 
-For development environments or testing:
-
-```yaml
-version: 1
-
-integrations:
-  - id: npm
-    enabled: true
-    policy:
-      update: major
-      allow_prerelease: true
-
-  - id: helm
-    enabled: true
-    policy:
-      update: major
-      allow_prerelease: false
-
-  - id: terraform
-    enabled: true
-    policy:
-      update: major
-      allow_prerelease: false
-
-  - id: precommit
-    enabled: true
-    policy:
-      update: major
-      allow_prerelease: false
-
-  - id: tflint
-    enabled: true
-    policy:
-      update: major
-      allow_prerelease: false
-
-  - id: mise
-    enabled: true
-    policy:
-      update: minor  # Still conservative for runtime tools
-      allow_prerelease: false
-```
-
-### Monorepo Configuration
-
-For monorepos with multiple package.json files:
+Full configuration with all options:
 
 ```yaml
 version: 1
@@ -461,14 +226,19 @@ integrations:
     enabled: true
     match:
       files:
-        - "package.json"            # Root package.json
-        - "apps/*/package.json"     # App packages
-        - "packages/*/package.json" # Shared packages
-        - "tools/*/package.json"    # Tool packages
+        - "package.json"
+        - "apps/*/package.json"     # Monorepo support
+        - "packages/*/package.json"
     policy:
       update: minor
       allow_prerelease: false
-      pin: false  # Use ranges for npm
+      pin: false  # Use version ranges
+
+  - id: helm
+    enabled: true
+    policy:
+      update: minor
+      allow_prerelease: false
 
   - id: terraform
     enabled: true
@@ -479,41 +249,26 @@ integrations:
     policy:
       update: minor
       allow_prerelease: false
-```
-
-### Selective Integration Configuration
-
-Only update specific ecosystems:
-
-```yaml
-version: 1
-
-integrations:
-  # Enable only npm and Helm updates
-  - id: npm
-    enabled: true
-    policy:
-      update: minor
-      allow_prerelease: false
-
-  - id: helm
-    enabled: true
-    policy:
-      update: minor
-      allow_prerelease: false
-
-  # Explicitly disable others
-  - id: terraform
-    enabled: false
-
-  - id: tflint
-    enabled: false
 
   - id: precommit
-    enabled: false
+    enabled: true
+    policy:
+      update: major  # Aggressive for dev tools
+
+  - id: tflint
+    enabled: true
+    policy:
+      update: major
+
+  - id: asdf
+    enabled: true
+    policy:
+      update: patch  # Conservative for runtimes
 
   - id: mise
-    enabled: false
+    enabled: true
+    policy:
+      update: patch  # Conservative for runtimes
 ```
 
 ## Configuration Precedence
@@ -524,7 +279,7 @@ Settings are applied in this order (later overrides earlier):
 2. **`uptool.yaml` configuration** (if exists)
 3. **CLI flags** (`--only`, `--exclude`)
 
-**Example**:
+Example:
 
 ```yaml
 # uptool.yaml
@@ -540,33 +295,7 @@ uptool update --only=npm  # npm WILL update despite enabled: false
 
 ## Validation
 
-uptool validates configuration on startup:
-
-**Valid**:
-
-```yaml
-version: 1
-integrations:
-  - id: npm
-    enabled: true
-    policy:
-      update: minor
-```
-
-**Invalid** (logs warning, uses defaults):
-
-```yaml
-version: 1
-integrations:
-  - id: unknown_integration  # ❌ Unknown integration
-    enabled: true
-
-  - id: npm
-    policy:
-      update: invalid_value  # ❌ Invalid update value
-```
-
-**Validation errors are logged**:
+uptool validates configuration on startup. Invalid values log warnings and use defaults:
 
 ```text
 WARN: Unknown integration 'unknown_integration' in config, skipping
@@ -575,194 +304,22 @@ WARN: Invalid update policy 'invalid_value' for npm, using default 'minor'
 
 ## Best Practices
 
-### 1. Start Conservative
-
-Begin with `patch` or `minor` updates:
-
-```yaml
-version: 1
-integrations:
-  - id: npm
-    policy:
-      update: minor  # Safe default
-```
-
-### 2. Separate Runtime from Development Tools
-
-Use different update policies:
-
-```yaml
-integrations:
-  # Conservative for runtime
-  - id: mise
-    policy:
-      update: patch
-
-  # Aggressive for dev tools
-  - id: precommit
-    policy:
-      update: major
-```
-
-### 3. Test with Pre-releases First
-
-Enable pre-releases in development, disable in production:
-
-```yaml
-# dev-uptool.yaml
-integrations:
-  - id: npm
-    policy:
-      allow_prerelease: true
-
-# prod-uptool.yaml
-integrations:
-  - id: npm
-    policy:
-      allow_prerelease: false
-```
-
-### 4. Use Explicit File Patterns for Monorepos
-
-Avoid wildcards that match too broadly:
-
-```yaml
-# Good: Explicit paths
-- id: npm
-  match:
-    files:
-      - "apps/api/package.json"
-      - "apps/web/package.json"
-
-# Risky: May match too many
-- id: npm
-  match:
-    files:
-      - "**/package.json"  # Might match node_modules!
-```
-
-### 5. Document Policy Decisions
-
-Add comments explaining choices:
-
-```yaml
-integrations:
-  # Only patch updates for Terraform to avoid breaking infrastructure changes
-  - id: terraform
-    policy:
-      update: patch  # Infrastructure stability critical
-
-  # Major updates OK for pre-commit hooks (non-breaking)
-  - id: precommit
-    policy:
-      update: major  # Hooks are isolated, safe to update aggressively
-```
-
-## Integration-Specific Notes
-
-### npm
-
-- Preserves constraint prefixes (`^`, `~`) when `pin: false`
-- Updates all dependency types (dependencies, devDependencies, peerDependencies, optionalDependencies)
-- Respects package-lock.json after updates (run `npm install` to sync)
-
-### Helm
-
-- Updates chart dependencies in `dependencies` array
-- Requires repository URL to be specified in Chart.yaml
-- Always pins exact versions
-
-### Terraform
-
-- Updates module versions in `module` blocks
-- Provider updates coming soon
-- Respects HCL syntax and formatting
-
-### precommit
-
-- Uses native `pre-commit autoupdate` command
-- Updates hook revisions in `.pre-commit-config.yaml`
-- Queries GitHub Releases for latest versions
-
-### tflint
-
-- Updates plugin versions in `plugin` blocks
-- Queries GitHub Releases for tflint rulesets
-- Preserves HCL formatting
-
-### asdf
-
-- Updates tool versions in `.tool-versions` file
-- One tool per line format
-- Currently supports detection; version resolution in development
-
-### mise
-
-- Updates tool versions in `mise.toml` or `.mise.toml`
-- Supports both string format (`go = "1.25"`) and map format (`go = { version = "1.25" }`)
-- Preserves TOML structure and comments
+1. **Start conservative**: Use `patch` or `minor` for production
+2. **Separate policies**: Conservative for runtime, aggressive for dev tools
+3. **Explicit paths**: Avoid broad wildcards in monorepos (`apps/*/package.json` not `**/package.json`)
+4. **Document decisions**: Add comments explaining policy choices
 
 ## Troubleshooting
 
-### Configuration Not Loading
+**Config not loading**: Check `uptool.yaml` exists in root, valid YAML syntax, run with `-v`
 
-**Problem**: uptool ignores config file
+**Integration not running**: Verify `enabled: true`, no CLI overrides (`--exclude`), files match pattern
 
-**Causes**:
-
-1. File not in repository root
-2. Filename typo (must be `uptool.yaml`, not `uptool.yml`)
-3. Invalid YAML syntax
-
-**Solution**:
-
-```bash
-# Check file exists in root
-ls uptool.yaml
-
-# Validate YAML syntax
-yamllint uptool.yaml
-
-# Run with verbose output
-uptool scan -v
-```
-
-### Integration Not Running
-
-**Problem**: Integration doesn't run despite configuration
-
-**Check**:
-
-1. Is `enabled: true`?
-2. Are CLI flags overriding? (`--exclude=npm`)
-3. Are files matched by pattern?
-
-```yaml
-# Enable and verify file patterns
-- id: npm
-  enabled: true
-  match:
-    files:
-      - "package.json"  # Check this path is correct
-```
-
-### Policy Not Applied
-
-**Problem**: Updates bypass policy limits
-
-**Remember**: Policy only affects automatic updates, not manual selection
-
-```bash
-# Policy applies
-uptool update
-
-# Policy BYPASSED (manual override)
-uptool update --only=npm  # Updates regardless of policy.enabled
-```
+**Policy not applied**: Policy applies to `uptool update`, bypassed with `--only` flag
 
 ## See Also
 
-- [Integration Details](overview.md#integration-details)
-- [CLI Reference](overview.md#cli-reference)
-- [GitHub Action Configuration](action-usage.md)
-- [Example Configurations](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/uptool.yaml)
+- [CLI Reference](cli/commands.md) - Complete command documentation
+- [Integration Guides](integrations/README.md) - Integration-specific details
+- [GitHub Action Usage](action-usage.md) - CI/CD configuration
+- [Examples](https://github.com/santosr2/uptool/tree/main/examples) - Sample configurations
