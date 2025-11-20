@@ -4,12 +4,13 @@ uptool uses **GitHub Environments** with approval gates to control releases. Thi
 
 ## Overview
 
-Two environments are configured in the release workflows:
+Three environments are configured in the release workflows:
 
 1. **pre-release** - Used for creating pre-release versions (rc/beta/alpha)
 2. **production** - Used for promoting pre-releases to stable versions
+3. **patch-release** - Used for creating patch releases on release branches
 
-Both environments require manual approval from designated reviewers before the workflow can proceed with creating/promoting releases.
+All environments require manual approval from designated reviewers before the workflow can proceed with creating/promoting releases.
 
 ## Environment Configuration
 
@@ -86,6 +87,37 @@ Both environments require manual approval from designated reviewers before the w
 
 **Save** the environment
 
+#### 4. Create Patch Release Environment
+
+1. Click **New environment**
+2. Name: `patch-release`
+3. Click **Configure environment**
+
+**Configure the following protection rules**:
+
+- ✅ **Required reviewers**
+  - Add maintainers who should approve patch releases
+  - Recommended: At least 1 reviewer (can be same as pre-release)
+  - Ensures security/bug fixes are reviewed before release
+
+- ✅ **Wait timer** (optional)
+  - Set to 0 minutes for immediate review
+  - Patch releases are typically urgent (security fixes)
+
+- ✅ **Deployment branches and tags**
+  - Select: **Selected branches and tags**
+  - Add pattern: `release-*` (for release branches)
+  - This ensures only release branches can create patch releases
+
+- ⚠️ **Prevent self-review** (recommended)
+  - Enable this for security patches especially
+
+**Environment secrets** (if needed):
+
+- No additional secrets required for basic setup
+
+**Save** the environment
+
 ## Approval Workflow
 
 ### Pre-Release Creation
@@ -126,6 +158,27 @@ When someone triggers the **Promote to Stable Release** workflow:
 - Stable version (e.g., `v0.2.0`)
 - Link to the stable release page (once approved)
 
+### Patch Release Creation
+
+When someone triggers the **Patch Release** workflow:
+
+1. Workflow validates release branch exists
+2. Updates version files on release branch
+3. Builds binaries and generates SBOMs
+4. **Workflow pauses at the `release` job**
+5. GitHub sends notification to required reviewers
+6. Reviewer(s) must **approve** or **reject** the deployment
+7. If approved: artifacts are signed and patch release is created
+8. If rejected: workflow is cancelled
+
+**Approval screen shows**:
+
+- Release branch (e.g., `release-0.1`)
+- Patch version (e.g., `v0.1.1`)
+- Patch type (security or bugfix)
+- Commits included in patch
+- Link to the patch release page (once approved)
+
 ## Approving a Deployment
 
 ### As a Reviewer
@@ -142,7 +195,7 @@ When you receive a deployment approval request:
    - Check CHANGELOG updates
 
 5. Click **Review deployments**
-6. Select the environment (`pre-release` or `production`)
+6. Select the environment (`pre-release`, `production`, or `patch-release`)
 7. Add a comment (optional but recommended):
 
    ```text
@@ -169,12 +222,21 @@ Before approving a stable release:
 - [ ] Version matches what was tested
 - [ ] All artifacts are present
 
+Before approving a patch release:
+
+- [ ] Patch is on correct release branch (e.g., `release-0.1`)
+- [ ] Version increment is correct (patch only)
+- [ ] Security vulnerability is properly fixed (if security patch)
+- [ ] Changes are minimal and targeted (no feature additions)
+- [ ] All tests passed on release branch
+- [ ] No conflicts with existing stable releases
+
 ## Viewing Deployment History
 
 GitHub tracks all deployments in the environment:
 
 1. Go to **Settings** → **Environments**
-2. Click on `pre-release` or `production`
+2. Click on `pre-release`, `production`, or `patch-release`
 3. View **Deployment history**:
    - Who triggered the workflow
    - Who approved/rejected
@@ -222,6 +284,13 @@ If you need to bypass approval (emergency only):
 - Recommended: 2-3 reviewers
 - Should include: Senior maintainers, security lead
 
+**Patch release environment**:
+
+- Minimum: 1 reviewer
+- Recommended: 1-2 reviewers (can be same as pre-release)
+- Should include: Security lead (for security patches), maintainers
+- Note: Security patches should be expedited but still reviewed
+
 ### Branch Protection
 
 Combine environment protection with branch protection:
@@ -233,11 +302,18 @@ Combine environment protection with branch protection:
    - ✅ Require branches to be up to date
    - ✅ Include administrators
 
+3. Add rule for `release-*` pattern (for patch release branches):
+   - ✅ Require pull request reviews (at least 1)
+   - ✅ Require status checks to pass
+   - ✅ Include administrators
+   - ✅ Restrict who can push (maintainers only)
+
 This ensures:
 
 - Code is reviewed before merging
 - Tests pass before merging
 - Releases require additional approval
+- Patch releases are protected and audited
 
 ### Audit Trail
 
@@ -257,10 +333,20 @@ Export deployment logs regularly for compliance:
 
 ## Example Release Flow
 
+### Standard Release Flow
+
 1. **Pre-Release**: Trigger workflow → Reviewer approves → `v0.2.0-rc.1` created
 2. **Testing**: Test artifacts, fix issues, create new RC if needed
 3. **Promotion**: Trigger promote workflow → Multiple reviewers approve → `v0.2.0` created
 4. **Audit**: All approvals logged in environment history
+
+### Patch Release Flow
+
+1. **Security Fix**: Vulnerability discovered in `v0.1.0`
+2. **Create Branch**: Create `release-0.1` from `v0.1.0` tag (if not exists)
+3. **Apply Fix**: Cherry-pick security fix to release branch
+4. **Patch Release**: Trigger patch workflow → Reviewer approves → `v0.1.1` created
+5. **Audit**: Patch release approval logged in patch-release environment history
 
 ## See Also
 

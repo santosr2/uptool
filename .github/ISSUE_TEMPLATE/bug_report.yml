@@ -81,7 +81,7 @@ body:
     id: go-version
     attributes:
       label: Go Version (if building from source)
-      placeholder: go version go1.23.0 darwin/arm64
+      placeholder: go version go1.25.0 darwin/arm64
 
   - type: dropdown
     id: usage
