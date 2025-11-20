@@ -8,11 +8,11 @@ uptool combines the ecosystem breadth of [Topgrade](https://github.com/topgrade-
 
 ## Why uptool?
 
-Modern projects use dozens of tools across multiple ecosystems:
+Modern projects use dozens of tools across multiple ecosystems. uptool helps you manage:
 
-- **Language dependencies**: npm, pip, go modules
-- **Infrastructure tools**: Terraform, Helm
-- **Development tools**: pre-commit, tflint
+- **Language dependencies**: npm packages
+- **Infrastructure tools**: Terraform modules, Helm charts
+- **Development tools**: pre-commit hooks, tflint plugins
 - **Runtime version managers**: asdf (`.tool-versions`), mise (`mise.toml`)
 
 Each ecosystem has its own update mechanism. Keeping them all current is tedious and error-prone.
@@ -107,8 +107,8 @@ uptool update --only npm,terraform
 | **pre-commit** | ✅ Stable | `.pre-commit-config.yaml` | GitHub Releases |
 | **Terraform** | ✅ Stable | `*.tf` | Terraform Registry API |
 | **tflint** | ✅ Stable | `.tflint.hcl` | GitHub Releases |
-| **asdf** | ✅ Stable | `.tool-versions` | GitHub Releases (per tool) |
-| **mise** | ✅ Stable | `mise.toml`, `.mise.toml` | GitHub Releases (per tool) |
+| **asdf** | ⚠️ Experimental | `.tool-versions` | GitHub Releases (per tool) |
+| **mise** | ⚠️ Experimental | `mise.toml`, `.mise.toml` | GitHub Releases (per tool) |
 
 ---
 
@@ -160,7 +160,8 @@ Ready to get started? Choose your path:
 !!! info Development Status
     uptool is under active development. The current focus is on:
 
-- ✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, asdf, mise)
+- ✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, tflint)
+- 🚧 Completing asdf/mise integrations (detection works, updates not yet implemented)
 - 🚧 Expanding test coverage (target: >70%)
 - 🚧 Adding Python ecosystem support
 - 📝 Improving documentation and examples

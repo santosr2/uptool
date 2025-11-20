@@ -302,7 +302,7 @@ To improve this plugin:
 
 ## License
 
-Same as uptool - Apache License 2.0
+Same as uptool - MIT License
 
 ## See Also
 

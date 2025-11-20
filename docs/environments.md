@@ -200,48 +200,11 @@ If you need to bypass approval (emergency only):
 
 ## Troubleshooting
 
-### Workflow Stuck on "Waiting for approval"
+**Workflow stuck waiting**: Check Actions tab for "Review deployments" button, verify you're a required reviewer
 
-**Problem**: Workflow shows waiting for approval but no notification received
+**Cannot approve**: Ensure you're listed as reviewer and didn't trigger the workflow yourself (if self-review prevented)
 
-**Solutions**:
-
-1. Check **Actions** tab for the workflow run
-2. Look for the "Review deployments" button
-3. Check your GitHub notification settings
-4. Verify you're listed as a required reviewer
-
-### Cannot Approve Deployment
-
-**Problem**: "Approve and deploy" button is disabled
-
-**Causes**:
-
-1. You're not listed as a required reviewer
-   - Solution: Ask repository admin to add you
-2. You triggered the workflow and self-review is prevented
-   - Solution: Ask another reviewer to approve
-3. Environment doesn't exist
-   - Solution: Follow setup instructions above
-
-### Environment Not Found
-
-**Problem**: Workflow fails with "Environment not found" error
-
-**Solution**:
-
-```bash
-# Verify environment names in workflows match exactly
-# .github/workflows/pre-release.yml
-environment:
-  name: pre-release  # Must match GitHub environment name
-
-# .github/workflows/promote-release.yml
-environment:
-  name: production   # Must match GitHub environment name
-```
-
-Check **Settings** → **Environments** to confirm names.
+**Environment not found**: Verify environment names in workflow files match **Settings** → **Environments** exactly
 
 ## Security Best Practices
 
@@ -292,56 +255,12 @@ Export deployment logs regularly for compliance:
 2. View deployment history
 3. Document approvals in release notes
 
-## Example: Full Release Flow
+## Example Release Flow
 
-### Scenario: Releasing v0.2.0
-
-**Step 1: Pre-Release Creation**
-
-```bash
-# Developer commits features
-git commit -m "feat: add Python integration"
-git push origin main
-
-# Trigger pre-release workflow
-# Actions → Pre-Release → Run workflow → Type: rc
-```
-
-**Step 2: Pre-Release Approval**
-
-- Workflow pauses at `build` job
-- Reviewer checks commits and tests
-- Reviewer approves deployment
-- Pre-release `v0.2.0-rc.1` is created
-
-**Step 3: Testing Phase**
-
-- Download and test pre-release artifacts
-- Report any issues found
-- Fix issues and create `v0.2.0-rc.2` if needed
-- Repeat until stable
-
-**Step 4: Stable Release Promotion**
-
-```bash
-# Trigger promote workflow
-# Actions → Promote to Stable Release → Run workflow
-# Input: v0.2.0-rc.1
-```
-
-**Step 5: Production Approval**
-
-- Workflow pauses at `promote` job
-- Reviewers confirm pre-release testing completed
-- Multiple reviewers approve
-- Stable release `v0.2.0` is created
-- CHANGELOG is updated
-
-**Step 6: Audit Trail**
-
-- All approvals logged in environment history
-- Release notes include reviewer names
-- Deployment history shows timeline
+1. **Pre-Release**: Trigger workflow → Reviewer approves → `v0.2.0-rc.1` created
+2. **Testing**: Test artifacts, fix issues, create new RC if needed
+3. **Promotion**: Trigger promote workflow → Multiple reviewers approve → `v0.2.0` created
+4. **Audit**: All approvals logged in environment history
 
 ## See Also
 

@@ -422,43 +422,8 @@ integrations:
 
 See [configuration.md](configuration.md) for complete reference.
 
-## Troubleshooting
-
-### Manifest Not Detected
-
-**Problem**: uptool doesn't find your manifest file
-
-**Solutions**:
-
-1. Run `uptool scan` to see what's detected
-2. Check file is in repository root or subdirectory
-3. Verify filename matches exactly (e.g., `package.json` not `Package.json`)
-4. Use `--only=<integration>` to test specific integration
-
-### Manifest Not Updated
-
-**Problem**: uptool detects manifest but doesn't update it
-
-**Solutions**:
-
-1. Run `uptool plan` to see if updates are available
-2. Check registry connectivity (npm, Terraform Registry, etc.)
-3. Verify version constraints allow updates
-4. Check integration policy in `uptool.yaml`
-
-### Format Preserved
-
-uptool preserves:
-
-- ✅ Comments (YAML, HCL, TOML)
-- ✅ Formatting (indentation, spacing)
-- ✅ Key order (JSON, YAML)
-- ✅ Version constraint prefixes (`^`, `~`, `>=`)
-
-If formatting is changed unexpectedly, please open an issue.
-
 ## See Also
 
-- [Configuration Reference](configuration.md)
-- [Integration Details](overview.md#integration-details)
-- [Version Management](versioning.md)
+- [Configuration Reference](configuration.md) - Configure update policies
+- [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
+- [Integration Guides](integrations/README.md) - Detailed integration documentation

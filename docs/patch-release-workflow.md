@@ -117,110 +117,13 @@ Result:
   - PR to release-0.2
 ```
 
-## Complete Workflow Examples
+## Quick Examples
 
-### Example 1: Security Vulnerability in Multiple Versions
+**Security patch**: Fix on main → Run "Coordinate Security Patches" workflow → Review automated PRs → Run "Patch Release" for each branch → Publish advisory
 
-**Scenario**: Critical security vulnerability affects 0.1.x and 0.2.x
+**Bug fix**: Cherry-pick to release branch → Run "Patch Release" workflow
 
-**Steps**:
-
-1. **Fix on main**:
-
-   ```bash
-   git checkout main
-   # Fix the vulnerability
-   git commit -m "fix(security): resolve CVE-2024-XXXXX"
-   git push origin main
-   # Note the commit SHA: abc123
-   ```
-
-2. **Ensure release branches exist**:
-   - Check if `release-0.1` and `release-0.2` exist
-   - If not, use **Create Release Branch** workflow
-
-3. **Coordinate patches**:
-   - Run **Coordinate Security Patches** workflow
-   - Affected versions: `0.1.x,0.2.x`
-   - Fix commits: `abc123`
-   - Severity: `critical`
-
-4. **Review and merge PRs**:
-   - Review the automated PRs created for each branch
-   - Ensure tests pass
-   - Merge PRs
-
-5. **Create patch releases**:
-   - Run **Patch Release** workflow for `release-0.1`
-   - Run **Patch Release** workflow for `release-0.2`
-   - Patch type: `security`
-
-6. **Announce**:
-   - Publish security advisory
-   - Notify users to upgrade
-   - Update affected versions in advisory
-
-### Example 2: Manual Bug Fix to Previous Version
-
-**Scenario**: User reports critical bug in 0.1.x, but main is on 0.2.x
-
-**Steps**:
-
-1. **Reproduce and fix**:
-
-   ```bash
-   git checkout main
-   # Fix the bug
-   git commit -m "fix: critical bug in dependency parsing"
-   git push origin main
-   # Note the commit SHA: def456
-   ```
-
-2. **Cherry-pick to release branch**:
-
-   ```bash
-   git checkout release-0.1
-   git cherry-pick def456
-   git push origin release-0.1
-   ```
-
-3. **Create patch release**:
-   - Run **Patch Release** workflow
-   - Release branch: `release-0.1`
-   - Patch type: `bugfix`
-
-### Example 3: Creating a New Release Branch
-
-**Scenario**: Just released v0.2.0, need to support 0.1.x for 6 months
-
-**✨ Automated Approach** (Recommended):
-
-When you run the **Promote to Stable Release** workflow for v0.2.0, it will **automatically** create the `release-0.1` branch. No manual action needed!
-
-**Manual Approach** (if needed):
-
-1. **Verify latest stable tag**:
-
-   ```bash
-   git tag -l "v0.1.*" | grep -v '\-' | sort -V | tail -n 1
-   # Output: v0.1.0
-   ```
-
-2. **Create release branch**:
-   - Run **Create Release Branch** workflow
-   - Version: `0.1`
-
-3. **Verify branch**:
-
-   ```bash
-   git fetch origin
-   git checkout release-0.1
-   cat .github/RELEASE_BRANCH_README.md
-   ```
-
-4. **Set calendar reminder**:
-   - 6 months from v0.2.0 release date
-   - Archive `release-0.1` when support ends
+**New release branch**: Automatically created when promoting to stable (or use "Create Release Branch" workflow)
 
 ## Release Branch Management
 
@@ -298,119 +201,33 @@ Users can pin to different levels:
 
 ## Troubleshooting
 
-### Cherry-pick Conflicts
+**Cherry-pick conflicts**: Check created issue for manual backport instructions, resolve conflicts manually, run Patch Release workflow
 
-If **Coordinate Security Patches** fails with conflicts:
+**Missing release branch**: Run "Create Release Branch" workflow first
 
-1. Check the created issue for manual backport instructions
-2. Manually resolve conflicts:
+**Failed workflow**: Check logs, fix issues on release branch, re-run
 
-   ```bash
-   git checkout release-0.1
-   git cherry-pick abc123
-   # Resolve conflicts
-   git add .
-   git cherry-pick --continue
-   git push origin release-0.1
-   ```
-
-3. Run **Patch Release** workflow
-
-### Missing Release Branch
-
-If you try to patch a version without a release branch:
-
-1. Run **Create Release Branch** first
-2. Then proceed with patching
-
-### Failed Patch Release
-
-If **Patch Release** workflow fails:
-
-1. Check workflow logs for errors
-2. Common issues:
-   - Version files not updated correctly
-   - Build failures
-   - Test failures
-3. Fix issues on the release branch
-4. Re-run workflow
-
-### Wrong Version Number
-
-If the patch version is wrong:
-
-1. Delete the tag (if created):
-
-   ```bash
-   git tag -d v0.1.1
-   git push origin :refs/tags/v0.1.1
-   ```
-
-2. Fix version files manually
-3. Re-run workflow
+**Wrong version**: Delete tag, fix version files, re-run workflow
 
 ## Best Practices
 
-### 1. Security Patches
-
-- ✅ **Do**: Use automated workflows for consistency
-- ✅ **Do**: Test patches thoroughly before release
-- ✅ **Do**: Announce security updates prominently
-- ❌ **Don't**: Delay security patches
-- ❌ **Don't**: Mix features with security fixes
-
-### 2. Bug Fixes
-
-- ✅ **Do**: Only backport critical bugs
-- ✅ **Do**: Document why the backport is necessary
-- ❌ **Don't**: Backport non-critical bugs
-- ❌ **Don't**: Introduce new features in patches
-
-### 3. Communication
-
-- ✅ **Do**: Update security advisories with fixed versions
-- ✅ **Do**: Notify users via GitHub releases
-- ✅ **Do**: Document in CHANGELOG.md
-- ❌ **Don't**: Silently release security fixes
-
-### 4. Version Management
-
-- ✅ **Do**: Follow semantic versioning strictly
-- ✅ **Do**: Keep mutable tags updated
-- ✅ **Do**: Document support timelines
-- ❌ **Don't**: Change immutable tags
-- ❌ **Don't**: Extend support without announcement
+- Only backport critical security fixes and bugs
+- Test patches thoroughly before release
+- Announce security updates via advisories and releases
+- Follow semantic versioning strictly
+- Never change immutable tags or mix features with patches
 
 ## FAQ
 
-### When should I create a release branch?
+**When to create release branch?** After releasing a new minor version (automated via Promote workflow)
 
-After releasing a new minor version. For example:
+**Support duration?** 6 months security patches after next minor release
 
-- Release v0.2.0 → Create `release-0.1` to support 0.1.x
+**Backport features?** No, only security fixes and critical bugs
 
-### How long are release branches supported?
+**Cherry-pick conflicts?** Workflow creates an issue with manual instructions
 
-Security patches only, for 6 months after the next minor release.
-
-### Can I backport features?
-
-No. Only security fixes and critical bug fixes. Features go to `main` only.
-
-### What if a security fix doesn't apply cleanly?
-
-The **Coordinate Security Patches** workflow will create an issue with manual instructions.
-
-### How do I know which versions need patches?
-
-Check the security advisory for affected versions. Example:
-
-- Affected: < 0.2.3
-- Needs patches: 0.1.x (via release-0.1)
-
-### Should I update mutable tags for patches?
-
-The workflow automatically updates the minor tag (e.g., `v0.1`). You don't need to manually update it.
+**Update mutable tags?** Automatic via workflow
 
 ## Related Documentation
 

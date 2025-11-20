@@ -171,24 +171,23 @@ uptool scan --verbose
 Create a `uptool.yaml` configuration file to customize behavior:
 
 ```yaml
-# Enable/disable specific integrations
+version: 1
+
 integrations:
-  npm:
+  - id: npm
     enabled: true
-  terraform:
+    policy:
+      update: minor           # none, patch, minor, major
+      allow_prerelease: false
+
+  - id: terraform
     enabled: true
-  helm:
+    policy:
+      update: major
+      allow_prerelease: false
+
+  - id: helm
     enabled: false  # Skip Helm charts
-
-# Update policies
-policies:
-  npm:
-    allow_major: false  # Only minor and patch updates
-    allow_prerelease: false
-
-  terraform:
-    allow_major: true
-    version_constraints: "~>"  # Use pessimistic constraints
 ```
 
 See the [Configuration Guide](configuration.md) for more details.
@@ -224,81 +223,9 @@ See the [GitHub Action Usage Guide](action-usage.md) for more examples.
 
 ---
 
-## Example Projects
+## Example Configurations
 
-Check out example configurations:
-
-- **JavaScript Project**: [examples/javascript](https://github.com/santosr2/uptool/tree/main/examples/javascript)
-- **Terraform Project**: [examples/terraform](https://github.com/santosr2/uptool/tree/main/examples/terraform)
-- **Multi-Language**: [examples/monorepo](https://github.com/santosr2/uptool/tree/main/examples/monorepo)
-
----
-
-## Common Workflows
-
-### Daily Dependency Scan
-
-```bash
-# Add to crontab
-0 9 * * * cd /path/to/project && uptool scan
-```
-
-### Pre-commit Hook
-
-```bash
-# .pre-commit-config.yaml
-repos:
-  - repo: local
-    hooks:
-      - id: uptool-scan
-        name: Scan for outdated dependencies
-        entry: uptool scan
-        language: system
-        pass_filenames: false
-```
-
-### Integration with CI
-
-```bash
-# In your CI script
-uptool scan || exit 1
-uptool plan --format json > updates.json
-```
-
----
-
-## Troubleshooting
-
-### No Updates Found
-
-If `uptool scan` doesn't find updates:
-
-1. Check that manifest files exist and are valid
-2. Verify internet connectivity (uptool queries registries)
-3. Run with `--verbose` to see debug output
-
-### Permission Denied
-
-If you get permission errors:
-
-```bash
-# On Linux/macOS
-sudo chmod +x /usr/local/bin/uptool
-
-# Or install to user directory
-go install github.com/santosr2/uptool/cmd/uptool@latest
-```
-
-### Rate Limiting
-
-If you hit API rate limits:
-
-```bash
-# Use authentication for higher limits
-export NPM_TOKEN=your-npm-token
-export GITHUB_TOKEN=your-github-token
-uptool scan
-```
+See the [examples/](../examples/) directory for sample configurations: [uptool.yaml](../examples/uptool.yaml), [uptool-minimal.yaml](../examples/uptool-minimal.yaml), [uptool-monorepo.yaml](../examples/uptool-monorepo.yaml)
 
 ---
 
