@@ -59,15 +59,18 @@ See [environments.md](environments.md) for approval gate setup.
 ## Version Tags
 
 **Immutable** (never change):
+
 - Stable: `v0.1.0`, `v0.2.0`
 - Pre-release: `v0.2.0-rc.1`, `v1.0.0-beta.2`
 
 **Mutable** (auto-updated for GitHub Actions):
+
 - `v0` → latest `v0.x.x` stable
 - `v0.1` → latest `v0.1.x` patch
 - `v0-rc` → latest `v0.x.x` pre-release
 
 **Usage**:
+
 ```yaml
 # Recommended
 - uses: santosr2/uptool@v0
@@ -82,6 +85,7 @@ See [environments.md](environments.md) for approval gate setup.
 ## Files Updated Automatically
 
 When versions change, `bump-my-version` updates:
+
 - `internal/version/VERSION` - Source of truth
 - `README.md` - Action version examples
 - `SECURITY.md` - Supported versions
@@ -109,7 +113,7 @@ Defines version format, files to update, and search/replace patterns.
 
 ## See Also
 
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Conventional commit guidelines
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Conventional commit guidelines
 - [environments.md](environments.md) - Approval gate configuration
 - [Conventional Commits](https://www.conventionalcommits.org/)
 - [Semantic Versioning](https://semver.org/)

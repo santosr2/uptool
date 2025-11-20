@@ -26,4 +26,4 @@ Multi-ecosystem support • Manifest-first updates • CLI & GitHub Action • S
 
 - [Installation](installation.md) • [Quick Start](quickstart.md) • [Configuration](configuration.md)
 - [CLI Reference](cli/commands.md) • [Integrations](integrations/README.md) • [GitHub Action](action-usage.md)
-- [Architecture](architecture.md) • [Main README](../README.md)
+- [Architecture](architecture.md) • [Main README](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/README.md)

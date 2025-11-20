@@ -30,6 +30,7 @@ jobs:
 ```
 
 **Version pinning**:
+
 - `@v0` - Latest stable (auto-updates)
 - `@v0.1` - Latest patch
 - `@v0.1.0` - Exact version (most secure)
@@ -114,6 +115,7 @@ steps:
 | `pr-url` | Created PR URL (if applicable) |
 
 **Usage**:
+
 ```yaml
 - uses: santosr2/uptool@v0
   id: uptool
@@ -128,6 +130,7 @@ steps:
 ## Permissions
 
 **Minimum required**:
+
 ```yaml
 permissions:
   contents: write          # To commit changes
@@ -135,6 +138,7 @@ permissions:
 ```
 
 **For auto-merge**:
+
 ```yaml
 permissions:
   contents: write
@@ -202,6 +206,7 @@ steps:
 ### PR Not Created
 
 **Check**:
+
 - Permissions include `contents: write` and `pull-requests: write`
 - Token has repo access
 - No existing PR with same branch name
@@ -209,6 +214,7 @@ steps:
 ### No Updates Found
 
 **Check**:
+
 - Manifest files exist in repository
 - Integration enabled in `uptool.yaml`
 - Run with `dry-run: 'true'` to see debug output
@@ -216,6 +222,7 @@ steps:
 ### Authentication Errors
 
 **For private packages**:
+
 ```yaml
 - name: Setup npm auth
   run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
@@ -228,6 +235,7 @@ steps:
 ### Action Times Out
 
 **Increase timeout**:
+
 ```yaml
 - uses: santosr2/uptool@v0
   timeout-minutes: 15  # Default is 360
@@ -245,7 +253,8 @@ steps:
 
 ## Examples
 
-See [.github/workflows/]( ../../.github/workflows/) for working examples:
+See [.github/workflows/](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/.github/workflows/) for working examples:
+
 - `dependency-updates.yml` - Weekly automated updates
 - `dependency-scan.yml` - PR scan checks
 
@@ -253,4 +262,4 @@ See [.github/workflows/]( ../../.github/workflows/) for working examples:
 
 - [Quick Start](quickstart.md) - CLI usage
 - [Configuration](configuration.md) - `uptool.yaml` reference
-- [action.yml](../action.yml) - Action definition
+- [action.yml](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/action.yml) - Action definition

@@ -21,6 +21,7 @@ Module versions in `module` blocks:
 - `module` block `version` attributes - Terraform Registry modules
 
 **Not yet supported** (future):
+
 - Provider versions in `required_providers` blocks
 - Git-based module source versions
 

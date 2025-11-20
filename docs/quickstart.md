@@ -225,7 +225,7 @@ See the [GitHub Action Usage Guide](action-usage.md) for more examples.
 
 ## Example Configurations
 
-See the [examples/](../examples/) directory for sample configurations: [uptool.yaml](../examples/uptool.yaml), [uptool-minimal.yaml](../examples/uptool-minimal.yaml), [uptool-monorepo.yaml](../examples/uptool-monorepo.yaml)
+See the [examples/](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/) directory for sample configurations: [uptool.yaml](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/uptool.yaml), [uptool-minimal.yaml](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/uptool-minimal.yaml), [uptool-monorepo.yaml](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/uptool-monorepo.yaml)
 
 ---
 
