@@ -1,0 +1,170 @@
+name: Verify Signed Commits
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  verify-commits:
+    name: Verify Commit Signatures
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Verify commit signatures
+        id: verify
+        run: |
+          echo "## 🔐 Commit Signature Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Get commits from PR
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+            HEAD_REF="${{ github.event.pull_request.head.sha }}"
+            COMMITS=$(git log --pretty=format:"%H" $BASE_REF..$HEAD_REF)
+          else
+            # Get recent commits from push
+            COMMITS=$(git log --pretty=format:"%H" -n 10)
+          fi
+
+          TOTAL=0
+          SIGNED=0
+          UNSIGNED=0
+          UNSIGNED_COMMITS=""
+
+          while IFS= read -r commit; do
+            if [ -z "$commit" ]; then
+              continue
+            fi
+
+            TOTAL=$((TOTAL+1))
+
+            # Check if commit is signed
+            VERIFICATION=$(git verify-commit "$commit" 2>&1 || echo "not-signed")
+
+            AUTHOR=$(git log -1 --pretty=format:"%an <%ae>" "$commit")
+            MESSAGE=$(git log -1 --pretty=format:"%s" "$commit")
+            SHORT_SHA=${commit:0:7}
+
+            if echo "$VERIFICATION" | grep -q "Good signature\|valid signature"; then
+              echo "✅ **Signed**: \`$SHORT_SHA\` - $MESSAGE" >> $GITHUB_STEP_SUMMARY
+              SIGNED=$((SIGNED+1))
+            elif echo "$VERIFICATION" | grep -q "gpg: Signature made"; then
+              echo "⚠️ **Signed (unverified)**: \`$SHORT_SHA\` - $MESSAGE" >> $GITHUB_STEP_SUMMARY
+              SIGNED=$((SIGNED+1))
+            else
+              echo "❌ **Unsigned**: \`$SHORT_SHA\` - $MESSAGE (by $AUTHOR)" >> $GITHUB_STEP_SUMMARY
+              UNSIGNED=$((UNSIGNED+1))
+              UNSIGNED_COMMITS="$UNSIGNED_COMMITS\n- $SHORT_SHA: $MESSAGE"
+            fi
+          done <<< "$COMMITS"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total commits checked**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+          echo "- **Signed commits**: $SIGNED" >> $GITHUB_STEP_SUMMARY
+          echo "- **Unsigned commits**: $UNSIGNED" >> $GITHUB_STEP_SUMMARY
+
+          if [ $TOTAL -gt 0 ]; then
+            PERCENTAGE=$((SIGNED * 100 / TOTAL))
+            echo "- **Signature coverage**: ${PERCENTAGE}%" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ℹ️ About Commit Signing" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Signed commits provide cryptographic proof of authorship and integrity." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**How to sign commits:**" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Configure GPG key" >> $GITHUB_STEP_SUMMARY
+          echo "git config --global user.signingkey YOUR_GPG_KEY_ID" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Sign commits" >> $GITHUB_STEP_SUMMARY
+          echo "git commit -S -m \"your message\"" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Or enable automatic signing" >> $GITHUB_STEP_SUMMARY
+          echo "git config --global commit.gpgsign true" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+          # Set output for other steps
+          echo "unsigned_count=$UNSIGNED" >> $GITHUB_OUTPUT
+          echo "signed_count=$SIGNED" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
+
+      - name: Add PR comment for unsigned commits
+        if: github.event_name == 'pull_request' && steps.verify.outputs.unsigned_count != '0'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const unsigned = '${{ steps.verify.outputs.unsigned_count }}';
+            const total = '${{ steps.verify.outputs.total_count }}';
+
+            const body = `## 🔐 Commit Signature Verification
+
+            ⚠️ **Warning**: ${unsigned} out of ${total} commits in this PR are not signed.
+
+            ### Why sign commits?
+
+            - ✅ Cryptographic proof of authorship
+            - ✅ Prevents commit forgery
+            - ✅ Improves supply chain security
+            - ✅ Required by many security policies
+
+            ### How to sign commits
+
+            \`\`\`bash
+            # Generate GPG key (if you don't have one)
+            gpg --full-generate-key
+
+            # List your keys
+            gpg --list-secret-keys --keyid-format=long
+
+            # Configure Git to use your key
+            git config --global user.signingkey YOUR_GPG_KEY_ID
+            git config --global commit.gpgsign true
+
+            # Add your GPG key to GitHub
+            # Settings → SSH and GPG keys → New GPG key
+            gpg --armor --export YOUR_GPG_KEY_ID
+            \`\`\`
+
+            For more information, see [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification).
+
+            ---
+
+            <sub>🤖 This check helps maintain supply chain security but is not currently required.</sub>
+            `;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Fail on unsigned commits
+        if: github.event_name == 'pull_request' && steps.verify.outputs.unsigned_count != '0'
+        run: |
+          echo "::error::All commits must be GPG/SSH signed. Found ${{ steps.verify.outputs.unsigned_count }} unsigned commits."
+          echo "::error::See workflow summary for signing instructions."
+          exit 1
