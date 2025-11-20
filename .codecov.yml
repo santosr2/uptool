@@ -1,0 +1,46 @@
+# Codecov configuration
+# https://docs.codecov.com/docs/codecov-yaml
+
+coverage:
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 2%
+        informational: false
+    patch:
+      default:
+        target: 70%
+        threshold: 5%
+        informational: false
+
+  range: 50..90
+  round: down
+  precision: 2
+
+comment:
+  layout: "header, diff, files, footer"
+  behavior: default
+  require_changes: false
+  require_base: false
+  require_head: true
+
+ignore:
+  - "**/*_test.go"
+  - "testdata/**/*"
+  - "examples/**/*"
+  - "scripts/**/*"
+  - "docs/**/*"
+  - "cmd/uptool/main.go"  # Exclude main.go from coverage (mostly initialization)
+
+flags:
+  unittests:
+    paths:
+      - internal/
+    carryforward: true
+
+github_checks:
+  annotations: true
+
+cli:
+  require_ci_to_pass: yes
