@@ -1,0 +1,110 @@
+name: ⚡ Performance Issue
+description: Report a performance problem
+title: "[perf]: "
+labels: ["performance"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a performance issue!
+
+  - type: dropdown
+    id: performance-type
+    attributes:
+      label: Performance Issue Type
+      description: What aspect of performance is affected?
+      options:
+        - Slow scan
+        - Slow update
+        - High memory usage
+        - High CPU usage
+        - Network requests
+        - File I/O
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: uptool-version
+    attributes:
+      label: uptool Version
+      description: Run `uptool version`
+      placeholder: "v0.1.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Information
+      description: Operating system, CPU, RAM, etc.
+      placeholder: |
+        - OS: macOS 14.0
+        - CPU: Apple M2
+        - RAM: 16GB
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this performance issue?
+      placeholder: |
+        1. Clone repository...
+        2. Run uptool scan...
+        3. Notice slow performance...
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Performance Metrics
+      description: Timing, memory usage, etc.
+      placeholder: |
+        - Time taken: 5 minutes
+        - Memory usage: 2GB
+        - CPU usage: 100%
+    validations:
+      required: true
+
+  - type: textarea
+    id: project-details
+    attributes:
+      label: Project Details
+      description: Information about your project that might affect performance
+      placeholder: |
+        - Number of manifest files: 50
+        - Total dependencies: 500
+        - Repository size: 1GB
+        - Monorepo: yes/no
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected-performance
+    attributes:
+      label: Expected Performance
+      description: What performance do you expect?
+      placeholder: "Should complete in under 30 seconds"
+    validations:
+      required: true
+
+  - type: textarea
+    id: debug-output
+    attributes:
+      label: Debug Output
+      description: Output from running with `UPTOOL_LOG_LEVEL=debug`
+      placeholder: "Paste debug output here..."
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that might be helpful
+    validations:
+      required: false
