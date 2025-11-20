@@ -5,6 +5,7 @@ Create external plugins to extend uptool with custom integrations.
 ## Overview
 
 **Built-in vs Plugin**:
+
 - **Built-in**: Compiled into uptool (npm, Helm, Terraform) - for widely-used ecosystems
 - **Plugin**: External `.so` library - for custom/experimental/proprietary integrations
 
@@ -36,7 +37,7 @@ func RegisterWith(register func(name string, constructor func() engine.Integrati
 
 ### 1. Project Structure
 
-```
+```tree
 my-plugin/
 ├── go.mod
 ├── plugin.go       # Integration implementation
@@ -117,12 +118,14 @@ uptool searches for plugins in these locations (in order):
 4. `$UPTOOL_PLUGIN_DIR` - Custom location
 
 **Install**:
+
 ```bash
 mkdir -p ~/.config/uptool/plugins
 cp myintegration.so ~/.config/uptool/plugins/
 ```
 
 **Verify**:
+
 ```bash
 uptool list --experimental
 # Should show "myintegration"
@@ -174,7 +177,8 @@ uptool scan --only=myintegration
 
 ## Example Plugin
 
-See [`examples/plugins/python/`](../../examples/plugins/) for a complete example:
+See [`examples/plugins/python/`](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/examples/plugins/) for a complete example:
+
 - Detects `pyproject.toml`, `requirements.txt`, `Pipfile`
 - Queries PyPI registry
 - Updates dependency versions
@@ -213,6 +217,6 @@ mv plugin-*.so "$PLUGIN_DIR/myplugin.so"
 
 ## See Also
 
-- [Integration Examples](../internal/integrations/) - Built-in integration code
+- [Integration Examples](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/integrations/) - Built-in integration code
 - [API Reference](api/README.md) - Engine API documentation
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guidelines
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines

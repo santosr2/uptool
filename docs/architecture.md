@@ -10,7 +10,7 @@ uptool's design, components, and data flow.
 
 ## System Overview
 
-```
+```text
 CLI (cmd/uptool)
   ↓
 Engine (Scan/Plan/Update)
@@ -25,6 +25,7 @@ Datasources (registries) + Rewrite (manifest updates)
 ### CLI Layer (`cmd/uptool`)
 
 Command handlers using Cobra:
+
 - `scan` - Find and parse manifests
 - `plan` - Query registries for updates
 - `update` - Apply changes to manifests
@@ -33,6 +34,7 @@ Command handlers using Cobra:
 ### Engine Layer (`internal/engine`)
 
 Orchestration logic:
+
 - **Scan**: Parallel integration detection, manifest parsing
 - **Plan**: Registry queries, version resolution, update policy
 - **Update**: Manifest rewriting, validation, diff generation
@@ -52,6 +54,7 @@ type Integration interface {
 ```
 
 **Types**:
+
 1. **Manifest Rewriting** (npm, Helm, asdf, mise) - Parse and rewrite files
 2. **Native Command** (pre-commit) - Execute tool's update command
 3. **Hybrid** (Terraform) - Parse HCL, query registry, rewrite
@@ -59,6 +62,7 @@ type Integration interface {
 ### Datasource Layer (`internal/datasource`)
 
 Registry abstraction:
+
 - npm Registry API
 - Helm/Artifact Hub
 - Terraform Registry
@@ -67,6 +71,7 @@ Registry abstraction:
 ### Rewrite Layer (`internal/rewrite`)
 
 Format-preserving updates:
+
 - **YAML**: Line-by-line rewriting, preserves comments
 - **JSON**: Structured rewriting with indentation
 - **TOML**: gopkg.in/toml-based updates
@@ -75,6 +80,7 @@ Format-preserving updates:
 ### Resolve Layer (`internal/resolve`)
 
 Semantic version resolution:
+
 - Parse version constraints (`^4.0.0`, `~1.2.3`, `>=2.0.0`)
 - Find compatible versions
 - Handle pre-release tags
@@ -82,6 +88,7 @@ Semantic version resolution:
 ### Policy Layer (`internal/policy`)
 
 Update policies from `uptool.yaml`:
+
 - Maximum update level (none/patch/minor/major)
 - Pre-release inclusion
 - Pin vs range versions
@@ -148,6 +155,7 @@ func (i *Integration) Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult
 ## Error Handling
 
 Errors categorized by severity:
+
 - **Fatal**: Stop execution (invalid config, missing binary)
 - **Retryable**: Temporary failures (network timeout, rate limit)
 - **Skippable**: Non-critical (single integration failure)
@@ -155,11 +163,13 @@ Errors categorized by severity:
 ## Performance
 
 **Current**:
+
 - Parallel integration detection
 - Sequential registry queries (network bound)
 - Single-threaded manifest rewriting
 
 **Future**:
+
 - Registry response caching
 - Parallel registry queries with semaphore
 - Batch updates for monorepos
@@ -173,7 +183,7 @@ Errors categorized by severity:
 
 ## File Structure
 
-```
+```tree
 uptool/
 ├── cmd/uptool/              # CLI entry point
 │   ├── main.go
@@ -199,5 +209,5 @@ uptool/
 ## See Also
 
 - [Plugin Development](plugin-development.md) - Create custom integrations
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Development guidelines
-- [Integration Examples](../internal/integrations/) - Source code examples
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
+- [Integration Examples](https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/internal/integrations/) - Source code examples
