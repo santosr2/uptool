@@ -92,6 +92,9 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
       run: |
+        # Change to workspace directory to avoid config path warnings
+        cd "$GITHUB_WORKSPACE"
+
         CMD="${{ inputs.command }}"
         ARGS=""
 
@@ -125,29 +128,36 @@ runs:
         /tmp/uptool $CMD $ARGS | tee /tmp/uptool-output.txt
         EXIT_CODE=${PIPESTATUS[0]}
 
-        # Parse output to set outputs
+        # Parse output to set outputs (use safer extraction with defaults)
         if grep -q "No updates available" /tmp/uptool-output.txt || grep -q "No manifests found" /tmp/uptool-output.txt; then
-          echo "updates-available=false" >> $GITHUB_OUTPUT
-          echo "manifests-updated=0" >> $GITHUB_OUTPUT
-          echo "dependencies-updated=0" >> $GITHUB_OUTPUT
+          echo "updates-available=false" >> "$GITHUB_OUTPUT"
+          echo "manifests-updated=0" >> "$GITHUB_OUTPUT"
+          echo "dependencies-updated=0" >> "$GITHUB_OUTPUT"
         else
-          echo "updates-available=true" >> $GITHUB_OUTPUT
+          echo "updates-available=true" >> "$GITHUB_OUTPUT"
 
-          # Extract counts from output
-          MANIFESTS=$(grep -oP 'Total: \K\d+(?= updates across \d+ manifests)' /tmp/uptool-output.txt || echo "0")
-          DEPS=$(grep -oP 'Applied: \K\d+' /tmp/uptool-output.txt | awk '{s+=$1} END {print s}' || echo "0")
+          # Extract counts from output (use grep -E for better compatibility)
+          MANIFESTS=$(grep -oE '[0-9]+ manifests' /tmp/uptool-output.txt | grep -oE '[0-9]+' | head -1 || echo "0")
+          DEPS=$(grep -oE '[0-9]+ (dependencies|updates)' /tmp/uptool-output.txt | grep -oE '[0-9]+' | awk '{s+=$1} END {print s+0}')
 
-          echo "manifests-updated=$MANIFESTS" >> $GITHUB_OUTPUT
-          echo "dependencies-updated=$DEPS" >> $GITHUB_OUTPUT
+          # Ensure we always have numeric values
+          MANIFESTS=${MANIFESTS:-0}
+          DEPS=${DEPS:-0}
+
+          echo "manifests-updated=$MANIFESTS" >> "$GITHUB_OUTPUT"
+          echo "dependencies-updated=$DEPS" >> "$GITHUB_OUTPUT"
         fi
 
-        exit $EXIT_CODE
+        exit "$EXIT_CODE"
 
     - name: Generate detailed PR body
       if: inputs.create-pr == 'true' && steps.uptool.outputs.updates-available == 'true'
       id: pr-body
       shell: bash
       run: |
+        # Change to workspace directory
+        cd "$GITHUB_WORKSPACE"
+
         # Run uptool plan with JSON output to get detailed update information
         /tmp/uptool plan --format=json > /tmp/plan-output.json
 
