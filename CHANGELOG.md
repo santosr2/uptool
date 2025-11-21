@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve based on linter by @santosr2([3ffa920](https://github.com/santosr2/uptool/commit/3ffa92049e42b9d95e327c72e1b82f36e44fafb4))
 
 ### Continuous Integration
+
+- **pre-release**: Remove unnecessary sed command by @santosr2([2df3cc8](https://github.com/santosr2/uptool/commit/2df3cc8ac0d4e27b6fd5a1032c78f7c598704b7f))
 - Add ci pipeline by @santosr2([812bb4d](https://github.com/santosr2/uptool/commit/812bb4dc9ecb356a77db855b08cf7c11ab28793b))
 - Add doc deploy by @santosr2([bc494c8](https://github.com/santosr2/uptool/commit/bc494c82dddf204a6397eeecdef0ea8ce6f06145))
 - Fix doc workflow by @santosr2([7eeced3](https://github.com/santosr2/uptool/commit/7eeced3d13855caff9b5fd47a83c8f10fa169235))
@@ -46,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([f127f83](https://github.com/santosr2/uptool/commit/f127f836a53a3945d86337a28469727e54299ab8))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([d97491c](https://github.com/santosr2/uptool/commit/d97491c5b3c946d88c77a64b6fd2857fe6ea8ef5))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([89551c1](https://github.com/santosr2/uptool/commit/89551c10ccfe8d44a750a2c8f570a88ad2ad0816))
+- Update CHANGELOG.md [skip ci] by @github-actions[bot]([f32690a](https://github.com/santosr2/uptool/commit/f32690afd832beab47e80905cc79bda1f682fed8))
 
 ### Features
 - Add community documentation by @santosr2([7256083](https://github.com/santosr2/uptool/commit/7256083915b365c67603502d06f662874c9cedf6))
