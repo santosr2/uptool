@@ -1,0 +1,123 @@
+name: GitHub Action Validation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'action.yml'
+      - '.github/workflows/action-validation.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'action.yml'
+      - '.github/workflows/action-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-action-metadata:
+    name: Validate action.yml
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate action.yml syntax
+        run: |
+          echo "Checking action.yml exists..."
+          test -f action.yml || (echo "::error::action.yml not found" && exit 1)
+
+          echo "Validating YAML syntax..."
+          python3 -c "import yaml; yaml.safe_load(open('action.yml'))" || \
+            (echo "::error::action.yml has invalid YAML syntax" && exit 1)
+
+          echo "✓ action.yml is valid"
+
+  test-action-scan:
+    name: Test Action - Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test scan command
+        uses: ./
+        id: scan
+        with:
+          command: scan
+          format: json
+
+      - name: Verify scan output
+        run: |
+          echo "Scan completed successfully"
+          echo "Updates available: ${{ steps.scan.outputs.updates-available }}"
+
+  test-action-plan:
+    name: Test Action - Plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test plan command
+        uses: ./
+        id: plan
+        with:
+          command: plan
+          format: table
+
+      - name: Verify plan output
+        run: |
+          echo "Plan completed successfully"
+          echo "Manifests updated: ${{ steps.plan.outputs.manifests-updated }}"
+          echo "Dependencies updated: ${{ steps.plan.outputs.dependencies-updated }}"
+
+  test-action-update-dry-run:
+    name: Test Action - Update (Dry Run)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test update command (dry-run)
+        uses: ./
+        id: update
+        with:
+          command: update
+          dry-run: 'true'
+          diff: 'true'
+
+      - name: Verify update output
+        run: |
+          echo "Update dry-run completed successfully"
+
+  test-action-filters:
+    name: Test Action - Filters
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test with --only filter
+        uses: ./
+        with:
+          command: scan
+          only: npm,helm
+
+      - name: Test with --exclude filter
+        uses: ./
+        with:
+          command: scan
+          exclude: precommit
