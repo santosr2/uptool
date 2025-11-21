@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([d97491c](https://github.com/santosr2/uptool/commit/d97491c5b3c946d88c77a64b6fd2857fe6ea8ef5))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([89551c1](https://github.com/santosr2/uptool/commit/89551c10ccfe8d44a750a2c8f570a88ad2ad0816))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([f32690a](https://github.com/santosr2/uptool/commit/f32690afd832beab47e80905cc79bda1f682fed8))
+- Update CHANGELOG.md [skip ci] by @github-actions[bot]([5bd1bb7](https://github.com/santosr2/uptool/commit/5bd1bb747b6e48db385e4b51050f88ec34cc2b6d))
 
 ### Features
 - Add community documentation by @santosr2([7256083](https://github.com/santosr2/uptool/commit/7256083915b365c67603502d06f662874c9cedf6))
@@ -59,6 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add container support by @santosr2([5f7ca50](https://github.com/santosr2/uptool/commit/5f7ca508b1637c4304e3da71bf66fab6cbcdaf53))
 
 ### GitHub Actions
+
+- **build-release**: Remove unnecessary shell fields by @santosr2([342022f](https://github.com/santosr2/uptool/commit/342022f1058f493ccf84a492ca5d5e9bfda44385))
 - Ensure it will execute in proper folder by @santosr2([16f3c8c](https://github.com/santosr2/uptool/commit/16f3c8cb8e61460f5ca4d2e546432848a7e1cc67))
 - Fix exit code by @santosr2([e17da0c](https://github.com/santosr2/uptool/commit/e17da0cd0ac12f210e50d144746afc0791f06d2a))
 
