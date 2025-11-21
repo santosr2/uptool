@@ -128,7 +128,7 @@ dependency:
   files:
     - go.mod
 
-  # Excluded licenses (none for now, but can be configured)
-  # excludes:
-  #   - name: "some-package"
-  #     version: "1.0.0"
+# Excluded licenses (none for now, but can be configured)
+# excludes:
+#   - name: "some-package"
+#     version: "1.0.0"

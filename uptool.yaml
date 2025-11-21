@@ -59,9 +59,9 @@ org_policy:
 # require_signoff_from:
 #   - "platform-team@company.com"
 
-  # Artifact signing verification
-  # signing:
-  #   cosign_verify: false
+# Artifact signing verification
+# signing:
+#   cosign_verify: false
 
   # Auto-merge settings for GitHub Actions
   # auto_merge:

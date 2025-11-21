@@ -292,5 +292,5 @@ networks:
     driver: bridge
     labels:
       com.uptool.network: "main"
-    # Enable IPv6 (optional)
-    # enable_ipv6: true
+      # Enable IPv6 (optional)
+      # enable_ipv6: true
