@@ -2,10 +2,10 @@ name: Verify Signed Commits
 
 on:
   pull_request:
-    branches: [ main ]
-    types: [ opened, synchronize, reopened ]
+    branches: [main]
+    types: [opened, synchronize, reopened]
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -32,15 +32,19 @@ jobs:
 
       - name: Verify commit signatures
         id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "## 🔐 Commit Signature Verification" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔐 Commit Signature Verification"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # Get commits from PR
             BASE_REF="${{ github.event.pull_request.base.sha }}"
             HEAD_REF="${{ github.event.pull_request.head.sha }}"
-            COMMITS=$(git log --pretty=format:"%H" $BASE_REF..$HEAD_REF)
+            COMMITS=$(git log --pretty=format:"%H" "$BASE_REF".."$HEAD_REF")
           else
             # Get recent commits from push
             COMMITS=$(git log --pretty=format:"%H" -n 10)
@@ -58,58 +62,92 @@ jobs:
 
             TOTAL=$((TOTAL+1))
 
-            # Check if commit is signed
-            VERIFICATION=$(git verify-commit "$commit" 2>&1 || echo "not-signed")
-
             AUTHOR=$(git log -1 --pretty=format:"%an <%ae>" "$commit")
             MESSAGE=$(git log -1 --pretty=format:"%s" "$commit")
-            SHORT_SHA=${commit:0:7}
+            SHORT_SHA="${commit:0:7}"
 
-            if echo "$VERIFICATION" | grep -q "Good signature\|valid signature"; then
-              echo "✅ **Signed**: \`$SHORT_SHA\` - $MESSAGE" >> $GITHUB_STEP_SUMMARY
-              SIGNED=$((SIGNED+1))
-            elif echo "$VERIFICATION" | grep -q "gpg: Signature made"; then
-              echo "⚠️ **Signed (unverified)**: \`$SHORT_SHA\` - $MESSAGE" >> $GITHUB_STEP_SUMMARY
+            # Check multiple signature types:
+            # 1. GPG signature (traditional)
+            # 2. SSH signature (newer)
+            # 3. GitHub web-based signature
+
+            IS_SIGNED=false
+            SIG_TYPE=""
+
+            # Try GPG verification first
+            if git verify-commit "$commit" 2>&1 | grep -q "Good signature\|valid signature"; then
+              IS_SIGNED=true
+              SIG_TYPE="GPG"
+            # Try SSH signature check
+            elif git log --format="%G?" -1 "$commit" | grep -q "G\|U"; then
+              # G = good signature, U = good signature with unknown validity
+              IS_SIGNED=true
+              SIG_TYPE="SSH/GPG"
+            # Check for any signature using git show
+            elif git show --show-signature --no-patch "$commit" 2>&1 | \
+                 grep -Eq "Signature made|Good signature|gpg: Signature|ssh: Signature|SSH:"; then
+              IS_SIGNED=true
+              SIG_TYPE="SSH/GPG"
+            # Check via GitHub API for web-based signatures
+            elif gh api "/repos/${{ github.repository }}/commits/$commit" \
+                 --jq '.commit.verification.verified' 2>/dev/null | grep -q "true"; then
+              IS_SIGNED=true
+              SIG_TYPE="GitHub"
+            fi
+
+            if [ "$IS_SIGNED" = true ]; then
+              echo "✅ **Signed ($SIG_TYPE)**: \`$SHORT_SHA\` - $MESSAGE" >> "$GITHUB_STEP_SUMMARY"
               SIGNED=$((SIGNED+1))
             else
-              echo "❌ **Unsigned**: \`$SHORT_SHA\` - $MESSAGE (by $AUTHOR)" >> $GITHUB_STEP_SUMMARY
+              echo "❌ **Unsigned**: \`$SHORT_SHA\` - $MESSAGE (by $AUTHOR)" >> "$GITHUB_STEP_SUMMARY"
               UNSIGNED=$((UNSIGNED+1))
               UNSIGNED_COMMITS="$UNSIGNED_COMMITS\n- $SHORT_SHA: $MESSAGE"
             fi
           done <<< "$COMMITS"
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total commits checked**: $TOTAL" >> $GITHUB_STEP_SUMMARY
-          echo "- **Signed commits**: $SIGNED" >> $GITHUB_STEP_SUMMARY
-          echo "- **Unsigned commits**: $UNSIGNED" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### Summary"
+            echo "- **Total commits checked**: $TOTAL"
+            echo "- **Signed commits**: $SIGNED"
+            echo "- **Unsigned commits**: $UNSIGNED"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ $TOTAL -gt 0 ]; then
+          if [ "$TOTAL" -gt 0 ]; then
             PERCENTAGE=$((SIGNED * 100 / TOTAL))
-            echo "- **Signature coverage**: ${PERCENTAGE}%" >> $GITHUB_STEP_SUMMARY
+            echo "- **Signature coverage**: ${PERCENTAGE}%" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### ℹ️ About Commit Signing" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Signed commits provide cryptographic proof of authorship and integrity." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**How to sign commits:**" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "# Configure GPG key" >> $GITHUB_STEP_SUMMARY
-          echo "git config --global user.signingkey YOUR_GPG_KEY_ID" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Sign commits" >> $GITHUB_STEP_SUMMARY
-          echo "git commit -S -m \"your message\"" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Or enable automatic signing" >> $GITHUB_STEP_SUMMARY
-          echo "git config --global commit.gpgsign true" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### ℹ️ About Commit Signing"
+            echo ""
+            echo "Signed commits provide cryptographic proof of authorship and integrity."
+            echo ""
+            echo "**Supported signature types**: GPG, SSH, GitHub web-based"
+            echo ""
+            echo "**How to sign commits (GPG):**"
+            echo '```bash'
+            echo "# Configure GPG key"
+            echo "git config --global user.signingkey YOUR_GPG_KEY_ID"
+            echo "git config --global commit.gpgsign true"
+            echo '```'
+            echo ""
+            echo "**How to sign commits (SSH):**"
+            echo '```bash'
+            echo "# Configure SSH signing"
+            echo "git config --global gpg.format ssh"
+            echo "git config --global user.signingkey ~/.ssh/id_ed25519.pub"
+            echo "git config --global commit.gpgsign true"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Set output for other steps
-          echo "unsigned_count=$UNSIGNED" >> $GITHUB_OUTPUT
-          echo "signed_count=$SIGNED" >> $GITHUB_OUTPUT
-          echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
+          {
+            echo "unsigned_count=$UNSIGNED"
+            echo "signed_count=$SIGNED"
+            echo "total_count=$TOTAL"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Add PR comment for unsigned commits
         if: github.event_name == 'pull_request' && steps.verify.outputs.unsigned_count != '0'
@@ -130,7 +168,23 @@ jobs:
             - ✅ Improves supply chain security
             - ✅ Required by many security policies
 
-            ### How to sign commits
+            ### Supported Signature Types
+
+            This workflow accepts **GPG**, **SSH**, and **GitHub web-based** signatures.
+
+            ### Option 1: Sign with SSH (Recommended - Easiest)
+
+            \`\`\`bash
+            # Configure SSH signing (uses your existing SSH key)
+            git config --global gpg.format ssh
+            git config --global user.signingkey ~/.ssh/id_ed25519.pub
+            git config --global commit.gpgsign true
+
+            # Add your SSH key to GitHub
+            # Settings → SSH and GPG keys → New SSH key (select "Signing Key" as type)
+            \`\`\`
+
+            ### Option 2: Sign with GPG (Traditional)
 
             \`\`\`bash
             # Generate GPG key (if you don't have one)
@@ -148,7 +202,15 @@ jobs:
             gpg --armor --export YOUR_GPG_KEY_ID
             \`\`\`
 
-            For more information, see [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification).
+            ### Option 3: GitHub Web-Based (Automatic)
+
+            Commits made through GitHub's web interface are automatically signed.
+
+            ---
+
+            For more information, see:
+            - [GitHub's guide on signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification)
+            - [SSH commit signing](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification#ssh-commit-signature-verification)
 
             ---
 

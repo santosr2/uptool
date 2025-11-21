@@ -247,6 +247,7 @@ Want to add support for a new ecosystem? See the [Plugin Development Guide](docs
 ### Quick Overview
 
 **Two options**:
+
 1. **Built-in Integration** - Compiled into uptool (for widely-used ecosystems)
 2. **Plugin** - External shared library (for custom/experimental integrations)
 
@@ -309,6 +310,7 @@ go test -cover ./internal/integrations/yourintegration  # Target >70%
 1. Run `mise run check` (fmt + vet + lint + test)
 2. Update CHANGELOG.md
 3. Commit with conventional commit:
+
    ```bash
    git commit -m "feat(integration): add yourname support
 
@@ -318,7 +320,7 @@ go test -cover ./internal/integrations/yourintegration  # Target >70%
    - Includes comprehensive tests and documentation"
    ```
 
-5. Push and create PR
+4. Push and create PR
 
 ## Documentation Standards
 
