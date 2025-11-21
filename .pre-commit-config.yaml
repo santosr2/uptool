@@ -110,6 +110,15 @@ repos:
   # Documentation validation
   - repo: local
     hooks:
+      # License header check
+      - id: license-eye-check
+        name: license-eye (check headers)
+        description: Check license headers with Apache SkyWalking Eyes
+        entry: mise exec -- license-eye header check
+        language: system
+        pass_filenames: false
+        files: \.(go)$
+
       - id: mkdocs-build
         name: mkdocs build
         entry: mise run docs-build

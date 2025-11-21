@@ -147,21 +147,23 @@ jobs:
             exit 1
           fi
 
-          echo "## 📋 LICENSE File Verification" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ LICENSE file exists and is not empty" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**File size:** $(wc -c < LICENSE) bytes" >> $GITHUB_STEP_SUMMARY
-          echo "**Lines:** $(wc -l < LICENSE)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📋 LICENSE File Verification"
+            echo ""
+            echo "✅ LICENSE file exists and is not empty"
+            echo ""
+            echo "**File size:** $(wc -c < LICENSE) bytes"
+            echo "**Lines:** $(wc -l < LICENSE)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Detect license type
           if grep -q "Apache License" LICENSE; then
-            echo "**Detected license:** Apache License 2.0" >> $GITHUB_STEP_SUMMARY
+            echo "**Detected license:** Apache License 2.0" >> "$GITHUB_STEP_SUMMARY"
           elif grep -q "MIT License" LICENSE; then
-            echo "**Detected license:** MIT License" >> $GITHUB_STEP_SUMMARY
+            echo "**Detected license:** MIT License" >> "$GITHUB_STEP_SUMMARY"
           elif grep -q "BSD" LICENSE; then
-            echo "**Detected license:** BSD License" >> $GITHUB_STEP_SUMMARY
+            echo "**Detected license:** BSD License" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "**Detected license:** Custom or Other" >> $GITHUB_STEP_SUMMARY
+            echo "**Detected license:** Custom or Other" >> "$GITHUB_STEP_SUMMARY"
           fi

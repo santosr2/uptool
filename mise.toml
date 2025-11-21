@@ -45,6 +45,9 @@ hadolint = "latest"
 "go:github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier" = "latest"
 "pipx:detect-secrets" = "latest"
 
+# License header checking
+"go:github.com/apache/skywalking-eyes/cmd/license-eye" = "latest"
+
 # Commit conventions
 node = "22"
 "npm:@commitlint/cli" = "latest"
@@ -127,9 +130,25 @@ else
 fi
 """
 
+[tasks.license-check]
+description = "Check license headers with license-eye"
+run = """
+echo "Checking license headers..."
+license-eye header check
+echo "✓ License headers valid"
+"""
+
+[tasks.license-fix]
+description = "Fix missing license headers"
+run = """
+echo "Fixing license headers..."
+license-eye header fix
+echo "✓ License headers fixed"
+"""
+
 [tasks.check]
-description = "Run all checks (fmt, vet, complexity, lint, test)"
-depends = ["fmt", "vet", "complexity", "lint", "test"]
+description = "Run all checks (fmt, vet, complexity, lint, license, test)"
+depends = ["fmt", "vet", "complexity", "lint", "license-check", "test"]
 run = "echo '✓ All checks passed'"
 
 [tasks.clean]
