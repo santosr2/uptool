@@ -118,9 +118,8 @@ jobs:
             --config=osv-scanner.toml
             --format=json
             --output=osv-results.json
-            --lockfile=go.mod:go.sum
-            --lockfile=docs/requirements.txt
-            --lockfile=examples/plugins/python/go.mod:examples/plugins/python/go.sum
+            --lockfile=./go.mod
+            --lockfile=./docs/requirements.txt
         continue-on-error: false
 
       - name: Upload OSV results
