@@ -1,0 +1,519 @@
+name: Patch Release (Security/Backport)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Release branch (e.g., release-0.1)'
+        required: true
+        type: string
+      patch_type:
+        description: 'Type of patch'
+        required: true
+        type: choice
+        options:
+          - security
+          - bugfix
+      changelog_notes:
+        description: 'Additional changelog notes (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate Patch Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      current_version: ${{ steps.version.outputs.current }}
+      next_version: ${{ steps.version.outputs.next }}
+      next_tag: ${{ steps.version.outputs.next_tag }}
+      minor_version: ${{ steps.version.outputs.minor }}
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate branch exists
+        env:
+          BRANCH: ${{ github.event.inputs.release_branch }}
+        run: |
+          if ! git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
+            echo "::error::Release branch $BRANCH does not exist"
+            exit 1
+          fi
+
+          if [[ ! "$BRANCH" =~ ^release-[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release branch format. Expected: release-X.Y"
+            exit 1
+          fi
+
+      - name: Calculate next patch version
+        id: version
+        env:
+          BRANCH: ${{ github.event.inputs.release_branch }}
+        run: |
+          # Extract minor version from branch name (e.g., release-0.1 -> 0.1)
+          MINOR_VERSION="${BRANCH#release-}"
+
+          # Find latest tag for this minor version
+          LATEST=$(git tag -l "v${MINOR_VERSION}.*" | grep -v '\-' | sort -V | tail -n 1 || echo "")
+
+          if [ -z "$LATEST" ]; then
+            echo "::error::No stable tags found for v${MINOR_VERSION}.x"
+            exit 1
+          fi
+
+          # Parse version components
+          CURRENT="${LATEST#v}"  # Remove 'v' prefix
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+
+          # Increment patch version
+          NEXT_PATCH=$((PATCH + 1))
+          NEXT="${MAJOR}.${MINOR}.${NEXT_PATCH}"
+          NEXT_TAG="v${NEXT}"
+
+          # Verify tag doesn't already exist
+          if git tag -l "$NEXT_TAG" | grep -q "$NEXT_TAG"; then
+            echo "::error::Tag $NEXT_TAG already exists"
+            exit 1
+          fi
+
+          {
+            echo "current=$CURRENT"
+            echo "next=$NEXT"
+            echo "next_tag=$NEXT_TAG"
+            echo "minor=$MINOR_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## 🔧 Patch Release Calculation"
+            echo ""
+            echo "**Current version**: v$CURRENT"
+            echo "**Next version**: $NEXT_TAG"
+          } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "**Release branch**: $BRANCH"
+            echo "**Patch type**: ${{ github.event.inputs.patch_type }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  update-version:
+    name: Update Version Files
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Update version files
+        env:
+          NEW_VERSION: ${{ needs.validate.outputs.next }}
+        run: |
+          # Update version using bump-my-version
+          bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
+
+      - name: Commit version update
+        env:
+          NEXT_TAG: ${{ needs.validate.outputs.next_tag }}
+          BRANCH: ${{ github.event.inputs.release_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add .
+          git commit -m "chore(release): patch release $NEXT_TAG [skip ci]"
+          git push origin "$BRANCH"
+
+  build:
+    name: Build Binaries
+    needs: [validate, update-version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: amd64
+          - os: darwin
+            arch: arm64
+          - os: windows
+            arch: amd64
+    steps:
+      - name: Checkout updated branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          VERSION: ${{ needs.validate.outputs.next_tag }}
+        run: |
+          # Determine binary name
+          BINARY_NAME="uptool-${{ matrix.os }}-${{ matrix.arch }}"
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            BINARY_NAME="${BINARY_NAME}.exe"
+          fi
+
+          # Build with version info
+          go build \
+            -o "$BINARY_NAME" \
+            ./cmd/uptool
+
+          # Create checksums
+          sha256sum "$BINARY_NAME" > "${BINARY_NAME}.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: binary-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            uptool-*
+            *.sha256
+          retention-days: 1
+
+  sign:
+    name: Sign Binaries
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: amd64
+          - os: darwin
+            arch: arm64
+          - os: windows
+            arch: amd64
+    steps:
+      - name: Download binary
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: binary-${{ matrix.os }}-${{ matrix.arch }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+
+      - name: Sign binary
+        env:
+          BINARY: uptool-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+        run: |
+          # Sign with keyless mode (OIDC)
+          cosign sign-blob \
+            --yes \
+            --output-signature "${BINARY}.sig" \
+            --output-certificate "${BINARY}.pem" \
+            "$BINARY"
+
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: signed-${{ matrix.os }}-${{ matrix.arch }}
+          path: |
+            *.sig
+            *.pem
+          retention-days: 1
+
+  sbom:
+    name: Generate SBOM
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Install Syft
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOM (SPDX)
+        run: |
+          syft packages . -o spdx-json=uptool-sbom.spdx.json
+
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          syft packages . -o cyclonedx-json=uptool-sbom.cyclonedx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: sbom
+          path: |
+            uptool-sbom.*.json
+          retention-days: 1
+
+  release:
+    name: Create Patch Release
+    needs: [validate, update-version, build, sign, sbom]
+    runs-on: ubuntu-latest
+    environment:
+      name: patch-release
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate.outputs.next_tag }}
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout updated branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.inputs.release_branch }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          path: release-assets
+
+      - name: Organize release assets
+        run: |
+          mkdir -p final-assets
+
+          # Copy binaries and checksums
+          find release-assets/binary-* -type f -exec cp {} final-assets/ \;
+
+          # Copy signatures
+          find release-assets/signed-* -type f -exec cp {} final-assets/ \;
+
+          # Copy SBOMs
+          find release-assets/sbom -type f -exec cp {} final-assets/ \;
+
+          # Generate combined checksums file
+          cd final-assets
+          sha256sum uptool-* > checksums.txt
+
+          echo "Release assets:"
+          ls -lah
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Generate release notes
+        env:
+          VERSION: ${{ needs.validate.outputs.next_tag }}
+          CURRENT: v${{ needs.validate.outputs.current }}
+          PATCH_TYPE: ${{ github.event.inputs.patch_type }}
+          NOTES: ${{ github.event.inputs.changelog_notes }}
+        run: |
+          # Generate changelog for this patch
+          git-cliff --config git-cliff.toml "$CURRENT..$VERSION" --strip all > changelog-section.md
+
+          # Create patch release notes
+          cat > release-notes.md <<EOFNOTES
+          # Patch Release $VERSION
+
+          This is a **$PATCH_TYPE patch release** for the ${{ github.event.inputs.release_branch }} release line.
+
+          $(if [ "$PATCH_TYPE" = "security" ]; then
+            echo "🔒 **This release contains security fixes. Users on the ${{ needs.validate.outputs.minor }}.x release line should upgrade immediately.**"
+          else
+            echo "🐛 **This release contains critical bug fixes for the ${{ needs.validate.outputs.minor }}.x release line.**"
+          fi)
+
+          ⚠️ **Note**: This is a maintenance release for a previous minor version. If you're on a newer version, you don't need this patch.
+
+          ## What's Changed
+
+          $(cat changelog-section.md)
+
+          $(if [ -n "$NOTES" ]; then
+            echo ""
+            echo "## Additional Notes"
+            echo ""
+            echo "$NOTES"
+          fi)
+
+          ---
+
+          ## 📦 Installation
+
+          ### Quick Install (Linux/macOS)
+
+          \`\`\`bash
+          # Detect OS and architecture
+          OS=\$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH=\$(uname -m)
+          case \$ARCH in
+              x86_64) ARCH="amd64" ;;
+              aarch64|arm64) ARCH="arm64" ;;
+          esac
+
+          # Download
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-\${OS}-\${ARCH}
+          chmod +x uptool-\${OS}-\${ARCH}
+          sudo mv uptool-\${OS}-\${ARCH} /usr/local/bin/uptool
+
+          # Verify
+          uptool version
+          \`\`\`
+
+          ### Verify Checksums
+
+          \`\`\`bash
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/checksums.txt
+          sha256sum -c checksums.txt
+          \`\`\`
+
+          ### Verify Signature (Cosign)
+
+          \`\`\`bash
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64.sig
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64.pem
+
+          cosign verify-blob \\
+            --signature uptool-linux-amd64.sig \\
+            --certificate uptool-linux-amd64.pem \\
+            --certificate-identity-regexp="^https://github.com/santosr2/uptool/" \\
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \\
+            uptool-linux-amd64
+          \`\`\`
+
+          ---
+
+          ## 🔐 Security
+
+          - **Checksums**: \`checksums.txt\`
+          - **Signatures**: Cosign keyless signing (*.sig, *.pem)
+          - **SBOM**: SPDX and CycloneDX formats included
+
+          ---
+
+          ## 📚 Documentation
+
+          - [README](https://github.com/${{ github.repository }}/blob/$VERSION/README.md)
+          - [Security Policy](https://github.com/${{ github.repository }}/blob/$VERSION/SECURITY.md)
+
+          ---
+
+          ## Support Window
+
+          According to our [Security Policy](https://github.com/${{ github.repository }}/blob/main/SECURITY.md):
+          - This release line receives security patches for **6 months** after the next minor release
+          - For long-term support, consider upgrading to the latest minor version
+
+          ---
+
+          <sub>🤖 Generated with [uptool](https://github.com/santosr2/uptool) patch release automation</sub>
+          EOFNOTES
+
+      - name: Create Git tag
+        env:
+          VERSION: ${{ needs.validate.outputs.next_tag }}
+          BRANCH: ${{ github.event.inputs.release_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create immutable tag for this patch
+          git tag -a "$VERSION" -m "Patch release $VERSION from $BRANCH"
+          git push origin "$VERSION"
+
+          echo "✅ Created tag: $VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.2.0
+        with:
+          tag_name: ${{ needs.validate.outputs.next_tag }}
+          name: ${{ needs.validate.outputs.next_tag }} (${{ github.event.inputs.patch_type == 'security' && '🔒 Security Patch' || '🐛 Bug Fix' }})
+          files: |
+            final-assets/*
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          make_latest: false  # Don't mark patches as latest
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update mutable minor tag
+        env:
+          VERSION: ${{ needs.validate.outputs.next_tag }}
+          MINOR_VERSION: ${{ needs.validate.outputs.minor }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Update mutable minor tag (e.g., v0.1) to point to this patch
+          MINOR_TAG="v${MINOR_VERSION}"
+
+          git tag -fa "$MINOR_TAG" -m "Latest patch in v${MINOR_VERSION} (currently $VERSION)"
+          git push origin "$MINOR_TAG" --force
+
+          echo "✅ Updated mutable tag: $MINOR_TAG -> $VERSION"
+
+  summary:
+    name: Release Summary
+    needs: [validate, release]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        env:
+          VERSION: ${{ needs.validate.outputs.next_tag }}
+          BRANCH: ${{ github.event.inputs.release_branch }}
+          PATCH_TYPE: ${{ github.event.inputs.patch_type }}
+          STATUS: ${{ needs.release.result }}
+        run: |
+          {
+            echo "## 🔧 Patch Release Complete"
+            echo ""
+            echo "**Version**: $VERSION"
+            echo "**Branch**: $BRANCH"
+            echo "**Type**: $PATCH_TYPE"
+            echo "**Status**: $STATUS"
+            echo ""
+            echo "🔗 **Release URL**: https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$PATCH_TYPE" = "security" ]; then
+            {
+              echo "### ⚠️ Security Patch"
+              echo "Users on the ${BRANCH#release-}.x release line should upgrade immediately."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

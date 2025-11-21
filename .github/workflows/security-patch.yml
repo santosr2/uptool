@@ -1,0 +1,396 @@
+name: Coordinate Security Patches
+
+on:
+  workflow_dispatch:
+    inputs:
+      advisory_id:
+        description: 'GitHub Security Advisory ID (GHSA-xxxx-xxxx-xxxx)'
+        required: false
+        type: string
+      affected_versions:
+        description: 'Affected version ranges (comma-separated, e.g., 0.1.x,0.2.x)'
+        required: true
+        type: string
+      severity:
+        description: 'Severity level'
+        required: true
+        type: choice
+        options:
+          - critical
+          - high
+          - medium
+          - low
+      description:
+        description: 'Brief description of the vulnerability'
+        required: true
+        type: string
+      fix_commits:
+        description: 'Commit SHA(s) from main to cherry-pick (comma-separated)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  security-events: write
+
+jobs:
+  identify-branches:
+    name: Identify Affected Release Branches
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      branches: ${{ steps.branches.outputs.list }}
+      branches_json: ${{ steps.branches.outputs.json }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Parse affected versions and find branches
+        id: branches
+        env:
+          AFFECTED: ${{ github.event.inputs.affected_versions }}
+        run: |
+          # Parse comma-separated affected versions (e.g., "0.1.x,0.2.x")
+          IFS=',' read -ra VERSIONS <<< "$AFFECTED"
+
+          BRANCHES=()
+          BRANCHES_JSON="["
+
+          for VERSION in "${VERSIONS[@]}"; do
+            # Trim whitespace
+            VERSION=$(echo "$VERSION" | xargs)
+
+            # Remove .x suffix to get minor version
+            MINOR_VERSION="${VERSION%.x}"
+
+            # Check if release branch exists
+            BRANCH="release-${MINOR_VERSION}"
+
+            if git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
+              echo "✅ Found release branch: $BRANCH"
+              BRANCHES+=("$BRANCH")
+
+              if [ "${BRANCHES_JSON}" != "[" ]; then
+                BRANCHES_JSON="${BRANCHES_JSON},"
+              fi
+              BRANCHES_JSON="${BRANCHES_JSON}\"${BRANCH}\""
+            else
+              echo "⚠️  No release branch found for $VERSION (expected: $BRANCH)"
+              echo "::warning::Release branch $BRANCH does not exist, skipping $VERSION"
+            fi
+          done
+
+          BRANCHES_JSON="${BRANCHES_JSON}]"
+
+          # Output results
+          echo "list=${BRANCHES[*]}" >> "$GITHUB_OUTPUT"
+          echo "json=$BRANCHES_JSON" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## 🎯 Affected Release Branches"
+            echo ""
+            echo "**Affected versions**: $AFFECTED"
+            echo "**Release branches found**: ${#BRANCHES[@]}"
+            echo ""
+            for BRANCH in "${BRANCHES[@]}"; do
+              echo "- \`$BRANCH\`"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${#BRANCHES[@]}" -eq 0 ]; then
+            {
+              echo ""
+              echo "⚠️  **Warning**: No release branches found for the specified versions."
+              echo "You may need to create release branches first using the \"Create Release Branch\" workflow."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  validate-commits:
+    name: Validate Fix Commits
+    needs: identify-branches
+    if: needs.identify-branches.outputs.branches != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Verify commits exist
+        env:
+          COMMITS: ${{ github.event.inputs.fix_commits }}
+        run: |
+          IFS=',' read -ra COMMIT_SHAS <<< "$COMMITS"
+
+          {
+            echo "## 🔍 Validating Fix Commits"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          ALL_VALID=true
+
+          for SHA in "${COMMIT_SHAS[@]}"; do
+            SHA=$(echo "$SHA" | xargs)  # Trim whitespace
+
+            if git cat-file -e "$SHA^{commit}" 2>/dev/null; then
+              # Get commit details
+              SUBJECT=$(git log -1 --format='%s' "$SHA")
+              AUTHOR=$(git log -1 --format='%an' "$SHA")
+
+              echo "- ✅ \`$SHA\`: $SUBJECT (by $AUTHOR)" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "- ❌ \`$SHA\`: **Commit not found**" >> "$GITHUB_STEP_SUMMARY"
+              ALL_VALID=false
+            fi
+          done
+
+          if [ "$ALL_VALID" = false ]; then
+            {
+              echo ""
+              echo "❌ **Error**: One or more commits not found"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+  cherry-pick:
+    name: Cherry-pick to ${{ matrix.branch }}
+    needs: [identify-branches, validate-commits]
+    if: needs.identify-branches.outputs.branches != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      matrix:
+        branch: ${{ fromJson(needs.identify-branches.outputs.branches_json) }}
+      fail-fast: false
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Cherry-pick commits
+        env:
+          COMMITS: ${{ github.event.inputs.fix_commits }}
+          BRANCH: ${{ matrix.branch }}
+          ADVISORY: ${{ github.event.inputs.advisory_id }}
+          DESCRIPTION: ${{ github.event.inputs.description }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          IFS=',' read -ra COMMIT_SHAS <<< "$COMMITS"
+
+          # Create a new branch for the cherry-pick
+          PATCH_BRANCH="security-patch/${BRANCH}-${GITHUB_RUN_NUMBER}"
+          git checkout -b "$PATCH_BRANCH"
+
+          echo "Cherry-picking commits to $PATCH_BRANCH..."
+
+          CHERRY_PICK_FAILED=false
+
+          for SHA in "${COMMIT_SHAS[@]}"; do
+            SHA=$(echo "$SHA" | xargs)
+
+            echo "Cherry-picking $SHA..."
+
+            if git cherry-pick "$SHA"; then
+              echo "✅ Successfully cherry-picked $SHA"
+            else
+              echo "❌ Failed to cherry-pick $SHA"
+              CHERRY_PICK_FAILED=true
+
+              # Check if there are conflicts
+              if git status | grep -q "Unmerged paths"; then
+                echo "::error::Cherry-pick conflict for commit $SHA on branch $BRANCH"
+                echo "Manual intervention required."
+
+                # Abort the cherry-pick
+                git cherry-pick --abort
+
+                # Create an issue to track manual backport
+                if [ -n "$ADVISORY" ]; then
+                  ISSUE_TITLE="Manual backport needed: $ADVISORY to $BRANCH"
+                else
+                  ISSUE_TITLE="Manual backport needed for $BRANCH"
+                fi
+
+                cat > issue-body.md <<EOF
+          ## Manual Backport Required
+
+          Automated cherry-pick failed for security patch on \`$BRANCH\`.
+
+          **Commit**: \`$SHA\`
+          **Advisory**: ${ADVISORY:-N/A}
+          **Description**: $DESCRIPTION
+
+          ### Steps to manually backport:
+
+          1. Checkout the release branch:
+             \`\`\`bash
+             git checkout $BRANCH
+             git pull origin $BRANCH
+             \`\`\`
+
+          2. Create a patch branch:
+             \`\`\`bash
+             git checkout -b security-patch-manual-$BRANCH
+             \`\`\`
+
+          3. Cherry-pick the commit:
+             \`\`\`bash
+             git cherry-pick $SHA
+             \`\`\`
+
+          4. Resolve conflicts manually
+
+          5. Push and create a PR:
+             \`\`\`bash
+             git push origin security-patch-manual-$BRANCH
+             gh pr create --base $BRANCH --title "$ISSUE_TITLE"
+             \`\`\`
+
+          6. After merging, trigger the **Patch Release** workflow
+          EOF
+
+                gh issue create \
+                  --title "$ISSUE_TITLE" \
+                  --body-file issue-body.md \
+                  --label "security,backport,needs-manual-intervention" || echo "Failed to create issue"
+
+                break
+              fi
+            fi
+          done
+
+          if [ "$CHERRY_PICK_FAILED" = true ]; then
+            echo "::warning::Cherry-pick failed for $BRANCH, manual intervention required"
+            exit 1
+          fi
+
+          # Push the patch branch
+          git push origin "$PATCH_BRANCH"
+
+          # Create pull request
+          if [ -n "$ADVISORY" ]; then
+            PR_TITLE="🔒 Security patch: $ADVISORY for $BRANCH"
+          else
+            PR_TITLE="🔒 Security patch for $BRANCH"
+          fi
+
+          cat > pr-body.md <<EOFPR
+          ## Security Patch
+
+          **Advisory**: ${ADVISORY:-N/A}
+          **Severity**: ${{ github.event.inputs.severity }}
+          **Target branch**: \`$BRANCH\`
+
+          ### Description
+
+          $DESCRIPTION
+
+          ### Commits Cherry-picked
+
+          $(for SHA in "${COMMIT_SHAS[@]}"; do
+            SHA=$(echo "$SHA" | xargs)
+            SUBJECT=$(git log -1 --format='%s' "$SHA" 2>/dev/null || echo "Unknown")
+            echo "- \`$SHA\`: $SUBJECT"
+          done)
+
+          ### Review Checklist
+
+          - [ ] All commits applied cleanly
+          - [ ] Tests pass
+          - [ ] Security issue is resolved
+          - [ ] Ready for patch release
+
+          ### Next Steps
+
+          After merging this PR:
+          1. Trigger the **Patch Release** workflow
+          2. Select branch: \`$BRANCH\`
+          3. Choose patch type: **security**
+
+          ---
+
+          🤖 Automated security patch via workflow run #${{ github.run_number }}
+          EOFPR
+
+          gh pr create \
+            --base "$BRANCH" \
+            --head "$PATCH_BRANCH" \
+            --title "$PR_TITLE" \
+            --body-file pr-body.md \
+            --label "security,backport,patch-release" || {
+              echo "::error::Failed to create PR for $BRANCH"
+              exit 1
+            }
+
+          echo "✅ Created PR for $BRANCH"
+
+  summary:
+    name: Security Patch Summary
+    needs: [identify-branches, cherry-pick]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        env:
+          BRANCHES: ${{ needs.identify-branches.outputs.branches }}
+          ADVISORY: ${{ github.event.inputs.advisory_id }}
+          SEVERITY: ${{ github.event.inputs.severity }}
+          AFFECTED: ${{ github.event.inputs.affected_versions }}
+        run: |
+          {
+            echo "## 🔒 Security Patch Coordination"
+            echo ""
+            echo "**Advisory**: ${ADVISORY:-N/A}"
+            echo "**Severity**: $SEVERITY"
+            echo "**Affected versions**: $AFFECTED"
+            echo ""
+            echo "### Release Branches Processed"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -n "$BRANCHES" ]; then
+            for BRANCH in $BRANCHES; do
+              echo "- \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+            done
+            {
+              echo ""
+              echo "### Next Steps"
+              echo ""
+              echo "1. Review and merge the security patch PRs"
+              echo "2. Run the **Patch Release** workflow for each affected branch"
+              echo "3. Verify releases are created correctly"
+              echo "4. Update the security advisory with fixed versions"
+              echo "5. Notify users of the security update"
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "⚠️  No release branches found."
+              echo ""
+              echo "You may need to:"
+              echo "- Create release branches for affected versions"
+              echo "- Manually apply patches to main only"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "📚 **See also**: [Security Policy](https://github.com/${{ github.repository }}/blob/main/SECURITY.md)"
+          } >> "$GITHUB_STEP_SUMMARY"

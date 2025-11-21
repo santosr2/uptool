@@ -71,7 +71,6 @@ header:
     - ".claudeignore"
     - ".yamllint"
     - ".env*"
-    - "commitlint.config.js"
     - "crush.json*"
     - ".github/CODEOWNERS"
 

@@ -1,0 +1,102 @@
+name: Changelog Automation
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'CHANGELOG.md'
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, labeled]
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Update type'
+        required: true
+        type: choice
+        options:
+          - preview
+          - update
+        default: preview
+
+# Don't cancel in-progress changelog updates
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0  # Full history for changelog generation
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Verify git-cliff configuration exists
+        run: |
+          if [ ! -f git-cliff.toml ]; then
+            echo "::error::git-cliff.toml not found in repository root"
+            exit 1
+          fi
+          echo "✅ Using git-cliff.toml from repository" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate changelog
+        id: generate
+        run: |
+          # Generate changelog using repository config
+          git-cliff --config git-cliff.toml --unreleased --prepend CHANGELOG.md
+
+          # Check if there are changes
+          if git diff --quiet CHANGELOG.md; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ No new changes to add to CHANGELOG.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "✅ CHANGELOG.md updated successfully" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Display changelog preview
+        if: github.event_name == 'pull_request' || github.event.inputs.update_type == 'preview'
+        run: |
+          {
+            echo "## 📝 Changelog Preview"
+            echo ""
+            echo '```markdown'
+            git-cliff --config git-cliff.toml --unreleased --strip all
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit and push changes
+        if: |
+          github.event_name == 'push' &&
+          github.ref == 'refs/heads/main' &&
+          steps.generate.outputs.has_changes == 'true' &&
+          (github.event.inputs.update_type == 'update' || github.event.inputs.update_type == '')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG.md [skip ci]"
+          git push
+
+      - name: Upload changelog artifact
+        if: steps.generate.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: changelog
+          path: CHANGELOG.md
+          retention-days: 30
+          if-no-files-found: error

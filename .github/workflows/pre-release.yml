@@ -1,0 +1,483 @@
+name: Pre-Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease_type:
+        description: 'Pre-release type'
+        required: true
+        type: choice
+        options:
+          - rc
+          - beta
+          - alpha
+        default: rc
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  calculate-version:
+    name: Calculate Next Version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      new_tag: ${{ steps.bump.outputs.new_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Calculate semantic version
+        id: semver
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+          default_bump: patch
+          release_branches: main
+
+      - name: Calculate pre-release version
+        id: bump
+        env:
+          PRERELEASE_TYPE: ${{ github.event.inputs.prerelease_type }}
+          NEXT_VERSION: ${{ steps.semver.outputs.new_version }}
+        run: |
+          # Get the base version (without 'v' prefix)
+          # NEXT_VERSION is provided by the environment (see env: above)
+          # shellcheck disable=SC2153
+          BASE_VERSION="${NEXT_VERSION#v}"
+
+          # Version format: v1.13.0-rc1, v1.13.0-beta3, v1.13.0-alpha20250708
+          # No dot between type and number, alpha uses date instead of number
+
+          if [ "$PRERELEASE_TYPE" = "alpha" ]; then
+            # For alpha: use date format (YYYYMMDD)
+            DATE_SUFFIX=$(date +%Y%m%d)
+            NEW_VERSION="${BASE_VERSION}-alpha${DATE_SUFFIX}"
+          else
+            # For rc/beta: find latest and increment number (no dot separator)
+            LATEST_PRERELEASE=$(git tag -l "v${BASE_VERSION}-${PRERELEASE_TYPE}[0-9]*" | sort -V | tail -n 1 || echo "")
+
+            if [ -z "$LATEST_PRERELEASE" ]; then
+              # No existing pre-release, start with 1
+              PRERELEASE_NUM=1
+            else
+              # Extract the pre-release number and increment
+              PRERELEASE_NUM=$(echo "$LATEST_PRERELEASE" | sed -E "s/.*-${PRERELEASE_TYPE}([0-9]+)$/\1/")
+              PRERELEASE_NUM=$((PRERELEASE_NUM + 1))
+            fi
+
+            NEW_VERSION="${BASE_VERSION}-${PRERELEASE_TYPE}${PRERELEASE_NUM}"
+          fi
+
+          NEW_TAG="v${NEW_VERSION}"
+
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## 🎯 Version Calculation"
+            echo ""
+            echo "**Next semantic version**: $NEXT_VERSION"
+            echo "**Pre-release type**: $PRERELEASE_TYPE"
+            echo "**Previous pre-release**: ${LATEST_PRERELEASE:-none}"
+            echo "**New pre-release version**: $NEW_TAG"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  update-version:
+    name: Update Version Files
+    needs: calculate-version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Update version files
+        env:
+          NEW_VERSION: ${{ needs.calculate-version.outputs.new_version }}
+        run: |
+          # Update all version references using bump-my-version (installed via mise)
+          bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
+
+      - name: Commit version changes
+        env:
+          NEW_TAG: ${{ needs.calculate-version.outputs.new_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(release): bump version to $NEW_TAG [skip ci]"
+          git push origin HEAD:main
+
+  test:
+    name: Pre-release Tests
+    needs: [calculate-version, update-version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main  # Get the updated version from main branch
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5.0.2
+        with:
+          files: ./coverage.out
+          flags: pre-release
+        continue-on-error: true
+
+  build:
+    name: Build Pre-release Artifacts
+    needs: [calculate-version, update-version, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: pre-release
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.calculate-version.outputs.new_tag }}
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    outputs:
+      hashes: ${{ steps.build-release.outputs.checksums }}
+    steps:
+      - name: Build, sign, and generate SBOMs
+        id: build-release
+        uses: ./.github/actions/build-release
+        with:
+          version: ${{ needs.calculate-version.outputs.new_tag }}
+          ref: main
+          upload-artifacts: 'false'
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Generate release notes
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.new_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Generate changelog section
+          PREV_TAG=$(git describe --tags --abbrev=0 "${VERSION}^" 2>/dev/null || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            git-cliff --config git-cliff.toml "$PREV_TAG..$VERSION" --strip all > changelog-section.md
+          else
+            git-cliff --config git-cliff.toml --strip all > changelog-section.md
+          fi
+
+          # Create release notes template
+          cat > release-notes.md <<'EOFNOTES'
+          # Pre-Release ${{ needs.calculate-version.outputs.new_tag }}
+
+          ⚠️ **This is a pre-release version intended for testing and early feedback.**
+
+          ## What's Changed
+
+          $(cat changelog-section.md)
+
+          ---
+
+          ## 📦 Installation
+
+          ### Docker (Recommended for Testing)
+
+          ```bash
+          # Pull pre-release image
+          docker pull ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }}
+
+          # Run uptool
+          docker run --rm ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }} version
+
+          # Scan a repository
+          docker run --rm -v "\$PWD:/workspace" ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }} scan
+          ```
+
+          ### Quick Install (Linux/macOS)
+
+          ```bash
+          # Detect OS and architecture
+          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH=$(uname -m)
+          case $ARCH in
+              x86_64) ARCH="amd64" ;;
+              aarch64|arm64) ARCH="arm64" ;;
+          esac
+
+          # Download
+          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.calculate-version.outputs.new_tag }}/uptool-${OS}-${ARCH}
+          chmod +x uptool-${OS}-${ARCH}
+          sudo mv uptool-${OS}-${ARCH} /usr/local/bin/uptool
+
+          # Verify
+          uptool version
+          ```
+
+          ### Go Install
+
+          ```bash
+          go install github.com/santosr2/uptool/cmd/uptool@${{ needs.calculate-version.outputs.new_tag }}
+          ```
+
+          ---
+
+          ## 🔐 Verification
+
+          ### Checksums
+
+          ```bash
+          # Download and verify
+          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.calculate-version.outputs.new_tag }}/checksums.txt
+          sha256sum -c checksums.txt
+          ```
+
+          ### Signature Verification (Cosign)
+
+          ```bash
+          # Install cosign
+          go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+
+          # Verify signature
+          cosign verify-blob \
+            --signature uptool-linux-amd64.sig \
+            --certificate uptool-linux-amd64.pem \
+            --certificate-identity-regexp="^https://github.com/santosr2/uptool/" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            uptool-linux-amd64
+          ```
+
+          ### SBOM
+
+          Software Bill of Materials available in:
+          - SPDX format: `uptool-sbom.spdx.json`
+          - CycloneDX format: `uptool-sbom.cyclonedx.json`
+
+          ---
+
+          ## 🐛 Reporting Issues
+
+          Please report any issues found in this pre-release at:
+          https://github.com/${{ github.repository }}/issues
+
+          **Note**: Pre-releases may contain bugs and are not recommended for production use.
+          EOFNOTES
+
+      - name: Create Git Tag
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.new_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create immutable tag (e.g., v0.2.0-rc1, v0.2.0-beta3, v0.2.0-alpha20250708)
+          git tag -a "$VERSION" -m "Pre-release $VERSION"
+          git push origin "$VERSION"
+
+          # Extract version components for mutable tags
+          # VERSION format: v0.2.0-rc1 or v0.2.0-beta3 or v0.2.0-alpha20250708
+          # Extract: MAJOR=0, MINOR=2, PRERELEASE_TYPE=rc
+          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+          PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
+
+          # Create/update mutable tags for convenience
+          # These tags follow the latest pre-release
+          MAJOR_RC_TAG="v${MAJOR}-${PRERELEASE_TYPE}"
+          MINOR_RC_TAG="v${MAJOR}.${MINOR}-${PRERELEASE_TYPE}"
+
+          echo "Creating mutable tags: $MAJOR_RC_TAG, $MINOR_RC_TAG"
+
+          # Force update mutable tags to point to this commit
+          git tag -fa "$MAJOR_RC_TAG" -m "Latest ${PRERELEASE_TYPE} pre-release in v${MAJOR}"
+          git tag -fa "$MINOR_RC_TAG" -m "Latest ${PRERELEASE_TYPE} pre-release in v${MAJOR}.${MINOR}"
+
+          # Push with --force to update existing tags
+          git push origin "$MAJOR_RC_TAG" --force
+          git push origin "$MINOR_RC_TAG" --force
+
+          echo "✅ Created tags: $VERSION (immutable), $MINOR_RC_TAG (mutable), $MAJOR_RC_TAG (mutable)"
+
+      - name: Create GitHub Pre-Release
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.2.0
+        with:
+          tag_name: ${{ needs.calculate-version.outputs.new_tag }}
+          name: ${{ needs.calculate-version.outputs.new_tag }}
+          files: |
+            dist/*
+          body_path: release-notes.md
+          draft: false
+          prerelease: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: pre-release-artifacts-${{ needs.calculate-version.outputs.new_tag }}
+          path: dist/
+          retention-days: 90
+          if-no-files-found: error
+
+  publish-docker:
+    name: Publish Pre-release Docker Image
+    needs: [calculate-version, update-version, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # Pre-release tag (e.g., v1.0.0-rc1)
+            type=raw,value=${{ needs.calculate-version.outputs.new_tag }}
+            # Git commit SHA
+            type=sha,prefix=${{ needs.calculate-version.outputs.new_tag }}-
+
+      - name: Build and push Docker image
+        id: build-push
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          sbom: true
+          provenance: true
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Publish summary
+        run: |
+          {
+            echo "## 🐳 Docker Pre-release Image Published"
+            echo ""
+            echo "**Registry**: \`${{ env.REGISTRY }}\`"
+            echo "**Image**: \`${{ env.IMAGE_NAME }}\`"
+            echo "**Tag**: \`${{ needs.calculate-version.outputs.new_tag }}\`"
+            echo "**Digest**: \`${{ steps.build-push.outputs.digest }}\`"
+            echo ""
+            echo "### Pull Command"
+            echo '```bash'
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.calculate-version.outputs.new_tag }}"
+            echo '```'
+            echo ""
+            echo "### Platforms"
+            echo "- ✅ linux/amd64"
+            echo "- ✅ linux/arm64"
+            echo ""
+            echo "### Attestations"
+            echo "- ✅ SBOM included"
+            echo "- ✅ SLSA Provenance included"
+            echo "- ✅ Artifact attestation generated"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  provenance:
+    name: Generate SLSA Provenance
+    needs: [build, calculate-version]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+      attestations: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      upload-assets: true
+      provenance-name: "uptool-${{ needs.calculate-version.outputs.new_tag }}.intoto.jsonl"
+
+  summary:
+    name: Pre-Release Summary
+    needs: [calculate-version, build, publish-docker, provenance]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        run: |
+          {
+            echo "## 🚀 Pre-Release Created"
+            echo ""
+            echo "**Version**: ${{ needs.calculate-version.outputs.new_tag }}"
+            echo "**Status**: ${{ needs.build.result }}"
+            echo ""
+            echo "### Artifacts"
+            echo "- ✅ Linux (AMD64, ARM64)"
+            echo "- ✅ macOS (AMD64, ARM64)"
+            echo "- ✅ Windows (AMD64)"
+            echo "- ✅ Checksums (SHA256)"
+            echo "- ✅ Signatures (Cosign)"
+            echo "- ✅ SBOM (SPDX + CycloneDX)"
+            echo "- ✅ SLSA Provenance (Level 3)"
+            echo ""
+            echo "### Docker Images"
+            echo "- ✅ Multi-platform (linux/amd64, linux/arm64)"
+            echo "- ✅ Published to GitHub Container Registry"
+            echo "- ✅ SBOM and Provenance included"
+            echo ""
+            echo "🔗 **Release URL**: https://github.com/${{ github.repository }}/releases/tag/${{ needs.calculate-version.outputs.new_tag }}"
+            echo "🐳 **Docker Image**: ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }}"
+          } >> "$GITHUB_STEP_SUMMARY"

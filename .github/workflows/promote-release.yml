@@ -1,0 +1,778 @@
+name: Promote to Stable Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      pre_release_tag:
+        description: 'Pre-release tag to promote (e.g., v0.5.0-rc1, v0.5.0-beta3, v0.5.0-alpha20250708)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate Promotion
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      pre_release_tag: ${{ steps.validate.outputs.pre_release_tag }}
+      stable_version: ${{ steps.validate.outputs.stable_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate inputs
+        id: validate
+        env:
+          PRE_RELEASE: ${{ github.event.inputs.pre_release_tag }}
+        run: |
+          # Validate pre-release format (v1.0.0-rc1, v1.0.0-beta3, v1.0.0-alpha20250708)
+          if [[ ! "$PRE_RELEASE" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(rc|beta|alpha)[0-9]+$ ]]; then
+            echo "::error::Invalid pre-release tag format. Expected: v1.0.0-rc1, v1.0.0-beta3, or v1.0.0-alpha20250708"
+            exit 1
+          fi
+
+          # Auto-extract stable version from pre-release (remove suffix)
+          STABLE=$(echo "$PRE_RELEASE" | sed 's/-rc[0-9]*//; s/-beta[0-9]*//; s/-alpha[0-9]*//')
+
+          # Verify pre-release tag exists
+          if ! git tag | grep -q "^${PRE_RELEASE}$"; then
+            echo "::error::Pre-release tag $PRE_RELEASE does not exist"
+            exit 1
+          fi
+
+          # Verify stable tag doesn't already exist
+          if git tag | grep -q "^${STABLE}$"; then
+            echo "::error::Stable tag $STABLE already exists"
+            exit 1
+          fi
+
+          echo "pre_release_tag=$PRE_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "stable_version=$STABLE" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## ✅ Validation Passed"
+            echo ""
+            echo "**Pre-release**: $PRE_RELEASE"
+            echo "**Stable version** (auto-detected): $STABLE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  update-version:
+    name: Update Version to Stable
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout pre-release tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.pre_release_tag }}
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Update version files to stable
+        env:
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          # Remove 'v' prefix for bump-my-version
+          VERSION_NO_V="${STABLE_VERSION#v}"
+
+          # Update all version references to stable version
+          bump-my-version bump --new-version "$VERSION_NO_V" --no-commit --no-tag patch
+
+      - name: Commit stable version
+        env:
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(release): release $STABLE_VERSION [skip ci]"
+          git push origin HEAD:main
+
+  test:
+    name: Final Validation Tests
+    needs: [validate, update-version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout updated main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup mise
+        uses: ./github/actions/setup-mise
+
+      - name: Run full test suite
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Verify build
+        run: |
+          go build -o uptool ./cmd/uptool
+          ./uptool version
+
+  promote:
+    name: Promote Release
+    needs: [validate, update-version, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate.outputs.stable_version }}
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout updated main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download pre-release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
+        run: |
+          mkdir -p release-assets
+          cd release-assets
+
+          # Download all assets from pre-release
+          gh release download "$PRE_RELEASE" --pattern '*'
+
+          echo "Downloaded assets:"
+          ls -lah
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Generate stable release notes
+        env:
+          VERSION: ${{ needs.validate.outputs.stable_version }}
+          PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
+        run: |
+          # Find previous stable release
+          PREV_STABLE=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | grep -v '\-' | sort -V | tail -n 1 || echo "")
+
+          if [ -n "$PREV_STABLE" ]; then
+            git-cliff --config git-cliff.toml "$PREV_STABLE..$PRE_RELEASE" --strip all > changelog-section.md
+          else
+            git-cliff --config git-cliff.toml --strip all > changelog-section.md
+          fi
+
+          # Create release notes
+          cat > release-notes.md <<EOFNOTES
+          # Release $VERSION
+
+          This is a stable release promoted from pre-release $PRE_RELEASE.
+
+          ## What's Changed
+
+          $(cat changelog-section.md)
+
+          ---
+
+          ## 📦 Installation
+
+          ### Docker (Recommended)
+
+          \`\`\`bash
+          # Pull latest stable image
+          docker pull ghcr.io/${{ github.repository }}:latest
+
+          # Or pull specific version
+          docker pull ghcr.io/${{ github.repository }}:$VERSION
+
+          # Run uptool
+          docker run --rm ghcr.io/${{ github.repository }} version
+
+          # Scan a repository
+          docker run --rm -v "\\\$PWD:/workspace" ghcr.io/${{ github.repository }} scan
+          \`\`\`
+
+          ### Quick Install (Linux/macOS)
+
+          \`\`\`bash
+          # Detect OS and architecture
+          OS=\$(uname -s | tr '[:upper:]' '[:lower:]')
+          ARCH=\$(uname -m)
+          case \$ARCH in
+              x86_64) ARCH="amd64" ;;
+              aarch64|arm64) ARCH="arm64" ;;
+          esac
+
+          # Download
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-\${OS}-\${ARCH}
+          chmod +x uptool-\${OS}-\${ARCH}
+          sudo mv uptool-\${OS}-\${ARCH} /usr/local/bin/uptool
+
+          # Verify
+          uptool version
+          \`\`\`
+
+          ### Platform-Specific
+
+          <details>
+          <summary><b>Linux (AMD64)</b></summary>
+
+          \`\`\`bash
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64
+          chmod +x uptool-linux-amd64
+          sudo mv uptool-linux-amd64 /usr/local/bin/uptool
+          \`\`\`
+          </details>
+
+          <details>
+          <summary><b>Linux (ARM64)</b></summary>
+
+          \`\`\`bash
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-arm64
+          chmod +x uptool-linux-arm64
+          sudo mv uptool-linux-arm64 /usr/local/bin/uptool
+          \`\`\`
+          </details>
+
+          <details>
+          <summary><b>macOS (Intel)</b></summary>
+
+          \`\`\`bash
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-darwin-amd64
+          chmod +x uptool-darwin-amd64
+          sudo mv uptool-darwin-amd64 /usr/local/bin/uptool
+          \`\`\`
+          </details>
+
+          <details>
+          <summary><b>macOS (Apple Silicon)</b></summary>
+
+          \`\`\`bash
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-darwin-arm64
+          chmod +x uptool-darwin-arm64
+          sudo mv uptool-darwin-arm64 /usr/local/bin/uptool
+          \`\`\`
+          </details>
+
+          <details>
+          <summary><b>Windows (AMD64)</b></summary>
+
+          \`\`\`powershell
+          Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-windows-amd64.exe" -OutFile "uptool.exe"
+          \`\`\`
+          </details>
+
+          ### Go Install
+
+          \`\`\`bash
+          go install github.com/santosr2/uptool/cmd/uptool@$VERSION
+          \`\`\`
+
+          ### Homebrew (coming soon)
+
+          \`\`\`bash
+          brew install santosr2/tap/uptool
+          \`\`\`
+
+          ---
+
+          ## 🔐 Verification
+
+          ### Checksums
+
+          Verify the integrity of downloaded binaries:
+
+          \`\`\`bash
+          # Download checksums
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/checksums.txt
+
+          # Verify
+          sha256sum -c checksums.txt
+
+          # Or verify specific file
+          sha256sum uptool-linux-amd64
+          grep uptool-linux-amd64 checksums.txt
+          \`\`\`
+
+          ### Signature Verification (Cosign)
+
+          All binaries are signed using [Sigstore Cosign](https://github.com/sigstore/cosign):
+
+          \`\`\`bash
+          # Install cosign
+          go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+
+          # Download binary and signature
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64.sig
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-linux-amd64.pem
+
+          # Verify signature
+          cosign verify-blob \\
+            --signature uptool-linux-amd64.sig \\
+            --certificate uptool-linux-amd64.pem \\
+            --certificate-identity-regexp="^https://github.com/santosr2/uptool/" \\
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \\
+            uptool-linux-amd64
+          \`\`\`
+
+          ### SLSA Provenance
+
+          This release includes [SLSA Level 3](https://slsa.dev/) build provenance:
+
+          \`\`\`bash
+          # Install slsa-verifier
+          go install github.com/slsa-framework/slsa-verifier/v2/cli/slsa-verifier@latest
+
+          # Download provenance
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-$VERSION.intoto.jsonl
+
+          # Verify provenance
+          slsa-verifier verify-artifact \\
+            --provenance-path uptool-$VERSION.intoto.jsonl \\
+            --source-uri github.com/santosr2/uptool \\
+            --source-tag $VERSION \\
+            uptool-linux-amd64
+          \`\`\`
+
+          ### SBOM
+
+          Software Bill of Materials (SBOM) files are included in multiple formats:
+
+          - **SPDX JSON**: \`uptool-sbom.spdx.json\`
+          - **CycloneDX JSON**: \`uptool-sbom.cyclonedx.json\`
+
+          \`\`\`bash
+          # Download SBOM
+          curl -LO https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-sbom.spdx.json
+
+          # Analyze with Syft
+          syft uptool-sbom.spdx.json
+          \`\`\`
+
+          ---
+
+          ## 📚 Documentation
+
+          - [README](https://github.com/${{ github.repository }}/blob/$VERSION/README.md)
+          - [CHANGELOG](https://github.com/${{ github.repository }}/blob/$VERSION/CHANGELOG.md)
+          - [Contributing Guide](https://github.com/${{ github.repository }}/blob/$VERSION/CONTRIBUTING.md)
+          - [Documentation Site](https://santosr2.github.io/uptool/)
+
+          ---
+
+          ## 🔗 Links
+
+          - **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_STABLE}...$VERSION
+          - **Pre-release**: https://github.com/${{ github.repository }}/releases/tag/$PRE_RELEASE
+
+          ---
+
+          <sub>🤖 Generated with [uptool](https://github.com/santosr2/uptool) release automation</sub>
+          EOFNOTES
+
+      - name: Create stable Git tag
+        env:
+          VERSION: ${{ needs.validate.outputs.stable_version }}
+          PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create immutable tag (e.g., v0.2.0)
+          git tag -a "$VERSION" -m "Release $VERSION (promoted from $PRE_RELEASE)"
+          git push origin "$VERSION"
+
+          # Extract version components for mutable tags
+          # VERSION format: v0.2.0
+          # Extract: MAJOR=0, MINOR=2
+          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+
+          # Create/update mutable tags for GitHub Actions convenience
+          # These allow users to pin to @v0 or @v0.2
+          MAJOR_TAG="v${MAJOR}"
+          MINOR_TAG="v${MAJOR}.${MINOR}"
+
+          echo "Creating mutable tags: $MAJOR_TAG, $MINOR_TAG"
+
+          # Force update mutable tags to point to this stable release
+          git tag -fa "$MAJOR_TAG" -m "Latest stable release in v${MAJOR} (currently $VERSION)"
+          git tag -fa "$MINOR_TAG" -m "Latest stable release in v${MAJOR}.${MINOR} (currently $VERSION)"
+
+          # Push with --force to update existing tags
+          git push origin "$MAJOR_TAG" --force
+          git push origin "$MINOR_TAG" --force
+
+          echo "✅ Created tags: $VERSION (immutable), $MINOR_TAG (mutable), $MAJOR_TAG (mutable)"
+          echo ""
+          echo "Users can now reference the action with:"
+          echo "  - uses: santosr2/uptool@$VERSION     # Exact version (immutable)"
+          echo "  - uses: santosr2/uptool@$MINOR_TAG   # Latest patch in v${MAJOR}.${MINOR} (mutable)"
+          echo "  - uses: santosr2/uptool@$MAJOR_TAG   # Latest release in v${MAJOR} (mutable)"
+
+      - name: Create GitHub Stable Release
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.2.0
+        with:
+          tag_name: ${{ needs.validate.outputs.stable_version }}
+          name: ${{ needs.validate.outputs.stable_version }}
+          files: |
+            release-assets/*
+          body_path: release-notes.md
+          draft: false
+          prerelease: false
+          make_latest: true
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG.md
+        env:
+          VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Update changelog
+          git-cliff --config git-cliff.toml --tag "$VERSION" --prepend CHANGELOG.md
+
+          # Commit and push
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG.md for $VERSION [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:main || echo "Failed to push changelog update"
+
+  promote-docker:
+    name: Promote Docker Image to Stable
+    needs: [validate, promote]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull pre-release image
+        env:
+          PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
+        run: |
+          # Pull the pre-release image
+          docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}"
+
+          # Get the image digest
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}" | cut -d'@' -f2)
+          echo "IMAGE_DIGEST=$DIGEST" >> "$GITHUB_ENV"
+
+          echo "Pulled pre-release image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}"
+          echo "Image digest: $DIGEST"
+
+      - name: Tag stable versions
+        env:
+          PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          # Extract version components (e.g., v1.2.3 → MAJOR=1, MINOR=2)
+          MAJOR=$(echo "$STABLE_VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$STABLE_VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+
+          # Tag the image with stable tags
+          docker tag "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${STABLE_VERSION}"
+          docker tag "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${MAJOR}.${MINOR}"
+          docker tag "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${MAJOR}"
+          docker tag "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${PRE_RELEASE}" "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+
+          echo "Tagged images:"
+          echo "  - ${STABLE_VERSION} (immutable)"
+          echo "  - v${MAJOR}.${MINOR} (mutable)"
+          echo "  - v${MAJOR} (mutable)"
+          echo "  - latest (mutable)"
+
+      - name: Push stable tags
+        env:
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          MAJOR=$(echo "$STABLE_VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$STABLE_VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+
+          # Push all tags
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${STABLE_VERSION}"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${MAJOR}.${MINOR}"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:v${MAJOR}"
+          docker push "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+
+          echo "✅ All stable tags pushed successfully"
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ env.IMAGE_DIGEST }}
+          push-to-registry: true
+
+      - name: Publish summary
+        env:
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          MAJOR=$(echo "$STABLE_VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$STABLE_VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+
+          {
+            echo "## 🐳 Docker Images Promoted"
+            echo ""
+            echo "**Registry**: \`${{ env.REGISTRY }}\`"
+            echo "**Image**: \`${{ env.IMAGE_NAME }}\`"
+            echo "**Digest**: \`${{ env.IMAGE_DIGEST }}\`"
+            echo ""
+            echo "### Available Tags"
+            echo "- \`${STABLE_VERSION}\` (immutable)"
+            echo "- \`v${MAJOR}.${MINOR}\` (mutable - latest patch)"
+            echo "- \`v${MAJOR}\` (mutable - latest minor)"
+            echo "- \`latest\` (mutable - latest stable)"
+            echo ""
+            echo "### Pull Commands"
+            echo '```bash'
+            echo "# Exact version (recommended for production)"
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${STABLE_VERSION}"
+            echo ""
+            echo "# Latest stable (convenience)"
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  create-previous-release-branch:
+    name: Create Release Branch for Previous Version
+    needs: [validate, promote]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine if release branch is needed
+        id: check
+        env:
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          # Extract version components from stable version (e.g., v0.2.0)
+          MAJOR=$(echo "$STABLE_VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$STABLE_VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+          PATCH=$(echo "$STABLE_VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.([0-9]+)$/\1/')
+
+          echo "Released version: MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
+
+          # Only create release branch if this is a NEW minor version (X.Y.0)
+          # and there exists a previous minor version
+          if [ "$PATCH" != "0" ]; then
+            echo "This is a patch release ($STABLE_VERSION), not creating release branch"
+            echo "create_branch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # This is a new minor version (X.Y.0)
+          # Check if there's a previous minor version
+          if [ "$MINOR" = "0" ]; then
+            echo "This is the first minor version (v${MAJOR}.0.0), no previous version to branch"
+            echo "create_branch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Calculate previous minor version
+          PREV_MINOR=$((MINOR - 1))
+          PREV_VERSION="${MAJOR}.${PREV_MINOR}"
+          BRANCH_NAME="release-${PREV_VERSION}"
+
+          # Check if release branch already exists
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+            echo "Release branch $BRANCH_NAME already exists"
+            echo "create_branch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Find latest stable tag for previous version
+          LATEST_TAG=$(git tag -l "v${PREV_VERSION}.*" | grep -v '\-' | sort -V | tail -n 1 || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "::warning::No stable tag found for v${PREV_VERSION}.x, cannot create release branch"
+            echo "create_branch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "✅ Should create release branch: $BRANCH_NAME from $LATEST_TAG"
+          {
+            echo "create_branch=true"
+            echo "branch_name=$BRANCH_NAME"
+            echo "base_tag=$LATEST_TAG"
+            echo "prev_version=$PREV_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create release branch
+        if: steps.check.outputs.create_branch == 'true'
+        env:
+          BRANCH_NAME: ${{ steps.check.outputs.branch_name }}
+          BASE_TAG: ${{ steps.check.outputs.base_tag }}
+          PREV_VERSION: ${{ steps.check.outputs.prev_version }}
+          NEW_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Checkout the base tag
+          git checkout "$BASE_TAG"
+
+          # Create the release branch
+          git checkout -b "$BRANCH_NAME"
+
+          # Create README for the branch
+          cat > .github/RELEASE_BRANCH_README.md <<EOFREADME
+          # Release Branch: $BRANCH_NAME
+
+          This is a **release branch** for long-term support of the $PREV_VERSION.x release line.
+
+          ## Purpose
+
+          This branch was automatically created when $NEW_VERSION was released.
+
+          According to our [Security Policy](../../SECURITY.md):
+          - This branch receives **security patches only** for 6 months after $NEW_VERSION release
+          - Support ends: $(date -d '+6 months' '+%Y-%m-%d' 2>/dev/null || date -v +6m '+%Y-%m-%d')
+
+          ## Workflow
+
+          ### For Maintainers: Creating a Patch Release
+
+          1. Cherry-pick fixes from \`main\`:
+             \`\`\`bash
+             git checkout $BRANCH_NAME
+             git cherry-pick <commit-sha>
+             git push origin $BRANCH_NAME
+             \`\`\`
+
+          2. Trigger patch release workflow:
+             - Go to Actions → "Patch Release"
+             - Select branch: \`$BRANCH_NAME\`
+             - Choose patch type: \`security\` or \`bugfix\`
+
+          ### For Users
+
+          This branch maintains the $PREV_VERSION.x release line. Users should:
+          - Update to latest patch: \`uptool@v$PREV_VERSION\` (mutable tag)
+          - Or pin to exact version: \`uptool@$BASE_TAG\`
+
+          ## Documentation
+
+          - [Patch Release Workflow](../../docs/patch-release-workflow.md)
+          - [Security Policy](../../SECURITY.md)
+          EOFREADME
+
+          git add .github/RELEASE_BRANCH_README.md
+          git commit -m "docs: add release branch README for $BRANCH_NAME [skip ci]"
+
+          # Push the branch
+          git push origin "$BRANCH_NAME"
+
+          echo "✅ Created release branch: $BRANCH_NAME from $BASE_TAG"
+
+          # Add summary
+          {
+            echo "## 🌿 Release Branch Created"
+            echo ""
+            echo "**Branch**: \`$BRANCH_NAME\`"
+            echo "**Base tag**: \`$BASE_TAG\`"
+            echo "**Purpose**: Security patches for $PREV_VERSION.x (6 months from $NEW_VERSION release)"
+            echo ""
+            echo "📚 See [Patch Release Workflow](https://github.com/${{ github.repository }}/blob/main/docs/patch-release-workflow.md)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  summary:
+    name: Promotion Summary
+    needs: [validate, promote, promote-docker, create-previous-release-branch]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        env:
+          BRANCH_CREATED: ${{ needs.create-previous-release-branch.result }}
+          DOCKER_PROMOTED: ${{ needs.promote-docker.result }}
+        run: |
+          {
+            echo "## 🎉 Release Promoted to Stable"
+            echo ""
+            echo "**Pre-release**: ${{ needs.validate.outputs.pre_release_tag }}"
+            echo "**Stable version**: ${{ needs.validate.outputs.stable_version }}"
+            echo "**Status**: ${{ needs.promote.result }}"
+            echo ""
+            echo "### Artifacts Promoted"
+            echo "- ✅ All binaries (Linux, macOS, Windows)"
+            echo "- ✅ Checksums"
+            echo "- ✅ Signatures"
+            echo "- ✅ SBOM files"
+            echo "- ✅ SLSA Provenance"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$DOCKER_PROMOTED" = "success" ]; then
+            {
+              echo "### 🐳 Docker Images"
+              echo "- ✅ Multi-platform images promoted to stable"
+              echo "- ✅ Available at: ghcr.io/${{ github.repository }}:latest"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "$BRANCH_CREATED" = "success" ]; then
+            {
+              echo "### 🌿 Release Branch"
+              echo "- ✅ Previous version release branch created automatically"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          {
+            echo "🔗 **Release URL**: https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate.outputs.stable_version }}"
+            echo "🐳 **Docker Image**: ghcr.io/${{ github.repository }}:${{ needs.validate.outputs.stable_version }}"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Next Steps"
+            echo "- [ ] Announce release on social media"
+            echo "- [ ] Update documentation if needed"
+            echo "- [ ] Update package managers (Homebrew, etc.)"
+            echo "- [ ] Close milestone for this version"
+          } >> "$GITHUB_STEP_SUMMARY"

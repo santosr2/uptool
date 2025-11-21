@@ -1,0 +1,175 @@
+# Reusable composite action for building, signing, and generating SBOMs for releases
+# This action reduces duplication across pre-release, promote-release, and patch-release workflows
+
+name: 'Build and Sign Release'
+description: 'Build binaries for all platforms, sign with Cosign, and generate SBOMs'
+
+inputs:
+  version:
+    description: 'Version tag (e.g., v0.1.0, v0.2.0-rc.1)'
+    required: true
+  ref:
+    description: 'Git ref to checkout'
+    required: false
+    default: 'main'
+  upload-artifacts:
+    description: 'Whether to upload artifacts (true) or just build locally (false)'
+    required: false
+    default: 'true'
+
+outputs:
+  dist-path:
+    description: 'Path to the dist directory containing all artifacts'
+    value: ${{ steps.paths.outputs.dist }}
+  checksums:
+    description: 'Base64 encoded SHA256 checksums for SLSA'
+    value: ${{ steps.checksums.outputs.hashes }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        ref: ${{ inputs.ref }}
+        fetch-depth: 0
+      shell: bash
+
+    - name: Setup mise
+      uses: ./.github/actions/setup-mise
+      shell: bash
+
+    - name: Set output paths
+      id: paths
+      shell: bash
+      run: |
+        DIST_DIR="$GITHUB_WORKSPACE/dist"
+        mkdir -p "$DIST_DIR"
+        echo "dist=$DIST_DIR" >> $GITHUB_OUTPUT
+
+    - name: Build for all platforms
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        DIST_DIR="${{ steps.paths.outputs.dist }}"
+
+        echo "🔨 Building uptool $VERSION for 5 platforms..."
+        echo "Using embedded VERSION file (no ldflags needed)"
+
+        # Linux AMD64
+        echo "  Building linux-amd64..."
+        GOOS=linux GOARCH=amd64 go build -o "$DIST_DIR/uptool-linux-amd64" ./cmd/uptool
+
+        # Linux ARM64
+        echo "  Building linux-arm64..."
+        GOOS=linux GOARCH=arm64 go build -o "$DIST_DIR/uptool-linux-arm64" ./cmd/uptool
+
+        # macOS AMD64
+        echo "  Building darwin-amd64..."
+        GOOS=darwin GOARCH=amd64 go build -o "$DIST_DIR/uptool-darwin-amd64" ./cmd/uptool
+
+        # macOS ARM64 (Apple Silicon)
+        echo "  Building darwin-arm64..."
+        GOOS=darwin GOARCH=arm64 go build -o "$DIST_DIR/uptool-darwin-arm64" ./cmd/uptool
+
+        # Windows AMD64
+        echo "  Building windows-amd64..."
+        GOOS=windows GOARCH=amd64 go build -o "$DIST_DIR/uptool-windows-amd64.exe" ./cmd/uptool
+
+        echo "✅ All binaries built successfully"
+        ls -lh "$DIST_DIR"/uptool-*
+
+    - name: Generate checksums
+      id: checksums
+      shell: bash
+      working-directory: ${{ steps.paths.outputs.dist }}
+      run: |
+        echo "📝 Generating SHA256 checksums..."
+        sha256sum uptool-* > checksums.txt
+        cat checksums.txt
+
+        # Generate base64 encoded hashes for SLSA provenance
+        HASHES=$(cat checksums.txt | base64 -w0)
+        echo "hashes=$HASHES" >> $GITHUB_OUTPUT
+        echo "✅ Checksums generated"
+
+    - name: Generate SBOM (SPDX)
+      uses: anchore/sbom-action@fc46e51e0a1fb8a11479054c4a0aefb49afc973c # v0.17.11
+      with:
+        path: ./
+        artifact-name: uptool-sbom.spdx.json
+        output-file: ${{ steps.paths.outputs.dist }}/uptool-sbom.spdx.json
+        format: spdx-json
+      shell: bash
+
+    - name: Generate SBOM (CycloneDX)
+      uses: CycloneDX/gh-gomod-generate-sbom@efc74245d6802c8cefd925620515442756c70d8f # v2.0.0
+      with:
+        version: v1
+        args: mod -licenses -json -output ${{ steps.paths.outputs.dist }}/uptool-sbom.cyclonedx.json
+      shell: bash
+
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+      shell: bash
+
+    - name: Sign artifacts with Cosign
+      shell: bash
+      env:
+        COSIGN_EXPERIMENTAL: 1
+      working-directory: ${{ steps.paths.outputs.dist }}
+      run: |
+        echo "🔏 Signing artifacts with Cosign (keyless mode)..."
+
+        for file in uptool-*; do
+          # Skip already-signed files and non-binary files
+          if [ -f "$file" ] && \
+             [[ "$file" != *.sig ]] && \
+             [[ "$file" != *.pem ]] && \
+             [[ "$file" != *sbom* ]] && \
+             [[ "$file" != checksums.txt ]]; then
+
+            echo "  Signing $file..."
+            cosign sign-blob --yes "$file" \
+              --output-signature="${file}.sig" \
+              --output-certificate="${file}.pem"
+          fi
+        done
+
+        echo "✅ All artifacts signed successfully"
+        ls -lh *.sig *.pem
+
+    - name: Upload artifacts
+      if: inputs.upload-artifacts == 'true'
+      uses: actions/upload-artifact@ea165f8d65b6b5c284233e0ffc04eaeb230a010e # v4.6.0
+      with:
+        name: release-artifacts
+        path: |
+          ${{ steps.paths.outputs.dist }}/uptool-*
+          ${{ steps.paths.outputs.dist }}/checksums.txt
+        retention-days: 7
+      shell: bash
+
+    - name: Summary
+      shell: bash
+      working-directory: ${{ steps.paths.outputs.dist }}
+      run: |
+        echo "## 📦 Build and Sign Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version**: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Ref**: ${{ inputs.ref }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Artifacts Generated" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Binaries (5 platforms)**:" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        ls -lh uptool-* | grep -v '\.sig$' | grep -v '\.pem$' | grep -v 'sbom' | grep -v 'checksums.txt' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Security Artifacts**:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Cosign signatures (*.sig)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Cosign certificates (*.pem)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ SHA256 checksums (checksums.txt)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ SBOM SPDX (uptool-sbom.spdx.json)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ SBOM CycloneDX (uptool-sbom.cyclonedx.json)" >> $GITHUB_STEP_SUMMARY
