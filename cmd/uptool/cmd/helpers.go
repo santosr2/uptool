@@ -47,13 +47,19 @@ func setupEngine() *engine.Engine {
 	var cfg *policy.Config
 	configPath := filepath.Join(".", "uptool.yaml")
 	if _, err := os.Stat(configPath); err == nil {
-		var loadErr error
-		cfg, loadErr = policy.LoadConfig(configPath)
-		if loadErr != nil {
-			logger.Warn("failed to load config, using defaults", "error", loadErr)
-			cfg = nil
+		// Convert to absolute path for secureio
+		absPath, absErr := filepath.Abs(configPath)
+		if absErr != nil {
+			logger.Warn("failed to resolve config path", "error", absErr)
 		} else {
-			logger.Debug("loaded configuration", "path", configPath)
+			var loadErr error
+			cfg, loadErr = policy.LoadConfig(absPath)
+			if loadErr != nil {
+				logger.Warn("failed to load config, using defaults", "error", loadErr)
+				cfg = nil
+			} else {
+				logger.Debug("loaded configuration", "path", absPath)
+			}
 		}
 	}
 

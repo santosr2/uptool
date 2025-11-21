@@ -2,9 +2,9 @@ name: License Compliance
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
     # Run every Monday at 8:00 UTC
     - cron: '0 8 * * 1'
@@ -30,8 +30,10 @@ jobs:
       - name: Check licenses
         id: check
         run: |
-          echo "## 📜 License Compliance Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📜 License Compliance Report"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Generate license report
           go-licenses report ./cmd/uptool > licenses.csv 2>&1 || true
@@ -42,23 +44,26 @@ jobs:
 
           for lic in $FORBIDDEN; do
             if grep -q "$lic" licenses.csv 2>/dev/null; then
-              echo "⚠️ Found potentially incompatible license: $lic" | tee -a $GITHUB_STEP_SUMMARY
+              echo "⚠️ Found potentially incompatible license: $lic" | tee -a "$GITHUB_STEP_SUMMARY"
               FOUND_ISSUES=1
             fi
           done
 
-          if [ $FOUND_ISSUES -eq 0 ]; then
-            echo "✅ No incompatible licenses detected" >> $GITHUB_STEP_SUMMARY
-            echo "has_issues=false" >> $GITHUB_OUTPUT
+          if [ "$FOUND_ISSUES" -eq 0 ]; then
+            echo "✅ No incompatible licenses detected" >> "$GITHUB_STEP_SUMMARY"
+            echo "has_issues=false" >> "$GITHUB_OUTPUT"
           else
-            echo "has_issues=true" >> $GITHUB_OUTPUT
+            echo "has_issues=true" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### License Summary" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          head -20 licenses.csv >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No licenses found" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### License Summary"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          head -20 licenses.csv >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || \
+            echo "No licenses found" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Generate SPDX SBOM
         run: |
@@ -91,29 +96,33 @@ jobs:
 
       - name: Check for license headers
         run: |
-          echo "## 📄 License Header Check" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📄 License Header Check"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           MISSING=0
           TOTAL=0
 
-          # Check all .go files for license headers
-          for file in $(find . -name "*.go" -not -path "./vendor/*" -not -path "./.git/*"); do
+          # Check all .go files for license headers using while read loop
+          while IFS= read -r -d '' file; do
             TOTAL=$((TOTAL+1))
             if ! head -5 "$file" | grep -q -i "license\|copyright\|spdx-license-identifier"; then
               echo "⚠️ Missing license header: $file" >> missing-headers.txt
               MISSING=$((MISSING+1))
             fi
-          done
+          done < <(find . -name "*.go" -not -path "./vendor/*" -not -path "./.git/*" -print0)
 
           if [ -f missing-headers.txt ]; then
-            echo "⚠️ **Files missing license headers: $MISSING/$TOTAL**" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            cat missing-headers.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            {
+              echo "⚠️ **Files missing license headers: $MISSING/$TOTAL**"
+              echo ""
+              echo '```'
+              cat missing-headers.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "✅ All Go files have license headers ($TOTAL/$TOTAL)" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All Go files have license headers ($TOTAL/$TOTAL)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Check LICENSE file exists
@@ -121,8 +130,10 @@ jobs:
             echo "::error::LICENSE file not found in repository root"
             exit 1
           else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "✅ LICENSE file exists" >> $GITHUB_STEP_SUMMARY
+            {
+              echo ""
+              echo "✅ LICENSE file exists"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
   verify-license-file:

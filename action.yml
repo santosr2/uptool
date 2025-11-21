@@ -76,13 +76,14 @@ runs:
     - name: Setup Go
       uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
       with:
-        go-version: '1.25'
+        go-version-file: 'go.mod'
+        check-latest: true
         cache: false
 
     - name: Install uptool
       shell: bash
       run: |
-        cd ${{ github.action_path }}
+        cd "${{ github.action_path }}"
         go build -o /tmp/uptool ./cmd/uptool
         chmod +x /tmp/uptool
 
@@ -125,8 +126,13 @@ runs:
 
         # Run uptool
         echo "Running: /tmp/uptool $CMD $ARGS"
-        /tmp/uptool $CMD $ARGS | tee /tmp/uptool-output.txt
-        EXIT_CODE=${PIPESTATUS[0]}
+        if /tmp/uptool $CMD $ARGS | tee /tmp/uptool-output.txt; then
+          EXIT_CODE=0
+        else
+          EXIT_CODE=$?
+          echo "::error::uptool command failed with exit code $EXIT_CODE"
+          exit "$EXIT_CODE"
+        fi
 
         # Parse output to set outputs (use safer extraction with defaults)
         if grep -q "No updates available" /tmp/uptool-output.txt || grep -q "No manifests found" /tmp/uptool-output.txt; then
@@ -148,7 +154,8 @@ runs:
           echo "dependencies-updated=$DEPS" >> "$GITHUB_OUTPUT"
         fi
 
-        exit "$EXIT_CODE"
+        # Exit successfully if uptool ran without errors
+        exit 0
 
     - name: Generate detailed PR body
       if: inputs.create-pr == 'true' && steps.uptool.outputs.updates-available == 'true'

@@ -2,12 +2,12 @@ name: GitHub Action Validation
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'action.yml'
       - '.github/workflows/action-validation.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'action.yml'
       - '.github/workflows/action-validation.yml'
