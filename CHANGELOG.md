@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([6c59527](https://github.com/santosr2/uptool/commit/6c595274d5b6324c629142762cf0f04bbfb20a96))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([5ac2e03](https://github.com/santosr2/uptool/commit/5ac2e03fd433ace4a44045caed527557482d5974))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([4e2a2b1](https://github.com/santosr2/uptool/commit/4e2a2b1772e8d69fbf4ea25508c15e457272bc4d))
+- Update CHANGELOG.md [skip ci] by @github-actions[bot]([f127f83](https://github.com/santosr2/uptool/commit/f127f836a53a3945d86337a28469727e54299ab8))
 
 ### Features
 - Add community documentation by @santosr2([7256083](https://github.com/santosr2/uptool/commit/7256083915b365c67603502d06f662874c9cedf6))
@@ -67,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add missing docs files by @santosr2([07f2c5f](https://github.com/santosr2/uptool/commit/07f2c5fe3bb0cbf1463e82d9761b8d206746c24e))
 - Apply DRY in ValidateFilePath by @santosr2([a5478cf](https://github.com/santosr2/uptool/commit/a5478cfe03236c6e230a201edd2819b977acb9cd))
 - License headers by @santosr2([25fb24c](https://github.com/santosr2/uptool/commit/25fb24c02b5c053848202980a399896a9bc196be))
+- Remove .bumpversion.toml repeated logic by @santosr2([369e80b](https://github.com/santosr2/uptool/commit/369e80b6d4355469271b94e200d3a47bf4ae02fa))
 
 ## [0.1.0] - 2025-11-14
 
