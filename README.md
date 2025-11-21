@@ -269,6 +269,7 @@ permissions:
 See [docs/integrations/](docs/integrations/) for detailed guides.
 
 **Quick examples**:
+
 - **npm**: Updates `package.json`, preserves constraints (`^`, `~`)
 - **Helm**: Updates `Chart.yaml` dependencies
 - **Terraform**: Updates module versions in `*.tf` files
@@ -317,6 +318,7 @@ See [docs/configuration.md](docs/configuration.md) and [`examples/`](examples/) 
 ## Version Management
 
 Automated semantic versioning via conventional commits:
+
 - `feat:` → minor bump (0.1.0 → 0.2.0)
 - `fix:` → patch bump (0.1.0 → 0.1.1)
 - `BREAKING CHANGE:` → major bump (0.1.0 → 1.0.0)

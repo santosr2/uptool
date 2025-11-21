@@ -55,9 +55,9 @@ integrations:
 
 # Optional: Organization-level policy settings
 org_policy:
-  # Require sign-off from specific teams/users
-  # require_signoff_from:
-  #   - "platform-team@company.com"
+# Require sign-off from specific teams/users
+# require_signoff_from:
+#   - "platform-team@company.com"
 
   # Artifact signing verification
   # signing:

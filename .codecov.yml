@@ -43,4 +43,4 @@ github_checks:
   annotations: true
 
 cli:
-  require_ci_to_pass: yes
+  require_ci_to_pass: true
