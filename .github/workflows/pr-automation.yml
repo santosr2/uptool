@@ -1,0 +1,519 @@
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+  check_suite:
+    types: [completed]
+
+# Cancel in-progress runs for the same PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # PR Title Validation
+  validate-title:
+    name: Validate PR Title
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'edited' || github.event.action == 'synchronize' || github.event.action == 'reopened')
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Validate PR title follows Conventional Commits
+        uses: amannn/action-semantic-pull-request@0723387faaf9b38adef4775cd42cfd5155ed6017 # v5.5.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^[a-z].+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            starts with a lowercase letter.
+          scopes: |
+            deps
+            npm
+            helm
+            terraform
+            tflint
+            precommit
+            asdf
+            mise
+            cli
+            engine
+            registry
+            policy
+            rewrite
+            resolve
+            docs
+            ci
+            release
+          ignoreLabels: |
+            ignore-semantic-title
+          wip: true
+
+      - name: Comment on validation failure
+        if: failure()
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const body = `## ❌ PR Title Validation Failed
+
+            Your PR title does not follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
+            ### Expected Format
+
+            \`\`\`
+            <type>[optional scope]: <description>
+            \`\`\`
+
+            ### Valid Types
+
+            - \`feat\`: A new feature
+            - \`fix\`: A bug fix
+            - \`docs\`: Documentation only changes
+            - \`style\`: Code style changes (formatting, missing semicolons, etc)
+            - \`refactor\`: Code refactoring (neither fixes a bug nor adds a feature)
+            - \`perf\`: Performance improvements
+            - \`test\`: Adding or updating tests
+            - \`build\`: Changes to build system or dependencies
+            - \`ci\`: Changes to CI configuration files and scripts
+            - \`chore\`: Other changes that don't modify src or test files
+            - \`revert\`: Reverts a previous commit
+
+            ### Examples
+
+            ✅ Good:
+            - \`feat: add Python integration\`
+            - \`fix(npm): handle missing package.json\`
+            - \`docs: update README with installation steps\`
+            - \`chore(deps): update golangci-lint to v2.6\`
+
+            ❌ Bad:
+            - \`Add Python integration\` (missing type)
+            - \`FEAT: add feature\` (type should be lowercase)
+            - \`fix: Fix bug\` (description should start with lowercase)
+
+            ### Bypass
+
+            If you need to bypass this check, add the \`ignore-semantic-title\` label to this PR.
+            `;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Success summary
+        if: success()
+        run: |
+          {
+            echo "## ✅ PR Title Validation Passed"
+            echo ""
+            echo "PR title follows Conventional Commits specification."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # Auto-Labeling
+  label-by-paths:
+    name: Label by File Paths
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Label based on file paths
+        uses: actions/labeler@8558fd74291d67161a8a78ce36a881fa63b766a9 # v5.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+
+  label-by-size:
+    name: Label by PR Size
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Size label
+        uses: codelytv/pr-size-labeler@4ec67706cd878fbc1c8db0a5dcd28b6bb412e85a # v1.10.3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: 'size/xs'
+          xs_max_size: 10
+          s_label: 'size/s'
+          s_max_size: 100
+          m_label: 'size/m'
+          m_max_size: 500
+          l_label: 'size/l'
+          l_max_size: 1000
+          xl_label: 'size/xl'
+          fail_if_xl: false
+          message_if_xl: >
+            This PR is very large. Consider breaking it into smaller PRs for easier review.
+          github_api_url: https://api.github.com
+
+  # PR Status Management
+  check-pr-status:
+    name: Check PR Status
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Check if PR is ready for review
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            // Check if PR has conflicts
+            if (pr.mergeable_state === 'dirty') {
+              const body = `## ⚠️ Merge Conflicts Detected
+
+              This PR has merge conflicts that need to be resolved before it can be merged.
+
+              ### How to Fix
+
+              \`\`\`bash
+              # Update your local main branch
+              git checkout main
+              git pull origin main
+
+              # Rebase your branch
+              git checkout ${pr.head.ref}
+              git rebase main
+
+              # Resolve conflicts, then
+              git add .
+              git rebase --continue
+
+              # Force push (be careful!)
+              git push --force-with-lease
+              \`\`\`
+
+              Once conflicts are resolved, this message will be updated automatically.
+              `;
+
+              // Check if we already commented about conflicts
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+
+              const conflictComment = comments.find(comment =>
+                comment.user.type === 'Bot' &&
+                comment.body.includes('Merge Conflicts Detected')
+              );
+
+              if (!conflictComment) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: body
+                });
+              }
+            }
+
+            // Check if PR is approved
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const approvals = reviews.filter(review => review.state === 'APPROVED');
+            const changes_requested = reviews.filter(review => review.state === 'CHANGES_REQUESTED');
+
+            core.summary
+              .addHeading('PR Status Check')
+              .addRaw('\n')
+              .addTable([
+                [{data: 'Status', header: true}, {data: 'Value', header: true}],
+                ['Mergeable', pr.mergeable_state],
+                ['Approvals', approvals.length.toString()],
+                ['Changes Requested', changes_requested.length.toString()],
+                ['Draft', pr.draft.toString()],
+              ])
+              .write();
+
+  label-approved:
+    name: Label Approved PRs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Add approved label
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            // Add "approved" label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['approved']
+            });
+
+            // Remove "needs-review" label if present
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                name: 'needs-review'
+              });
+            } catch (error) {
+              // Label might not exist, ignore error
+            }
+
+  label-changes-requested:
+    name: Label PRs with Changes Requested
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested'
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Add changes-requested label
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            // Add "changes-requested" label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['changes-requested']
+            });
+
+            // Remove "approved" label if present
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                name: 'approved'
+              });
+            } catch (error) {
+              // Label might not exist, ignore error
+            }
+
+  add-needs-review:
+    name: Add Needs Review Label
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'ready_for_review' || github.event.action == 'reopened')
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Add needs-review label
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            // Only add label if not draft
+            if (!pr.draft) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: ['needs-review']
+              });
+
+              console.log('Added "needs-review" label to PR #' + context.issue.number);
+            }
+
+  # Auto-merge
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.user.login == 'dependabot[bot]' ||
+      contains(github.event.pull_request.labels.*.name, 'auto-merge')
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check if PR is ready to merge
+        id: check
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            // Check if all checks passed
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha,
+            });
+
+            const allChecksPassed = checks.check_runs.every(
+              check => check.status === 'completed' && check.conclusion === 'success'
+            );
+
+            // Check if PR has required approvals
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const approvals = reviews.filter(review => review.state === 'APPROVED');
+            const hasApproval = approvals.length >= 1;
+
+            // Check if mergeable
+            const isMergeable = pr.mergeable_state === 'clean' || pr.mergeable_state === 'unstable';
+
+            // Determine if we should auto-merge
+            const shouldMerge = allChecksPassed && isMergeable;
+
+            // For dependabot PRs, we can auto-merge without approval for patch updates
+            const isDependabot = pr.user.login === 'dependabot[bot]';
+            const isPatchUpdate = pr.title.match(/bump .* from .* to .*\.\d+\.\d+$/i);
+
+            const canAutoMerge = isDependabot && isPatchUpdate ? shouldMerge : shouldMerge && hasApproval;
+
+            core.setOutput('can_merge', canAutoMerge);
+            core.setOutput('reason',
+              !allChecksPassed ? 'Checks have not passed' :
+              !isMergeable ? 'PR is not mergeable' :
+              !hasApproval && !isPatchUpdate ? 'No approval yet' :
+              'Ready to merge'
+            );
+
+            core.summary
+              .addHeading('Auto-merge Check')
+              .addRaw('\n')
+              .addTable([
+                [{data: 'Criteria', header: true}, {data: 'Status', header: true}],
+                ['All checks passed', allChecksPassed ? '✅' : '❌'],
+                ['Mergeable', isMergeable ? '✅' : '❌'],
+                ['Has approval', hasApproval ? '✅' : '❌'],
+                ['Dependabot patch', (isDependabot && isPatchUpdate) ? '✅' : 'N/A'],
+                ['Can auto-merge', canAutoMerge ? '✅' : '❌'],
+              ])
+              .write();
+
+            return canAutoMerge;
+
+      - name: Enable auto-merge
+        if: steps.check.outputs.can_merge == 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              merge_method: 'squash',
+              commit_title: context.payload.pull_request.title,
+              commit_message: 'Auto-merged by GitHub Actions'
+            });
+
+            console.log('✅ PR auto-merged successfully');
+
+      - name: Comment if cannot merge
+        if: steps.check.outputs.can_merge != 'true'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const reason = '${{ steps.check.outputs.reason }}';
+
+            const body = `## 🤖 Auto-merge Status
+
+            This PR cannot be auto-merged yet.
+
+            **Reason**: ${reason}
+
+            ### Requirements for Auto-merge
+
+            - ✅ All CI checks must pass
+            - ✅ PR must be mergeable (no conflicts)
+            - ✅ At least 1 approval (or patch update for Dependabot)
+
+            Once all requirements are met, this PR will be automatically merged.
+            `;
+
+            // Check if we already commented
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Auto-merge Status')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  # Summary
+  summary:
+    name: PR Automation Summary
+    needs: [validate-title, label-by-paths, label-by-size]
+    if: always() && github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          {
+            echo "## 🤖 PR Automation Complete"
+            echo ""
+            echo "Automated checks applied:"
+            echo "- PR title validation: ${{ needs.validate-title.result }}"
+            echo "- Path-based labeling: ${{ needs.label-by-paths.result }}"
+            echo "- Size-based labeling: ${{ needs.label-by-size.result }}"
+          } >> "$GITHUB_STEP_SUMMARY"
