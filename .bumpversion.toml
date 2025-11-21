@@ -34,14 +34,14 @@ replace = "@v{new_version}"
 # README.md - Also search for major.minor version references (e.g., @v0.1)
 [[tool.bumpversion.files]]
 filename = "README.md"
-search = "@v{current_version[0]}.{current_version[1]}"
-replace = "@v{new_version[0]}.{new_version[1]}"
+search = "@v{current_major}.{current_minor}"
+replace = "@v{new_major}.{new_minor}"
 
 # SECURITY.md - Supported version matrix
 [[tool.bumpversion.files]]
 filename = "SECURITY.md"
-search = "{current_version[0]}.{current_version[1]}.x"
-replace = "{new_version[0]}.{new_version[1]}.x"
+search = "{current_major}.{current_minor}.x"
+replace = "{new_major}.{new_minor}.x"
 
 # SECURITY.md - Version pinning examples
 [[tool.bumpversion.files]]
@@ -58,14 +58,8 @@ replace = "@v{new_version}"
 # docs/action-usage.md - Also update major.minor references
 [[tool.bumpversion.files]]
 filename = "docs/action-usage.md"
-search = "@v{current_version[0]}.{current_version[1]}"
-replace = "@v{new_version[0]}.{new_version[1]}"
-
-# docs/README.md - Action version examples
-[[tool.bumpversion.files]]
-filename = "docs/README.md"
-search = "@v{current_version}"
-replace = "@v{new_version}"
+search = "@v{current_major}.{current_minor}"
+replace = "@v{new_major}.{new_minor}"
 
 # docs/versioning.md - Version examples throughout
 [[tool.bumpversion.files]]
@@ -82,8 +76,8 @@ replace = "@v{new_version}"
 # docs/versioning.md - Major.minor version references
 [[tool.bumpversion.files]]
 filename = "docs/versioning.md"
-search = "@v{current_version[0]}.{current_version[1]}"
-replace = "@v{new_version[0]}.{new_version[1]}"
+search = "@v{current_major}.{current_minor}"
+replace = "@v{new_major}.{new_minor}"
 
 # docs/patch-release-workflow.md - Version examples
 [[tool.bumpversion.files]]
@@ -100,8 +94,8 @@ replace = "@v{new_version}"
 # docs/patch-release-workflow.md - Major.minor version references
 [[tool.bumpversion.files]]
 filename = "docs/patch-release-workflow.md"
-search = "@v{current_version[0]}.{current_version[1]}"
-replace = "@v{new_version[0]}.{new_version[1]}"
+search = "@v{current_major}.{current_minor}"
+replace = "@v{new_major}.{new_minor}"
 
 # examples/plugins/README.md - Plugin compatibility version
 [[tool.bumpversion.files]]
@@ -124,44 +118,20 @@ replace = "uptool_version: v{new_version}"
 # .github/MARKETPLACE.md - GitHub Action version references
 [[tool.bumpversion.files]]
 filename = ".github/MARKETPLACE.md"
-search = "@v{current_version[0]}"
-replace = "@v{new_version[0]}"
-
-# CONTRIBUTING.md - Version example in commit type table (from version)
-[[tool.bumpversion.files]]
-filename = "CONTRIBUTING.md"
-search = "{current_version} →"
-replace = "{new_version} →"
-
-# CONTRIBUTING.md - Version example in commit type table (to version for minor)
-[[tool.bumpversion.files]]
-filename = "CONTRIBUTING.md"
-search = "→ {current_version[0]}.{current_version[1]+1}.0"
-replace = "→ {new_version[0]}.{new_version[1]+1}.0"
-
-# CONTRIBUTING.md - Version example in commit type table (to version for patch)
-[[tool.bumpversion.files]]
-filename = "CONTRIBUTING.md"
-search = "→ {current_version[0]}.{current_version[1]}.{current_version[2]+1}"
-replace = "→ {new_version[0]}.{new_version[1]}.{new_version[2]+1}"
-
-# CONTRIBUTING.md - Version example in commit type table (to version for major)
-[[tool.bumpversion.files]]
-filename = "CONTRIBUTING.md"
-search = "→ {current_version[0]+1}.0.0"
-replace = "→ {new_version[0]+1}.0.0"
+search = "@v{current_major}"
+replace = "@v{new_major}"
 
 # docs/quickstart.md - Action version references (major.minor)
 [[tool.bumpversion.files]]
 filename = "docs/quickstart.md"
-search = "@v{current_version[0]}.{current_version[1]}"
-replace = "@v{new_version[0]}.{new_version[1]}"
+search = "@v{current_major}.{current_minor}"
+replace = "@v{new_major}.{new_minor}"
 
 # docs/migration.md - Action version references (major only)
 [[tool.bumpversion.files]]
 filename = "docs/migration.md"
-search = "@v{current_version[0]}"
-replace = "@v{new_version[0]}"
+search = "@v{current_major}"
+replace = "@v{new_major}"
 
 # Pre-release configuration
 [tool.bumpversion.parts.pre_label]
