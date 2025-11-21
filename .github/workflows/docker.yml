@@ -1,0 +1,196 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Dockerfile'
+      - 'Dockerfile.dev'
+      - 'go.mod'
+      - 'go.sum'
+      - '**.go'
+      - '.github/workflows/docker.yml'
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same workflow on the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-test:
+    name: Build and Test Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Build Docker image (test)
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+
+      - name: Test Docker image
+        run: |
+          echo "## 🐳 Docker Image Testing" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          # Test basic functionality
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test version
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test --help
+
+          # Test scan command
+          docker run --rm -v "$PWD:/workspace" ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test scan --dry-run
+
+          {
+            echo "✅ Image built and tested successfully"
+            echo ""
+            echo "**Image**: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish Docker Images
+    needs: build-and-test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.7.1
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            # For main branch: latest
+            type=raw,value=latest,enable={{is_default_branch}}
+            # For tags: version tags (v1.2.3, v1.2, v1)
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            # For pre-releases: rc, beta, alpha tags
+            type=semver,pattern={{version}},suffix=-{{prerelease}},enable=${{ contains(github.ref, '-') }}
+            # Git commit SHA
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker images
+        id: build-push
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          sbom: true
+          provenance: true
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c # v1.4.3
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build-push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Publish summary
+        run: |
+          {
+            echo "## 🐳 Docker Images Published"
+            echo ""
+            echo "**Registry**: \`${{ env.REGISTRY }}\`"
+            echo "**Image**: \`${{ env.IMAGE_NAME }}\`"
+            echo "**Digest**: \`${{ steps.build-push.outputs.digest }}\`"
+            echo ""
+            echo "### Tags"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}" | sed 's/^/  /'
+            echo '```'
+            echo ""
+            echo "### Pull Command"
+            echo '```bash'
+            echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+            echo '```'
+            echo ""
+            echo "### Platforms"
+            echo "- ✅ linux/amd64"
+            echo "- ✅ linux/arm64"
+            echo ""
+            echo "### Attestations"
+            echo "- ✅ SBOM included"
+            echo "- ✅ SLSA Provenance included"
+            echo "- ✅ Artifact attestation generated"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  scan:
+    name: Scan Docker Image for Vulnerabilities
+    needs: publish
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.29.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Upload scan results artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: trivy-docker-scan
+          path: trivy-results.sarif
+          retention-days: 30

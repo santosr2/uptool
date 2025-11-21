@@ -1,0 +1,34 @@
+# Development Dockerfile with all tools
+FROM golang:1.25-alpine
+
+# Install development dependencies
+RUN apk add --no-cache \
+    git \
+    make \
+    bash \
+    curl \
+    ca-certificates \
+    gcc \
+    musl-dev \
+    && rm -rf /var/cache/apk/*
+
+# Install mise for tool management
+RUN curl https://mise.run | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+WORKDIR /workspace
+
+# Install air for live reload
+RUN go install github.com/cosmtrek/air@latest
+
+# Install development tools via mise
+COPY mise.toml .
+RUN mise install
+
+# Set up environment
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=amd64
+
+# Default command
+CMD ["bash"]

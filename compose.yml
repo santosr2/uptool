@@ -1,0 +1,296 @@
+# Docker Compose configuration for uptool
+# Compose Specification (no version field required)
+# See: https://docs.docker.com/reference/compose-file/
+
+name: uptool
+
+# Extension fields for DRY configuration
+x-common-variables: &common-env
+  UPTOOL_LOG_LEVEL: ${UPTOOL_LOG_LEVEL:-info}
+  UPTOOL_DEBUG: ${UPTOOL_DEBUG:-false}
+
+services:
+  # Production uptool service
+  uptool:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+      labels:
+        com.uptool.component: "main"
+    image: uptool:${VERSION:-dev}
+    container_name: uptool
+    restart: unless-stopped
+
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+        read_only: true
+      - type: bind
+        source: ./output
+        target: /output
+
+    environment:
+      <<: *common-env
+      UPTOOL_CONFIG: /workspace/uptool.yaml
+
+    command: scan --format json
+
+    networks:
+      - uptool
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 128M
+
+    # Security settings
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    profiles:
+      - production
+
+  # Development environment with hot reload
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      args:
+        GO_VERSION: ${GO_VERSION:-1.25}
+      labels:
+        com.uptool.component: "dev"
+    image: uptool:dev
+    container_name: uptool-dev
+
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - go-modules:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+      # Exclude vendor and dist from sync
+      - /workspace/vendor
+      - /workspace/dist
+
+    working_dir: /workspace
+
+    environment:
+      <<: *common-env
+      CGO_ENABLED: "0"
+      GOOS: linux
+      GOARCH: ${GOARCH:-amd64}
+      UPTOOL_DEV_MODE: "true"
+
+    # Use air for hot reload
+    command: air -c .air.toml
+
+    ports:
+      - "${DEV_PORT:-8080}:8080"
+
+    networks:
+      - uptool
+
+    # Interactive terminal
+    stdin_open: true
+    tty: true
+
+    # Resource limits (more generous for development)
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 256M
+
+    # Live code sync (Compose v2.22+)
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /workspace
+          ignore:
+            - vendor/
+            - dist/
+            - .git/
+            - "**/.DS_Store"
+        - action: rebuild
+          path: go.mod
+        - action: rebuild
+          path: go.sum
+
+    profiles:
+      - dev
+      - development
+
+  # Test runner service
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      labels:
+        com.uptool.component: "test"
+    image: uptool:test
+    container_name: uptool-test
+
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - go-modules:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+      - type: bind
+        source: ./coverage
+        target: /workspace/coverage
+
+    working_dir: /workspace
+
+    environment:
+      <<: *common-env
+      CGO_ENABLED: "1"  # Required for race detector
+      GOOS: linux
+      GOARCH: ${GOARCH:-amd64}
+
+    command: >
+      sh -c "
+        go test -v -race -coverprofile=/workspace/coverage/coverage.out -covermode=atomic ./... &&
+        go tool cover -html=/workspace/coverage/coverage.out -o /workspace/coverage/coverage.html
+      "
+
+    networks:
+      - uptool
+
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 512M
+
+    profiles:
+      - test
+      - ci
+
+  # Benchmarking service
+  benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      labels:
+        com.uptool.component: "benchmark"
+    image: uptool:benchmark
+    container_name: uptool-benchmark
+
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - go-modules:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+      - type: bind
+        source: ./benchmarks
+        target: /benchmarks
+
+    working_dir: /workspace
+
+    environment:
+      <<: *common-env
+      CGO_ENABLED: "0"
+      GOOS: linux
+      GOARCH: ${GOARCH:-amd64}
+
+    command: >
+      sh -c "
+        go test -bench=. -benchmem -benchtime=5s -run=^$$ ./... | tee /benchmarks/results.txt
+      "
+
+    networks:
+      - uptool
+
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 1G
+        reservations:
+          cpus: '2'
+          memory: 256M
+
+    profiles:
+      - benchmark
+      - perf
+
+  # Linting service
+  lint:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      labels:
+        com.uptool.component: "lint"
+    image: uptool:lint
+    container_name: uptool-lint
+
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - go-modules:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+
+    working_dir: /workspace
+
+    command: golangci-lint run --timeout 5m
+
+    networks:
+      - uptool
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 512M
+
+    profiles:
+      - lint
+      - ci
+
+# Named volumes
+volumes:
+  go-modules:
+    name: uptool-go-modules
+    driver: local
+    labels:
+      com.uptool.volume: "go-modules"
+
+  go-build-cache:
+    name: uptool-go-build-cache
+    driver: local
+    labels:
+      com.uptool.volume: "build-cache"
+
+# Networks
+networks:
+  uptool:
+    name: uptool-network
+    driver: bridge
+    labels:
+      com.uptool.network: "main"
+    # Enable IPv6 (optional)
+    # enable_ipv6: true

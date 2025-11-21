@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# Documentation
+docs/
+*.md
+!README.md
+mkdocs.yml
+
+# Build artifacts
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+uptool
+coverage.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+testdata/
+*_test.go
+test/
+
+# Development
+.devcontainer/
+.air.toml
+mise.toml
+.tool-versions
+.pre-commit-config.yaml
+
+# LLM agents
+.claude/
+CLAUDE.md
+
+# Examples
+examples/
+
+# Scripts
+scripts/
+
+# Configs
+.golangci.yml
+.yamllint
+.editorconfig
+commitlint.config.js
+git-cliff.toml
+.bumpversion.toml
