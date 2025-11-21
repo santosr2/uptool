@@ -39,19 +39,6 @@ func (i *Integration) Name() string {
 	return integrationName
 }
 
-// validateFilePath validates that a file path is safe to read/write
-func validateFilePath(path string) error {
-	// Clean the path to resolve any . or .. components
-	cleanPath := filepath.Clean(path)
-
-	// Check for directory traversal attempts
-	if strings.Contains(cleanPath, "..") {
-		return fmt.Errorf("path contains directory traversal: %s", path)
-	}
-
-	return nil
-}
-
 // Detect scans for mise.toml and .mise.toml files.
 func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Manifest, error) {
 	var manifests []*engine.Manifest
@@ -94,7 +81,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 // parseManifest parses mise.toml or .mise.toml files.
 func (i *Integration) parseManifest(path string) (*engine.Manifest, error) {
 	// Validate path for security
-	if err := validateFilePath(path); err != nil {
+	if err := integrations.ValidateFilePath(path); err != nil {
 		return nil, err
 	}
 

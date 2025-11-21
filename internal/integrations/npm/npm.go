@@ -46,19 +46,6 @@ func (i *Integration) Name() string {
 	return "npm"
 }
 
-// validateFilePath validates that a file path is safe to read/write
-func validateFilePath(path string) error {
-	// Clean the path to resolve any . or .. components
-	cleanPath := filepath.Clean(path)
-
-	// Check for directory traversal attempts
-	if strings.Contains(cleanPath, "..") {
-		return fmt.Errorf("path contains directory traversal: %s", path)
-	}
-
-	return nil
-}
-
 // PackageJSON represents the structure of package.json.
 type PackageJSON struct {
 	Dependencies         map[string]string `json:"dependencies,omitempty"`
@@ -95,7 +82,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 			}
 
 			// Validate path for security
-			err = validateFilePath(path)
+			err = integrations.ValidateFilePath(path)
 			if err != nil {
 				return err
 			}
@@ -273,7 +260,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	// Read the current package.json
 	fullPath := plan.Manifest.Path
 	// Validate path for security
-	if err := validateFilePath(fullPath); err != nil {
+	if err := integrations.ValidateFilePath(fullPath); err != nil {
 		return nil, fmt.Errorf("invalid path: %w", err)
 	}
 

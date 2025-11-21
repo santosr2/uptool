@@ -36,16 +36,18 @@ jobs:
           fetch-depth: 0
 
       - name: Run TruffleHog
-        uses: trufflesecurity/trufflehog@3f9f94ebabfcc32e6f2e5e96c254be404da5ecf9 # v3.87.2
+        uses: trufflesecurity/trufflehog@aade3bff5594fe8808578dd4db3dfeae9bf2abdc # v3.91.1
         with:
           extra_args: --only-verified --json --github-actions
 
       - name: Add scan summary
         if: always()
         run: |
-          echo "## 🔐 TruffleHog Secret Scan" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✓ Scan completed (only verified secrets reported)" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔐 TruffleHog Secret Scan"
+            echo ""
+            echo "✓ Scan completed (only verified secrets reported)"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   gitleaks:
     name: Gitleaks Secret Scan
@@ -60,7 +62,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@cb7149a9e14a6c68869e4e8e0e4b563ccc6e833a # v2.3.7
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_SUMMARY: true
@@ -86,9 +88,9 @@ jobs:
       - name: Check for secrets
         run: |
           if grep -q '"results": {}' .secrets.baseline; then
-            echo "✓ No secrets detected" >> $GITHUB_STEP_SUMMARY
+            echo "✓ No secrets detected" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "⚠️ Potential secrets found" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Potential secrets found" >> "$GITHUB_STEP_SUMMARY"
             cat .secrets.baseline
             exit 1
           fi
@@ -322,7 +324,7 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
-          repo_token: ${{ secrets.SCORECARD_TOKEN }}
+          # repo_token: ${{ secrets.SCORECARD_TOKEN }}
           publish_results: true
 
       - name: Upload SARIF results
@@ -341,11 +343,13 @@ jobs:
       - name: Scorecard summary
         if: always()
         run: |
-          echo "## 🔒 OpenSSF Scorecard Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Scorecard analysis completed successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View detailed results in the Security tab → Code scanning alerts" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔒 OpenSSF Scorecard Results"
+            echo ""
+            echo "✅ Scorecard analysis completed successfully"
+            echo ""
+            echo "View detailed results in the Security tab → Code scanning alerts"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # Summary
   summary:
@@ -358,21 +362,23 @@ jobs:
     steps:
       - name: Generate summary
         run: |
-          echo "## 🔒 Security Scanning Complete" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Secret Scanning" >> $GITHUB_STEP_SUMMARY
-          echo "- TruffleHog: ${{ needs.trufflehog.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Gitleaks: ${{ needs.gitleaks.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Detect Secrets: ${{ needs.detect-secrets.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Vulnerability Scanning" >> $GITHUB_STEP_SUMMARY
-          echo "- OSV Scanner: ${{ needs.osv-scanner.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Go Vulncheck: ${{ needs.go-vulncheck.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Trivy Scanning" >> $GITHUB_STEP_SUMMARY
-          echo "- Filesystem: ${{ needs.trivy-filesystem.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- IaC Config: ${{ needs.trivy-config.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 🔒 Security Scanning Complete"
+            echo ""
+            echo "### Secret Scanning"
+            echo "- TruffleHog: ${{ needs.trufflehog.result }}"
+            echo "- Gitleaks: ${{ needs.gitleaks.result }}"
+            echo "- Detect Secrets: ${{ needs.detect-secrets.result }}"
+            echo ""
+            echo "### Vulnerability Scanning"
+            echo "- OSV Scanner: ${{ needs.osv-scanner.result }}"
+            echo "- Go Vulncheck: ${{ needs.go-vulncheck.result }}"
+            echo ""
+            echo "### Trivy Scanning"
+            echo "- Filesystem: ${{ needs.trivy-filesystem.result }}"
+            echo "- IaC Config: ${{ needs.trivy-config.result }}"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Check if all critical scans passed
           if [ "${{ needs.trufflehog.result }}" == "success" ] && \
@@ -380,9 +386,11 @@ jobs:
              [ "${{ needs.detect-secrets.result }}" == "success" ] && \
              [ "${{ needs.osv-scanner.result }}" == "success" ] && \
              [ "${{ needs.go-vulncheck.result }}" == "success" ]; then
-            echo "🎉 **All critical security scans passed**" >> $GITHUB_STEP_SUMMARY
+            echo "🎉 **All critical security scans passed**" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "⚠️ **Some security scans failed - review results above**" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Some security scans failed - review results above**" >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📊 **Detailed results**: Security tab → Code scanning alerts" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "📊 **Detailed results**: Security tab → Code scanning alerts"
+          } >> "$GITHUB_STEP_SUMMARY"

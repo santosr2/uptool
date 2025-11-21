@@ -43,13 +43,13 @@ Production releases are automated via GitHub Actions.
 1. Maintainer triggers pre-release workflow
 2. System calculates version from commits
 3. Approval gate (designated reviewers)
-4. Creates pre-release (e.g., `v0.2.0-rc.1`)
+4. Creates pre-release (e.g., `v0.2.0-rc1`, `v0.2.0-beta3`, `v0.2.0-alpha20250708`)
 5. Builds artifacts
 
 ### Stable Release
 
 1. Maintainer triggers promote workflow
-2. Extracts stable version (`v0.2.0-rc.1` → `v0.2.0`)
+2. Extracts stable version (`v0.2.0-rc1` → `v0.2.0`)
 3. Approval gate (multiple reviewers)
 4. Promotes artifacts
 5. Updates CHANGELOG
@@ -60,14 +60,14 @@ See [environments.md](environments.md) for approval gate setup.
 
 **Immutable** (never change):
 
-- Stable: `v0.1.0`, `v0.2.0`
-- Pre-release: `v0.2.0-rc.1`, `v1.0.0-beta.2`
+- Stable: `v0.1.0`, `v0.2.0`, `v1.13.0`
+- Pre-release: `v0.2.0-rc1`, `v1.0.0-beta3`, `v1.13.0-alpha20250708`
 
 **Mutable** (auto-updated for GitHub Actions):
 
 - `v0` → latest `v0.x.x` stable
 - `v0.1` → latest `v0.1.x` patch
-- `v0-rc` → latest `v0.x.x` pre-release
+- `v0-rc`, `v0-beta`, `v0-alpha` → latest `v0.x.x` pre-release of each type
 
 **Usage**:
 

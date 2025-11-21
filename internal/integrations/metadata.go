@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -84,19 +83,6 @@ func findRegistryFile() (string, error) {
 	return "", fmt.Errorf("integrations.yaml not found")
 }
 
-// validateFilePath validates that a file path is safe to read/write
-func validateFilePath(path string) error {
-	// Clean the path to resolve any . or .. components
-	cleanPath := filepath.Clean(path)
-
-	// Check for directory traversal attempts
-	if strings.Contains(cleanPath, "..") {
-		return fmt.Errorf("path contains directory traversal: %s", path)
-	}
-
-	return nil
-}
-
 // LoadMetadata loads integration metadata from the integrations.yaml file.
 func LoadMetadata() (*RegistryMetadata, error) {
 	if cachedMetadata != nil {
@@ -109,7 +95,7 @@ func LoadMetadata() (*RegistryMetadata, error) {
 	}
 
 	// Validate path for security
-	err = validateFilePath(registryPath)
+	err = ValidateFilePath(registryPath)
 	if err != nil {
 		return nil, fmt.Errorf("invalid registry path: %w", err)
 	}
