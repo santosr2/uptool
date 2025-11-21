@@ -1,0 +1,167 @@
+name: License Compliance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run every Monday at 8:00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  license-check:
+    name: Check Dependency Licenses
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Check licenses
+        id: check
+        run: |
+          echo "## 📜 License Compliance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Generate license report
+          go-licenses report ./cmd/uptool > licenses.csv 2>&1 || true
+
+          # Check for problematic licenses
+          FORBIDDEN="GPL-3.0 AGPL-3.0 LGPL-3.0"
+          FOUND_ISSUES=0
+
+          for lic in $FORBIDDEN; do
+            if grep -q "$lic" licenses.csv 2>/dev/null; then
+              echo "⚠️ Found potentially incompatible license: $lic" | tee -a $GITHUB_STEP_SUMMARY
+              FOUND_ISSUES=1
+            fi
+          done
+
+          if [ $FOUND_ISSUES -eq 0 ]; then
+            echo "✅ No incompatible licenses detected" >> $GITHUB_STEP_SUMMARY
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_issues=true" >> $GITHUB_OUTPUT
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### License Summary" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          head -20 licenses.csv >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No licenses found" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate SPDX SBOM
+        run: |
+          go-licenses save ./cmd/uptool --save_path=./third_party_licenses 2>&1 || true
+
+      - name: Upload license report
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: license-report
+          path: |
+            licenses.csv
+            third_party_licenses/
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Fail on incompatible licenses
+        if: steps.check.outputs.has_issues == 'true'
+        run: |
+          echo "::error::Incompatible licenses detected. Review the license report."
+          exit 1
+
+  license-header-check:
+    name: Check License Headers
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Check for license headers
+        run: |
+          echo "## 📄 License Header Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          MISSING=0
+          TOTAL=0
+
+          # Check all .go files for license headers
+          for file in $(find . -name "*.go" -not -path "./vendor/*" -not -path "./.git/*"); do
+            TOTAL=$((TOTAL+1))
+            if ! head -5 "$file" | grep -q -i "license\|copyright\|spdx-license-identifier"; then
+              echo "⚠️ Missing license header: $file" >> missing-headers.txt
+              MISSING=$((MISSING+1))
+            fi
+          done
+
+          if [ -f missing-headers.txt ]; then
+            echo "⚠️ **Files missing license headers: $MISSING/$TOTAL**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat missing-headers.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All Go files have license headers ($TOTAL/$TOTAL)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Check LICENSE file exists
+          if [ ! -f LICENSE ]; then
+            echo "::error::LICENSE file not found in repository root"
+            exit 1
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ LICENSE file exists" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  verify-license-file:
+    name: Verify LICENSE File
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Verify LICENSE content
+        run: |
+          if [ ! -f LICENSE ]; then
+            echo "::error::LICENSE file not found"
+            exit 1
+          fi
+
+          # Check if LICENSE is not empty
+          if [ ! -s LICENSE ]; then
+            echo "::error::LICENSE file is empty"
+            exit 1
+          fi
+
+          echo "## 📋 LICENSE File Verification" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ LICENSE file exists and is not empty" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**File size:** $(wc -c < LICENSE) bytes" >> $GITHUB_STEP_SUMMARY
+          echo "**Lines:** $(wc -l < LICENSE)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Detect license type
+          if grep -q "Apache License" LICENSE; then
+            echo "**Detected license:** Apache License 2.0" >> $GITHUB_STEP_SUMMARY
+          elif grep -q "MIT License" LICENSE; then
+            echo "**Detected license:** MIT License" >> $GITHUB_STEP_SUMMARY
+          elif grep -q "BSD" LICENSE; then
+            echo "**Detected license:** BSD License" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Detected license:** Custom or Other" >> $GITHUB_STEP_SUMMARY
+          fi
