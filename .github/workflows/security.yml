@@ -115,10 +115,12 @@ jobs:
         uses: google/osv-scanner-action/osv-scanner-action@b77c075a1235514558f0eb88dbd31e22c45e0cd2 # v2.3.0
         with:
           scan-args: |-
-            --recursive
+            --config=osv-scanner.toml
             --format=json
             --output=osv-results.json
-            ./
+            --lockfile=go.mod:go.sum
+            --lockfile=docs/requirements.txt
+            --lockfile=examples/plugins/python/go.mod:examples/plugins/python/go.sum
         continue-on-error: false
 
       - name: Upload OSV results

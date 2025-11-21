@@ -1,0 +1,26 @@
+# OSV Scanner Configuration
+# https://google.github.io/osv-scanner/configuration/
+
+# What we scan:
+# - go.mod:go.sum                              - Production Go dependencies
+# - docs/requirements.txt                      - Documentation build dependencies (MkDocs, etc.)
+# - examples/plugins/python/go.mod:go.sum      - Plugin example dependencies (educational code)
+#
+# What we DON'T scan:
+# - examples/plugins/python/testdata/          - Test fixtures (not production code)
+# - testdata/                                  - Test fixtures (not production code)
+# - .mise/                                     - Tool cache (development tools only)
+#
+# The workflow uses explicit --lockfile flags to scan specific dependency files,
+# avoiding recursive filesystem traversal that would pick up test data.
+
+# Example: Ignore specific vulnerabilities (if needed in future)
+# [[IgnoredVulns]]
+# id = "GO-2024-XXXX"
+# reason = "False positive - only affects development tools"
+
+# Example: Package overrides (if needed in future)
+# [[PackageOverrides]]
+# name = "example-package"
+# version = "1.0.0"
+# ecosystem = "Go"
