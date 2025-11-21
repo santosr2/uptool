@@ -83,6 +83,12 @@ jobs:
         env:
           STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
+          # Get the current version from the VERSION file (source of truth)
+          CURRENT_VERSION=$(cat internal/version/VERSION)
+
+          # Update current_version in .bumpversion.toml to match what's in files
+          sed -i "s/^current_version = .*/current_version = \"$CURRENT_VERSION\"/" .bumpversion.toml
+
           # Remove 'v' prefix for bump-my-version
           VERSION_NO_V="${STABLE_VERSION#v}"
 
