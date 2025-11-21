@@ -7,7 +7,7 @@
 
 [![CI Status](https://github.com/santosr2/uptool/workflows/CI/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/ci.yml)
 [![Documentation](https://github.com/santosr2/uptool/workflows/Documentation/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/docs-deploy.yml)
-[![CodeQL](https://github.com/santosr2/uptool/workflows/CodeQL/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/santosr2/uptool/workflows/CodeQL/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/security.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/santosr2/uptool/badge)](https://scorecard.dev/viewer/?uri=github.com/santosr2/uptool)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9999/badge)](https://www.bestpractices.dev/projects/9999)
 [![codecov](https://codecov.io/gh/santosr2/uptool/branch/main/graph/badge.svg)](https://codecov.io/gh/santosr2/uptool)
