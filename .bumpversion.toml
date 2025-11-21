@@ -67,12 +67,6 @@ filename = "docs/versioning.md"
 search = "{current_version}"
 replace = "{new_version}"
 
-# docs/versioning.md - Action version references
-[[tool.bumpversion.files]]
-filename = "docs/versioning.md"
-search = "@v{current_version}"
-replace = "@v{new_version}"
-
 # docs/versioning.md - Major.minor version references
 [[tool.bumpversion.files]]
 filename = "docs/versioning.md"
@@ -84,12 +78,6 @@ replace = "@v{new_major}.{new_minor}"
 filename = "docs/patch-release-workflow.md"
 search = "{current_version}"
 replace = "{new_version}"
-
-# docs/patch-release-workflow.md - Action version references
-[[tool.bumpversion.files]]
-filename = "docs/patch-release-workflow.md"
-search = "@v{current_version}"
-replace = "@v{new_version}"
 
 # docs/patch-release-workflow.md - Major.minor version references
 [[tool.bumpversion.files]]
@@ -116,10 +104,10 @@ search = "uptool_version: v{current_version}"
 replace = "uptool_version: v{new_version}"
 
 # .github/MARKETPLACE.md - GitHub Action version references
-[[tool.bumpversion.files]]
-filename = ".github/MARKETPLACE.md"
-search = "@v{current_major}"
-replace = "@v{new_major}"
+# [[tool.bumpversion.files]]
+# filename = ".github/MARKETPLACE.md"
+# search = "@v{current_major}"
+# replace = "@v{new_major}"
 
 # docs/quickstart.md - Action version references (major.minor)
 [[tool.bumpversion.files]]
@@ -128,10 +116,10 @@ search = "@v{current_major}.{current_minor}"
 replace = "@v{new_major}.{new_minor}"
 
 # docs/migration.md - Action version references (major only)
-[[tool.bumpversion.files]]
-filename = "docs/migration.md"
-search = "@v{current_major}"
-replace = "@v{new_major}"
+# [[tool.bumpversion.files]]
+# filename = "docs/migration.md"
+# search = "@v{current_major}"
+# replace = "@v{new_major}"
 
 # Pre-release configuration
 [tool.bumpversion.parts.pre_label]
