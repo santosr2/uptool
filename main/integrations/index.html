@@ -1689,180 +1689,109 @@
 
 
 <h1 id="integration-guides">Integration Guides<a class="headerlink" href="#integration-guides" title="Permanent link">&para;</a></h1>
-<p>This directory contains detailed guides for each uptool integration.</p>
+<p>Detailed guides for each uptool integration.</p>
 <h2 id="available-integrations">Available Integrations<a class="headerlink" href="#available-integrations" title="Permanent link">&para;</a></h2>
-<h3 id="package-managers">Package Managers<a class="headerlink" href="#package-managers" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong><a href="npm/">npm</a></strong> - JavaScript/Node.js dependencies (<code>package.json</code>)</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>package.json</code></li>
-<li>Registry: npm Registry</li>
-</ul>
-<h3 id="infrastructure-as-code">Infrastructure as Code<a class="headerlink" href="#infrastructure-as-code" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>helm</strong> - Kubernetes Helm charts (<code>Chart.yaml</code>)</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>Chart.yaml</code></li>
-<li>
-<p>Registry: Helm chart repositories</p>
-</li>
-<li>
-<p><strong>terraform</strong> - Terraform modules (<code>*.tf</code>)</p>
-</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>*.tf</code> files</li>
-<li>
-<p>Registry: Terraform Registry</p>
-</li>
-<li>
-<p><strong>tflint</strong> - Terraform linter plugins (<code>.tflint.hcl</code>)</p>
-</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>.tflint.hcl</code></li>
-<li>Registry: GitHub Releases</li>
-</ul>
-<h3 id="development-tools">Development Tools<a class="headerlink" href="#development-tools" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>precommit</strong> - Pre-commit hooks (<code>.pre-commit-config.yaml</code>)</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>.pre-commit-config.yaml</code></li>
-<li>Registry: GitHub Releases</li>
-<li>
-<p>Note: Uses native <code>pre-commit autoupdate</code></p>
-</li>
-<li>
-<p><strong>asdf</strong> - asdf version manager (<code>.tool-versions</code>)</p>
-</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>.tool-versions</code></li>
-<li>
-<p>Registry: GitHub Releases (per tool)</p>
-</li>
-<li>
-<p><strong>mise</strong> - mise version manager (<code>mise.toml</code>)</p>
-</li>
-<li>Status: ✅ Stable</li>
-<li>Manifests: <code>mise.toml</code>, <code>.mise.toml</code></li>
-<li>Registry: GitHub Releases (per tool)</li>
-</ul>
-<h2 id="integration-categories">Integration Categories<a class="headerlink" href="#integration-categories" title="Permanent link">&para;</a></h2>
-<h3 id="by-update-strategy">By Update Strategy<a class="headerlink" href="#by-update-strategy" title="Permanent link">&para;</a></h3>
-<p><strong>Custom Rewriting</strong> (uptool parses and rewrites manifest):</p>
-<ul>
-<li>npm (<code>package.json</code>)</li>
-<li>helm (<code>Chart.yaml</code>)</li>
-<li>terraform (<code>*.tf</code>)</li>
-<li>tflint (<code>.tflint.hcl</code>)</li>
-<li>asdf (<code>.tool-versions</code>)</li>
-<li>mise (<code>mise.toml</code>)</li>
-</ul>
-<p><strong>Native Command</strong> (integration calls native tool):</p>
-<ul>
-<li>precommit (<code>pre-commit autoupdate</code>)</li>
-</ul>
-<h3 id="by-registry-type">By Registry Type<a class="headerlink" href="#by-registry-type" title="Permanent link">&para;</a></h3>
-<p><strong>HTTP APIs</strong>:</p>
-<ul>
-<li>npm → npm Registry API</li>
-<li>terraform → Terraform Registry API</li>
-</ul>
-<p><strong>Repository Indexes</strong>:</p>
-<ul>
-<li>helm → Helm chart repository <code>index.yaml</code></li>
-</ul>
-<p><strong>GitHub Releases</strong>:</p>
-<ul>
-<li>precommit → Hook repository releases</li>
-<li>tflint → Plugin repository releases</li>
-<li>asdf → Tool repository releases (via plugin mapping)</li>
-<li>mise → Tool repository releases</li>
-</ul>
-<h2 id="quick-reference">Quick Reference<a class="headerlink" href="#quick-reference" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
 <th>Integration</th>
 <th>Manifest</th>
-<th>Update Strategy</th>
+<th>Status</th>
 <th>Registry</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>npm</td>
+<td><strong><a href="npm/">npm</a></strong></td>
 <td><code>package.json</code></td>
-<td>Custom rewrite</td>
-<td>npm API</td>
+<td>✅ Stable</td>
+<td>npm Registry API</td>
 </tr>
 <tr>
-<td>helm</td>
+<td><strong><a href="helm/">helm</a></strong></td>
 <td><code>Chart.yaml</code></td>
-<td>Custom rewrite</td>
-<td>Helm repos</td>
+<td>✅ Stable</td>
+<td>Helm chart repositories</td>
 </tr>
 <tr>
-<td>terraform</td>
+<td><strong><a href="terraform/">terraform</a></strong></td>
 <td><code>*.tf</code></td>
-<td>Custom rewrite</td>
-<td>Terraform API</td>
+<td>✅ Stable</td>
+<td>Terraform Registry API</td>
 </tr>
 <tr>
-<td>tflint</td>
+<td><strong><a href="tflint/">tflint</a></strong></td>
 <td><code>.tflint.hcl</code></td>
-<td>Custom rewrite</td>
-<td>GitHub</td>
+<td>✅ Stable</td>
+<td>GitHub Releases</td>
 </tr>
 <tr>
-<td>precommit</td>
+<td><strong><a href="precommit/">precommit</a></strong></td>
 <td><code>.pre-commit-config.yaml</code></td>
-<td>Native command</td>
-<td>GitHub</td>
+<td>✅ Stable</td>
+<td>GitHub Releases</td>
 </tr>
 <tr>
-<td>asdf</td>
+<td><strong><a href="asdf/">asdf</a></strong></td>
 <td><code>.tool-versions</code></td>
-<td>Custom rewrite</td>
-<td>GitHub</td>
+<td>⚠️ Experimental</td>
+<td>GitHub Releases</td>
 </tr>
 <tr>
-<td>mise</td>
+<td><strong><a href="mise/">mise</a></strong></td>
 <td><code>mise.toml</code></td>
-<td>Custom rewrite</td>
-<td>GitHub</td>
+<td>⚠️ Experimental</td>
+<td>GitHub Releases</td>
 </tr>
 </tbody>
 </table>
+<h2 id="by-category">By Category<a class="headerlink" href="#by-category" title="Permanent link">&para;</a></h2>
+<h3 id="package-managers">Package Managers<a class="headerlink" href="#package-managers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="npm/">npm</a></strong> - JavaScript/Node.js dependencies</li>
+</ul>
+<h3 id="infrastructure-as-code">Infrastructure as Code<a class="headerlink" href="#infrastructure-as-code" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="helm/">helm</a></strong> - Kubernetes package manager</li>
+<li><strong><a href="terraform/">terraform</a></strong> - Terraform modules</li>
+<li><strong><a href="tflint/">tflint</a></strong> - Terraform linter plugins</li>
+</ul>
+<h3 id="development-tools">Development Tools<a class="headerlink" href="#development-tools" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><a href="precommit/">precommit</a></strong> - Pre-commit hooks (uses native <code>pre-commit autoupdate</code>)</li>
+<li><strong><a href="asdf/">asdf</a></strong> - asdf version manager</li>
+<li><strong><a href="mise/">mise</a></strong> - mise version manager (modern asdf alternative)</li>
+</ul>
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="scan-for-specific-integration">Scan for Specific Integration<a class="headerlink" href="#scan-for-specific-integration" title="Permanent link">&para;</a></h3>
+<h3 id="scan-specific-integration">Scan Specific Integration<a class="headerlink" href="#scan-specific-integration" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>uptool<span class="w"> </span>scan<span class="w"> </span>--only<span class="o">=</span>npm
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uptool<span class="w"> </span>scan<span class="w"> </span>--only<span class="o">=</span>terraform,tflint
 </span></code></pre></div>
 <h3 id="update-single-integration">Update Single Integration<a class="headerlink" href="#update-single-integration" title="Permanent link">&para;</a></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uptool<span class="w"> </span>update<span class="w"> </span>--only<span class="o">=</span>helm<span class="w"> </span>--diff
 </span></code></pre></div>
-<h3 id="exclude-specific-integrations">Exclude Specific Integrations<a class="headerlink" href="#exclude-specific-integrations" title="Permanent link">&para;</a></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uptool<span class="w"> </span>update<span class="w"> </span>--exclude<span class="o">=</span>precommit
+<h3 id="exclude-integrations">Exclude Integrations<a class="headerlink" href="#exclude-integrations" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>uptool<span class="w"> </span>update<span class="w"> </span>--exclude<span class="o">=</span>precommit,terraform
 </span></code></pre></div>
-<h3 id="integration-priority">Integration Priority<a class="headerlink" href="#integration-priority" title="Permanent link">&para;</a></h3>
-<p>When using multiple integrations, they run in parallel:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uptool<span class="w"> </span>update<span class="w">  </span><span class="c1"># All integrations run concurrently</span>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>Control integrations via <code>uptool.yaml</code>:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">integrations</span><span class="p">:</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npm</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">policy</span><span class="p">:</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">      </span><span class="nt">update</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minor</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">terraform</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </span></code></pre></div>
-<p>To control execution:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># uptool.yaml</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nt">integrations</span><span class="p">:</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">npm</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">terraform</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">    </span><span class="c1"># Disabled</span>
-</span></code></pre></div>
+<p>See <a href="../configuration/">Configuration Guide</a> for complete options.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../manifests/">Manifest Files Reference</a></li>
-<li><a href="../configuration/">Configuration Guide</a></li>
-<li><a href="../overview/#supported-integrations">Main README</a></li>
+<li><a href="../cli/commands/">CLI Reference</a> - Command documentation</li>
+<li><a href="../configuration/">Configuration</a> - Policy settings</li>
+<li><a href="../INTEGRATION_TEMPLATE/">Template</a> - Template for new integrations</li>
 </ul>
 
 
@@ -1886,7 +1815,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 18, 2025 03:51:50 UTC"><span class="timeago" datetime="2025-11-18T03:51:50+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 18, 2025 03:51:50 UTC">2025-11-18</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 20, 2025 22:14:41 UTC"><span class="timeago" datetime="2025-11-20T22:14:41+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 20, 2025 22:14:41 UTC">2025-11-20</span>
   </span>
 
     

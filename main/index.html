@@ -1811,11 +1811,11 @@
 <p>uptool combines the ecosystem breadth of <a href="https://github.com/topgrade-rs/topgrade">Topgrade</a>, the precision of <a href="https://github.com/dependabot/dependabot-core">Dependabot</a>, and the flexibility of <a href="https://github.com/renovatebot/renovate">Renovate</a> — but with a <strong>manifest-first philosophy</strong> that works across ANY project toolchain defined in configuration files.</p>
 <hr />
 <h2 id="why-uptool">Why uptool?<a class="headerlink" href="#why-uptool" title="Permanent link">&para;</a></h2>
-<p>Modern projects use dozens of tools across multiple ecosystems:</p>
+<p>Modern projects use dozens of tools across multiple ecosystems. uptool helps you manage:</p>
 <ul>
-<li><strong>Language dependencies</strong>: npm, pip, go modules</li>
-<li><strong>Infrastructure tools</strong>: Terraform, Helm</li>
-<li><strong>Development tools</strong>: pre-commit, tflint</li>
+<li><strong>Language dependencies</strong>: npm packages</li>
+<li><strong>Infrastructure tools</strong>: Terraform modules, Helm charts</li>
+<li><strong>Development tools</strong>: pre-commit hooks, tflint plugins</li>
 <li><strong>Runtime version managers</strong>: asdf (<code>.tool-versions</code>), mise (<code>mise.toml</code>)</li>
 </ul>
 <p>Each ecosystem has its own update mechanism. Keeping them all current is tedious and error-prone.</p>
@@ -1925,13 +1925,13 @@
 </tr>
 <tr>
 <td><strong>asdf</strong></td>
-<td>✅ Stable</td>
+<td>⚠️ Experimental</td>
 <td><code>.tool-versions</code></td>
 <td>GitHub Releases (per tool)</td>
 </tr>
 <tr>
 <td><strong>mise</strong></td>
-<td>✅ Stable</td>
+<td>⚠️ Experimental</td>
 <td><code>mise.toml</code>, <code>.mise.toml</code></td>
 <td>GitHub Releases (per tool)</td>
 </tr>
@@ -1979,7 +1979,8 @@
 <p>uptool is under active development. The current focus is on:</p>
 </div>
 <ul>
-<li>✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, asdf, mise)</li>
+<li>✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, tflint)</li>
+<li>🚧 Completing asdf/mise integrations (detection works, updates not yet implemented)</li>
 <li>🚧 Expanding test coverage (target: &gt;70%)</li>
 <li>🚧 Adding Python ecosystem support</li>
 <li>📝 Improving documentation and examples</li>
@@ -2011,7 +2012,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 18, 2025 21:41:15 UTC"><span class="timeago" datetime="2025-11-18T21:41:15+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 18, 2025 21:41:15 UTC">2025-11-18</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 20, 2025 22:14:41 UTC"><span class="timeago" datetime="2025-11-20T22:14:41+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 20, 2025 22:14:41 UTC">2025-11-20</span>
   </span>
 
     

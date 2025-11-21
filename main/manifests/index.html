@@ -1052,56 +1052,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Troubleshooting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#manifest-not-detected" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manifest Not Detected
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manifest-not-updated" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manifest Not Updated
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#format-preserved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Format Preserved
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2421,39 +2371,11 @@
 </span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">               </span><span class="c1"># Disable Terraform updates</span>
 </span></code></pre></div>
 <p>See <a href="../configuration/">configuration.md</a> for complete reference.</p>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<h3 id="manifest-not-detected">Manifest Not Detected<a class="headerlink" href="#manifest-not-detected" title="Permanent link">&para;</a></h3>
-<p><strong>Problem</strong>: uptool doesn't find your manifest file</p>
-<p><strong>Solutions</strong>:</p>
-<ol>
-<li>Run <code>uptool scan</code> to see what's detected</li>
-<li>Check file is in repository root or subdirectory</li>
-<li>Verify filename matches exactly (e.g., <code>package.json</code> not <code>Package.json</code>)</li>
-<li>Use <code>--only=&lt;integration&gt;</code> to test specific integration</li>
-</ol>
-<h3 id="manifest-not-updated">Manifest Not Updated<a class="headerlink" href="#manifest-not-updated" title="Permanent link">&para;</a></h3>
-<p><strong>Problem</strong>: uptool detects manifest but doesn't update it</p>
-<p><strong>Solutions</strong>:</p>
-<ol>
-<li>Run <code>uptool plan</code> to see if updates are available</li>
-<li>Check registry connectivity (npm, Terraform Registry, etc.)</li>
-<li>Verify version constraints allow updates</li>
-<li>Check integration policy in <code>uptool.yaml</code></li>
-</ol>
-<h3 id="format-preserved">Format Preserved<a class="headerlink" href="#format-preserved" title="Permanent link">&para;</a></h3>
-<p>uptool preserves:</p>
-<ul>
-<li>✅ Comments (YAML, HCL, TOML)</li>
-<li>✅ Formatting (indentation, spacing)</li>
-<li>✅ Key order (JSON, YAML)</li>
-<li>✅ Version constraint prefixes (<code>^</code>, <code>~</code>, <code>&gt;=</code>)</li>
-</ul>
-<p>If formatting is changed unexpectedly, please open an issue.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../configuration/">Configuration Reference</a></li>
-<li><a href="../overview/#integration-details">Integration Details</a></li>
-<li><a href="../versioning/">Version Management</a></li>
+<li><a href="../configuration/">Configuration Reference</a> - Configure update policies</li>
+<li><a href="../troubleshooting/">Troubleshooting Guide</a> - Common issues and solutions</li>
+<li><a href="../integrations/">Integration Guides</a> - Detailed integration documentation</li>
 </ul>
 
 
@@ -2477,7 +2399,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 18, 2025 03:51:50 UTC"><span class="timeago" datetime="2025-11-18T03:51:50+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 18, 2025 03:51:50 UTC">2025-11-18</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 20, 2025 22:14:41 UTC"><span class="timeago" datetime="2025-11-20T22:14:41+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 20, 2025 22:14:41 UTC">2025-11-20</span>
   </span>
 
     

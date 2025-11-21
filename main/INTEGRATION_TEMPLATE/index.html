@@ -12,13 +12,9 @@
         <meta name="author" content="santosr2">
       
       
-        <link rel="canonical" href="https://santosr2.github.io/uptool/main/environments/">
+        <link rel="canonical" href="https://santosr2.github.io/uptool/main/INTEGRATION_TEMPLATE/">
       
       
-        <link rel="prev" href="../configuration/">
-      
-      
-        <link rel="next" href="../manifests/">
       
       
         
@@ -29,7 +25,7 @@
     
     
       
-        <title>Environments - uptool</title>
+        <title>[Integration Name] Integration - uptool</title>
       
     
     
@@ -84,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#github-environments-setup" class="md-skip">
+        <a href="#integration-name-integration" class="md-skip">
           Skip to content
         </a>
       
@@ -124,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Environments
+              [Integration Name] Integration
             
           </span>
         </div>
@@ -275,12 +271,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../configuration/" class="md-tabs__link">
           
   
@@ -620,10 +614,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -641,22 +633,21 @@
     
     
       
-        
-        
-      
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
             
   
   
@@ -674,7 +665,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -717,37 +708,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Environments
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../environments/" class="md-nav__link">
         
   
   
@@ -763,298 +727,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Configuration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Environment Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#creating-environments" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating Environments
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approval-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Approval Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Approval Workflow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pre-release-creation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-Release Creation
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#stable-release-promotion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stable Release Promotion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patch-release-creation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Patch Release Creation
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#approving-a-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Approving a Deployment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Approving a Deployment">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#as-a-reviewer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        As a Reviewer
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#review-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Review Checklist
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#viewing-deployment-history" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Viewing Deployment History
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bypassing-approval-not-recommended" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bypassing Approval (Not Recommended)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#security-best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security Best Practices
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Security Best Practices">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#required-reviewers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Required Reviewers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#branch-protection" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Branch Protection
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#audit-trail" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Audit Trail
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-release-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example Release Flow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Example Release Flow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#standard-release-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Standard Release Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#patch-release-flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Patch Release Flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See Also
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1957,46 +1629,6 @@
   
 
 
-  <nav class="md-path" aria-label="Navigation" >
-    <ol class="md-path__list">
-      
-        
-  
-  
-    <li class="md-path__item">
-      <a href=".." class="md-path__link">
-        
-  <span class="md-ellipsis">
-    Home
-  </span>
-
-      </a>
-    </li>
-  
-
-      
-      
-        
-  
-  
-    
-    
-      <li class="md-path__item">
-        <a href="../configuration/" class="md-path__link">
-          
-  <span class="md-ellipsis">
-    User Guide
-  </span>
-
-        </a>
-      </li>
-    
-  
-
-      
-    </ol>
-  </nav>
-
               
               <article class="md-content__inner md-typeset">
                 
@@ -2007,361 +1639,95 @@
   
 
 
-<h1 id="github-environments-setup">GitHub Environments Setup<a class="headerlink" href="#github-environments-setup" title="Permanent link">&para;</a></h1>
-<p>uptool uses <strong>GitHub Environments</strong> with approval gates to control releases. This provides an additional layer of security and creates an audit trail for all releases.</p>
+<h1 id="integration-name-integration">[Integration Name] Integration<a class="headerlink" href="#integration-name-integration" title="Permanent link">&para;</a></h1>
+<p>Brief one-sentence description of what this integration does.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Three environments are configured in the release workflows:</p>
-<ol>
-<li><strong>pre-release</strong> - Used for creating pre-release versions (rc/beta/alpha)</li>
-<li><strong>production</strong> - Used for promoting pre-releases to stable versions</li>
-<li><strong>patch-release</strong> - Used for creating patch releases on release branches</li>
-</ol>
-<p>All environments require manual approval from designated reviewers before the workflow can proceed with creating/promoting releases.</p>
-<h2 id="environment-configuration">Environment Configuration<a class="headerlink" href="#environment-configuration" title="Permanent link">&para;</a></h2>
-<h3 id="prerequisites">Prerequisites<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h3>
+<p><strong>Integration ID</strong>: <code>integration-id</code></p>
+<p><strong>Manifest Files</strong>: <code>manifest-file.ext</code></p>
+<p><strong>Update Strategy</strong>: How it updates (e.g., YAML rewriting, native command, HCL parsing)</p>
+<p><strong>Registry</strong>: Where it queries versions (e.g., npm Registry API, GitHub Releases)</p>
+<p><strong>Status</strong>: ✅ Stable | 🧪 Experimental</p>
+<h2 id="what-gets-updated">What Gets Updated<a class="headerlink" href="#what-gets-updated" title="Permanent link">&para;</a></h2>
+<p>Clear bullet list of what parts of the manifest are updated:</p>
 <ul>
-<li>Repository administrator access</li>
-<li>Appropriate repository permissions (Settings → Environments)</li>
+<li><code>section1</code> - Description</li>
+<li><code>section2</code> - Description</li>
 </ul>
-<h3 id="creating-environments">Creating Environments<a class="headerlink" href="#creating-environments" title="Permanent link">&para;</a></h3>
-<h4 id="1-navigate-to-environments">1. Navigate to Environments<a class="headerlink" href="#1-navigate-to-environments" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Go to your repository on GitHub</li>
-<li>Click <strong>Settings</strong> (top menu)</li>
-<li>In the left sidebar, click <strong>Environments</strong></li>
-</ol>
-<h4 id="2-create-pre-release-environment">2. Create Pre-Release Environment<a class="headerlink" href="#2-create-pre-release-environment" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Click <strong>New environment</strong></li>
-<li>Name: <code>pre-release</code></li>
-<li>Click <strong>Configure environment</strong></li>
-</ol>
-<p><strong>Configure the following protection rules</strong>:</p>
-<ul>
-<li>✅ <strong>Required reviewers</strong></li>
-<li>Add maintainers who should approve pre-releases</li>
-<li>Recommended: At least 1 reviewer</li>
-<li>
-<p>Prevents accidental pre-release creation</p>
-</li>
-<li>
-<p>✅ <strong>Wait timer</strong> (optional)</p>
-</li>
-<li>Set to 0 minutes (no automatic delay)</li>
-<li>
-<p>Or add a delay if desired</p>
-</li>
-<li>
-<p>✅ <strong>Deployment branches and tags</strong></p>
-</li>
-<li>Select: <strong>Selected branches and tags</strong></li>
-<li>Add rule: <code>main</code> branch only</li>
-<li>This ensures only main branch can create releases</li>
-</ul>
-<p><strong>Environment secrets</strong> (if needed):</p>
-<ul>
-<li>No additional secrets required for basic setup</li>
-<li>GitHub token is automatically provided</li>
-</ul>
-<p><strong>Save</strong> the environment</p>
-<h4 id="3-create-production-environment">3. Create Production Environment<a class="headerlink" href="#3-create-production-environment" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Click <strong>New environment</strong></li>
-<li>Name: <code>production</code></li>
-<li>Click <strong>Configure environment</strong></li>
-</ol>
-<p><strong>Configure the following protection rules</strong>:</p>
-<ul>
-<li>✅ <strong>Required reviewers</strong></li>
-<li>Add maintainers who should approve stable releases</li>
-<li>Recommended: At least 2 reviewers for production</li>
-<li>
-<p>Requires multiple approvals for critical releases</p>
-</li>
-<li>
-<p>✅ <strong>Wait timer</strong> (optional)</p>
-</li>
-<li>Set to 0 minutes for immediate review</li>
-<li>
-<p>Or set to 10-30 minutes for time to review changes</p>
-</li>
-<li>
-<p>✅ <strong>Deployment branches and tags</strong></p>
-</li>
-<li>Select: <strong>Selected branches and tags</strong></li>
-<li>Add rule: <code>main</code> branch only</li>
-<li>
-<p>Ensures only main branch can promote to stable</p>
-</li>
-<li>
-<p>⚠️ <strong>Prevent self-review</strong> (recommended)</p>
-</li>
-<li>Enable this to require approval from someone other than the workflow trigger</li>
-</ul>
-<p><strong>Environment secrets</strong> (if needed):</p>
-<ul>
-<li>No additional secrets required for basic setup</li>
-</ul>
-<p><strong>Save</strong> the environment</p>
-<h4 id="4-create-patch-release-environment">4. Create Patch Release Environment<a class="headerlink" href="#4-create-patch-release-environment" title="Permanent link">&para;</a></h4>
-<ol>
-<li>Click <strong>New environment</strong></li>
-<li>Name: <code>patch-release</code></li>
-<li>Click <strong>Configure environment</strong></li>
-</ol>
-<p><strong>Configure the following protection rules</strong>:</p>
-<ul>
-<li>✅ <strong>Required reviewers</strong></li>
-<li>Add maintainers who should approve patch releases</li>
-<li>Recommended: At least 1 reviewer (can be same as pre-release)</li>
-<li>
-<p>Ensures security/bug fixes are reviewed before release</p>
-</li>
-<li>
-<p>✅ <strong>Wait timer</strong> (optional)</p>
-</li>
-<li>Set to 0 minutes for immediate review</li>
-<li>
-<p>Patch releases are typically urgent (security fixes)</p>
-</li>
-<li>
-<p>✅ <strong>Deployment branches and tags</strong></p>
-</li>
-<li>Select: <strong>Selected branches and tags</strong></li>
-<li>Add pattern: <code>release-*</code> (for release branches)</li>
-<li>
-<p>This ensures only release branches can create patch releases</p>
-</li>
-<li>
-<p>⚠️ <strong>Prevent self-review</strong> (recommended)</p>
-</li>
-<li>Enable this for security patches especially</li>
-</ul>
-<p><strong>Environment secrets</strong> (if needed):</p>
-<ul>
-<li>No additional secrets required for basic setup</li>
-</ul>
-<p><strong>Save</strong> the environment</p>
-<h2 id="approval-workflow">Approval Workflow<a class="headerlink" href="#approval-workflow" title="Permanent link">&para;</a></h2>
-<h3 id="pre-release-creation">Pre-Release Creation<a class="headerlink" href="#pre-release-creation" title="Permanent link">&para;</a></h3>
-<p>When someone triggers the <strong>Pre-Release</strong> workflow:</p>
-<ol>
-<li>Workflow calculates version and updates files</li>
-<li>Tests run automatically</li>
-<li><strong>Workflow pauses at the <code>build</code> job</strong></li>
-<li>GitHub sends notification to required reviewers</li>
-<li>Reviewer(s) must <strong>approve</strong> or <strong>reject</strong> the deployment</li>
-<li>If approved: artifacts are built and pre-release is created</li>
-<li>If rejected: workflow is cancelled</li>
-</ol>
-<p><strong>Approval screen shows</strong>:</p>
-<ul>
-<li>Pre-release version (e.g., <code>v0.2.0-rc.1</code>)</li>
-<li>Commit SHA being released</li>
-<li>Link to the release page (once approved)</li>
-<li>Comment field for approval notes</li>
-</ul>
-<h3 id="stable-release-promotion">Stable Release Promotion<a class="headerlink" href="#stable-release-promotion" title="Permanent link">&para;</a></h3>
-<p>When someone triggers the <strong>Promote to Stable Release</strong> workflow:</p>
-<ol>
-<li>Workflow validates pre-release tag exists</li>
-<li>Updates version files to stable</li>
-<li>Tests run automatically</li>
-<li><strong>Workflow pauses at the <code>promote</code> job</strong></li>
-<li>GitHub sends notification to required reviewers</li>
-<li>Reviewer(s) must <strong>approve</strong> or <strong>reject</strong> the deployment</li>
-<li>If approved: artifacts are promoted and stable release is created</li>
-<li>If rejected: workflow is cancelled</li>
-</ol>
-<p><strong>Approval screen shows</strong>:</p>
-<ul>
-<li>Pre-release being promoted (e.g., <code>v0.2.0-rc.1</code>)</li>
-<li>Stable version (e.g., <code>v0.2.0</code>)</li>
-<li>Link to the stable release page (once approved)</li>
-</ul>
-<h3 id="patch-release-creation">Patch Release Creation<a class="headerlink" href="#patch-release-creation" title="Permanent link">&para;</a></h3>
-<p>When someone triggers the <strong>Patch Release</strong> workflow:</p>
-<ol>
-<li>Workflow validates release branch exists</li>
-<li>Updates version files on release branch</li>
-<li>Builds binaries and generates SBOMs</li>
-<li><strong>Workflow pauses at the <code>release</code> job</strong></li>
-<li>GitHub sends notification to required reviewers</li>
-<li>Reviewer(s) must <strong>approve</strong> or <strong>reject</strong> the deployment</li>
-<li>If approved: artifacts are signed and patch release is created</li>
-<li>If rejected: workflow is cancelled</li>
-</ol>
-<p><strong>Approval screen shows</strong>:</p>
-<ul>
-<li>Release branch (e.g., <code>release-0.1</code>)</li>
-<li>Patch version (e.g., <code>v0.1.1</code>)</li>
-<li>Patch type (security or bugfix)</li>
-<li>Commits included in patch</li>
-<li>Link to the patch release page (once approved)</li>
-</ul>
-<h2 id="approving-a-deployment">Approving a Deployment<a class="headerlink" href="#approving-a-deployment" title="Permanent link">&para;</a></h2>
-<h3 id="as-a-reviewer">As a Reviewer<a class="headerlink" href="#as-a-reviewer" title="Permanent link">&para;</a></h3>
-<p>When you receive a deployment approval request:</p>
-<ol>
-<li><strong>Check your email</strong> or GitHub notifications</li>
-<li><strong>Go to Actions</strong> tab in the repository</li>
-<li>Find the workflow run waiting for approval</li>
-<li><strong>Review the details</strong>:</li>
-<li>Check the version being released</li>
-<li>Review the commits included</li>
-<li>Verify tests passed</li>
-<li>
-<p>Check CHANGELOG updates</p>
-</li>
-<li>
-<p>Click <strong>Review deployments</strong></p>
-</li>
-<li>Select the environment (<code>pre-release</code>, <code>production</code>, or <code>patch-release</code>)</li>
-<li>Add a comment (optional but recommended):</li>
-</ol>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Approved: Version v0.2.0 includes security fixes
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<p><strong>Before</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a># Example manifest before update
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>dependency: 1.0.0
 </span></code></pre></div>
-<ol>
-<li>Click <strong>Approve and deploy</strong> or <strong>Reject</strong></li>
-</ol>
-<h3 id="review-checklist">Review Checklist<a class="headerlink" href="#review-checklist" title="Permanent link">&para;</a></h3>
-<p>Before approving a pre-release:</p>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Version number is correct</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All tests passed</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No breaking changes without documentation</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> CHANGELOG is updated</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Commit messages follow conventional commits</li>
-</ul>
-<p>Before approving a stable release:</p>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Pre-release was tested successfully</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No critical issues reported</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Documentation is accurate</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Version matches what was tested</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All artifacts are present</li>
-</ul>
-<p>Before approving a patch release:</p>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Patch is on correct release branch (e.g., <code>release-0.1</code>)</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Version increment is correct (patch only)</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Security vulnerability is properly fixed (if security patch)</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Changes are minimal and targeted (no feature additions)</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All tests passed on release branch</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No conflicts with existing stable releases</li>
-</ul>
-<h2 id="viewing-deployment-history">Viewing Deployment History<a class="headerlink" href="#viewing-deployment-history" title="Permanent link">&para;</a></h2>
-<p>GitHub tracks all deployments in the environment:</p>
-<ol>
-<li>Go to <strong>Settings</strong> → <strong>Environments</strong></li>
-<li>Click on <code>pre-release</code>, <code>production</code>, or <code>patch-release</code></li>
-<li>View <strong>Deployment history</strong>:</li>
-<li>Who triggered the workflow</li>
-<li>Who approved/rejected</li>
-<li>When it was deployed</li>
-<li>Links to workflow runs</li>
-<li>Comments from reviewers</li>
-</ol>
-<p>This creates a complete audit trail for compliance.</p>
-<h2 id="bypassing-approval-not-recommended">Bypassing Approval (Not Recommended)<a class="headerlink" href="#bypassing-approval-not-recommended" title="Permanent link">&para;</a></h2>
-<p><strong>Warning</strong>: Only repository administrators can bypass environment protection rules.</p>
-<p>If you need to bypass approval (emergency only):</p>
-<ol>
-<li>Go to <strong>Settings</strong> → <strong>Environments</strong></li>
-<li>Select the environment</li>
-<li>Temporarily remove <strong>Required reviewers</strong></li>
-<li>Run the workflow</li>
-<li><strong>Immediately re-enable</strong> required reviewers</li>
-</ol>
-<p><strong>Better approach</strong>: Add yourself as an approved reviewer if needed.</p>
-<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
-<p><strong>Workflow stuck waiting</strong>: Check Actions tab for "Review deployments" button, verify you're a required reviewer</p>
-<p><strong>Cannot approve</strong>: Ensure you're listed as reviewer and didn't trigger the workflow yourself (if self-review prevented)</p>
-<p><strong>Environment not found</strong>: Verify environment names in workflow files match <strong>Settings</strong> → <strong>Environments</strong> exactly</p>
-<h2 id="security-best-practices">Security Best Practices<a class="headerlink" href="#security-best-practices" title="Permanent link">&para;</a></h2>
-<h3 id="required-reviewers">Required Reviewers<a class="headerlink" href="#required-reviewers" title="Permanent link">&para;</a></h3>
-<p><strong>Pre-release environment</strong>:</p>
+<p><strong>After</strong>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a># Example manifest after update
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>dependency: 1.5.0
+</span></code></pre></div>
+<h2 id="integration-specific-behavior">Integration-Specific Behavior<a class="headerlink" href="#integration-specific-behavior" title="Permanent link">&para;</a></h2>
+<p>Any unique behavior for this integration:</p>
 <ul>
-<li>Minimum: 1 reviewer</li>
-<li>Recommended: 1-2 reviewers</li>
-<li>Should include: Project maintainers</li>
+<li><strong>Version constraints</strong>: How constraints are handled</li>
+<li><strong>Format preservation</strong>: What formatting is preserved</li>
+<li><strong>Special features</strong>: Any unique features</li>
 </ul>
-<p><strong>Production environment</strong>:</p>
-<ul>
-<li>Minimum: 2 reviewers</li>
-<li>Recommended: 2-3 reviewers</li>
-<li>Should include: Senior maintainers, security lead</li>
-</ul>
-<p><strong>Patch release environment</strong>:</p>
-<ul>
-<li>Minimum: 1 reviewer</li>
-<li>Recommended: 1-2 reviewers (can be same as pre-release)</li>
-<li>Should include: Security lead (for security patches), maintainers</li>
-<li>Note: Security patches should be expedited but still reviewed</li>
-</ul>
-<h3 id="branch-protection">Branch Protection<a class="headerlink" href="#branch-protection" title="Permanent link">&para;</a></h3>
-<p>Combine environment protection with branch protection:</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>Example <code>uptool.yaml</code> configuration:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">integrations</span><span class="p">:</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration-id</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">policy</span><span class="p">:</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">update</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">minor</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">      </span><span class="nt">allow_prerelease</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</span></code></pre></div>
+<h2 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h2>
+<p><em>(Optional section - only include if there are notable limitations)</em></p>
+<p>List any known limitations:</p>
 <ol>
-<li>Go to <strong>Settings</strong> → <strong>Branches</strong></li>
-<li>Add rule for <code>main</code> branch:</li>
-<li>✅ Require pull request reviews (at least 1)</li>
-<li>✅ Require status checks to pass</li>
-<li>✅ Require branches to be up to date</li>
-<li>
-<p>✅ Include administrators</p>
-</li>
-<li>
-<p>Add rule for <code>release-*</code> pattern (for patch release branches):</p>
-</li>
-<li>✅ Require pull request reviews (at least 1)</li>
-<li>✅ Require status checks to pass</li>
-<li>✅ Include administrators</li>
-<li>✅ Restrict who can push (maintainers only)</li>
-</ol>
-<p>This ensures:</p>
-<ul>
-<li>Code is reviewed before merging</li>
-<li>Tests pass before merging</li>
-<li>Releases require additional approval</li>
-<li>Patch releases are protected and audited</li>
-</ul>
-<h3 id="audit-trail">Audit Trail<a class="headerlink" href="#audit-trail" title="Permanent link">&para;</a></h3>
-<p>GitHub automatically logs:</p>
-<ul>
-<li>Who triggered the workflow</li>
-<li>Who approved/rejected</li>
-<li>When deployment occurred</li>
-<li>Environment variables used</li>
-<li>Workflow run details</li>
-</ul>
-<p>Export deployment logs regularly for compliance:</p>
-<ol>
-<li>Go to <strong>Settings</strong> → <strong>Environments</strong> → [Environment]</li>
-<li>View deployment history</li>
-<li>Document approvals in release notes</li>
-</ol>
-<h2 id="example-release-flow">Example Release Flow<a class="headerlink" href="#example-release-flow" title="Permanent link">&para;</a></h2>
-<h3 id="standard-release-flow">Standard Release Flow<a class="headerlink" href="#standard-release-flow" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Pre-Release</strong>: Trigger workflow → Reviewer approves → <code>v0.2.0-rc.1</code> created</li>
-<li><strong>Testing</strong>: Test artifacts, fix issues, create new RC if needed</li>
-<li><strong>Promotion</strong>: Trigger promote workflow → Multiple reviewers approve → <code>v0.2.0</code> created</li>
-<li><strong>Audit</strong>: All approvals logged in environment history</li>
-</ol>
-<h3 id="patch-release-flow">Patch Release Flow<a class="headerlink" href="#patch-release-flow" title="Permanent link">&para;</a></h3>
-<ol>
-<li><strong>Security Fix</strong>: Vulnerability discovered in <code>v0.1.0</code></li>
-<li><strong>Create Branch</strong>: Create <code>release-0.1</code> from <code>v0.1.0</code> tag (if not exists)</li>
-<li><strong>Apply Fix</strong>: Cherry-pick security fix to release branch</li>
-<li><strong>Patch Release</strong>: Trigger patch workflow → Reviewer approves → <code>v0.1.1</code> created</li>
-<li><strong>Audit</strong>: Patch release approval logged in patch-release environment history</li>
+<li><strong>Limitation name</strong>: Description and workaround</li>
 </ol>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment">GitHub Environments Documentation</a></li>
-<li><a href="https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules">Deployment Protection Rules</a></li>
-<li><a href="../versioning/">Version Management Guide</a></li>
-<li><a href="https://github.com/santosr2/uptool/blob/{{ extra.uptool_version }}/CONTRIBUTING.md">Contributing Guide</a></li>
+<li><a href="../cli/commands/">CLI Reference</a></li>
+<li><a href="../configuration/">Configuration Guide</a></li>
+<li><a href="https://santosr2.github.io/uptool">Official Documentation</a></li>
+</ul>
+<hr />
+<h2 id="template-guidelines">Template Guidelines<a class="headerlink" href="#template-guidelines" title="Permanent link">&para;</a></h2>
+<h3 id="length-target">Length Target<a class="headerlink" href="#length-target" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Minimum</strong>: 60 lines</li>
+<li><strong>Target</strong>: 80-120 lines</li>
+<li><strong>Maximum</strong>: 150 lines</li>
+</ul>
+<h3 id="required-sections">Required Sections<a class="headerlink" href="#required-sections" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Overview (ID, files, strategy, registry, status)</li>
+<li>What Gets Updated (bullet list)</li>
+<li>Example (before/after code blocks)</li>
+<li>Integration-Specific Behavior</li>
+</ol>
+<h3 id="optional-sections">Optional Sections<a class="headerlink" href="#optional-sections" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Configuration (if non-standard)</li>
+<li>Limitations (only if notable)</li>
+</ul>
+<h3 id="sections-to-avoid">Sections to AVOID<a class="headerlink" href="#sections-to-avoid" title="Permanent link">&para;</a></h3>
+<ul>
+<li>❌ Generic CLI usage (covered in CLI reference)</li>
+<li>❌ Obvious troubleshooting (e.g., "check internet connection")</li>
+<li>❌ Redundant registry API details</li>
+<li>❌ Monorepo support (mention briefly in "What Gets Updated")</li>
+<li>❌ Version constraint tables (show in example instead)</li>
+<li>❌ Step-by-step workflows (covered in quickstart)</li>
+</ul>
+<h3 id="style-guidelines">Style Guidelines<a class="headerlink" href="#style-guidelines" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Be direct and concise</li>
+<li>Use tables for structured data</li>
+<li>Use code blocks for examples</li>
+<li>Link to other docs instead of duplicating content</li>
+<li>Focus on integration-specific details only</li>
 </ul>
 
 
@@ -2385,7 +1751,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 20, 2025 22:40:11 UTC"><span class="timeago" datetime="2025-11-20T22:40:11+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 20, 2025 22:40:11 UTC">2025-11-20</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 21, 2025 13:47:31 UTC"><span class="timeago" datetime="2025-11-21T13:47:31+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 21, 2025 13:47:31 UTC">2025-11-21</span>
   </span>
 
     
@@ -2395,7 +1761,7 @@
     <span class="md-icon" title="Created">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 16, 2025 16:35:58 UTC"><span class="timeago" datetime="2025-11-16T16:35:58+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 16, 2025 16:35:58 UTC">2025-11-16</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 21, 2025 13:47:31 UTC"><span class="timeago" datetime="2025-11-21T13:47:31+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 21, 2025 13:47:31 UTC">2025-11-21</span>
   </span>
 
     
@@ -2427,44 +1793,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../configuration/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Configuration">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Configuration
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../manifests/" class="md-footer__link md-footer__link--next" aria-label="Next: Manifests">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Manifests
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
