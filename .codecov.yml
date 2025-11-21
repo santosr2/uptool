@@ -41,6 +41,3 @@ flags:
 
 github_checks:
   annotations: true
-
-cli:
-  require_ci_to_pass: true

@@ -29,9 +29,10 @@ permissions:
   id-token: write
   pull-requests: write
 
+# Don't cancel in-progress deployments to avoid partial deployments
 concurrency:
-  group: "pages-${{ github.ref }}"
-  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-docs:

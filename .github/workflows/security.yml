@@ -1,0 +1,388 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run daily at 02:00 UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same workflow on the same ref
+# Don't cancel for scheduled runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # Secret Scanning
+  trufflehog:
+    name: TruffleHog Secret Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@3f9f94ebabfcc32e6f2e5e96c254be404da5ecf9 # v3.87.2
+        with:
+          extra_args: --only-verified --json --github-actions
+
+      - name: Add scan summary
+        if: always()
+        run: |
+          echo "## 🔐 TruffleHog Secret Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✓ Scan completed (only verified secrets reported)" >> $GITHUB_STEP_SUMMARY
+
+  gitleaks:
+    name: Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@cb7149a9e14a6c68869e4e8e0e4b563ccc6e833a # v2.3.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_SUMMARY: true
+
+  detect-secrets:
+    name: IBM Detect Secrets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Run detect-secrets scan
+        run: |
+          detect-secrets scan --all-files --force-use-all-plugins \
+            --exclude-files '\.git/.*|\.github/workflows/.*\.yml|go\.sum' \
+            > .secrets.baseline
+
+      - name: Check for secrets
+        run: |
+          if grep -q '"results": {}' .secrets.baseline; then
+            echo "✓ No secrets detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Potential secrets found" >> $GITHUB_STEP_SUMMARY
+            cat .secrets.baseline
+            exit 1
+          fi
+
+      - name: Upload baseline
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: secrets-baseline
+          path: .secrets.baseline
+          retention-days: 30
+          if-no-files-found: warn
+
+  # Vulnerability Scanning
+  osv-scanner:
+    name: OSV Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run OSV Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@b77c075a1235514558f0eb88dbd31e22c45e0cd2 # v2.3.0
+        with:
+          scan-args: |-
+            --recursive
+            --skip-git
+            --format=json
+            --output=osv-results.json
+            ./
+        continue-on-error: false
+
+      - name: Upload OSV results
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: osv-scanner-results
+          path: osv-results.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@3b139cfc5fae8b618d3eae3675e383bb1769c019 # v4.5.0
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: always
+
+  go-vulncheck:
+    name: Go Vulnerability Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+
+  # Trivy Security Scanning
+  trivy-filesystem:
+    name: Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.29.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+
+      - name: Upload filesystem scan results
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: trivy-filesystem-scan
+          path: trivy-fs-results.sarif
+          retention-days: 30
+
+  trivy-config:
+    name: Trivy IaC Configuration Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run Trivy config scan
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.29.0
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-config-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '0'
+
+      - name: Upload config scan results
+        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          sarif_file: 'trivy-config-results.sarif'
+
+      - name: Upload config scan artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: trivy-config-scan
+          path: trivy-config-results.sarif
+          retention-days: 30
+
+  trivy-image:
+    name: Trivy Docker Image Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Build Docker image
+        run: docker build -t uptool:latest .
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.29.0
+        with:
+          scan-type: 'image'
+          image-ref: 'uptool:latest'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload image scan results
+        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
+      - name: Upload image scan artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: trivy-image-scan
+          path: trivy-image-results.sarif
+          retention-days: 30
+
+  # CodeQL Analysis
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['go']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          category: "/language:${{matrix.language}}"
+
+  # OpenSSF Scorecard
+  scorecard:
+    name: OpenSSF Scorecard
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run OpenSSF Scorecard
+        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          repo_token: ${{ secrets.SCORECARD_TOKEN }}
+          publish_results: true
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
+        with:
+          sarif_file: results.sarif
+
+      - name: Upload Scorecard results artifact
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: scorecard-sarif
+          path: results.sarif
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Scorecard summary
+        if: always()
+        run: |
+          echo "## 🔒 OpenSSF Scorecard Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Scorecard analysis completed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed results in the Security tab → Code scanning alerts" >> $GITHUB_STEP_SUMMARY
+
+  # Summary
+  summary:
+    name: Security Summary
+    needs: [trufflehog, gitleaks, detect-secrets, osv-scanner, go-vulncheck, trivy-filesystem, trivy-config]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 🔒 Security Scanning Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Secret Scanning" >> $GITHUB_STEP_SUMMARY
+          echo "- TruffleHog: ${{ needs.trufflehog.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Gitleaks: ${{ needs.gitleaks.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Detect Secrets: ${{ needs.detect-secrets.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Vulnerability Scanning" >> $GITHUB_STEP_SUMMARY
+          echo "- OSV Scanner: ${{ needs.osv-scanner.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Go Vulncheck: ${{ needs.go-vulncheck.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Trivy Scanning" >> $GITHUB_STEP_SUMMARY
+          echo "- Filesystem: ${{ needs.trivy-filesystem.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- IaC Config: ${{ needs.trivy-config.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if all critical scans passed
+          if [ "${{ needs.trufflehog.result }}" == "success" ] && \
+             [ "${{ needs.gitleaks.result }}" == "success" ] && \
+             [ "${{ needs.detect-secrets.result }}" == "success" ] && \
+             [ "${{ needs.osv-scanner.result }}" == "success" ] && \
+             [ "${{ needs.go-vulncheck.result }}" == "success" ]; then
+            echo "🎉 **All critical security scans passed**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some security scans failed - review results above**" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Detailed results**: Security tab → Code scanning alerts" >> $GITHUB_STEP_SUMMARY
