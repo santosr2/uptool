@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"github.com/santosr2/uptool/internal/integrations"
 )
 
 const (
@@ -18,19 +20,6 @@ const (
 	shellPowershell = "powershell"
 	osWindows       = "windows"
 )
-
-// validateFilePath validates that a file path is safe to read/write
-func validateFilePath(path string) error {
-	// Clean the path to resolve any . or .. components
-	cleanPath := filepath.Clean(path)
-
-	// Check for directory traversal attempts
-	if strings.Contains(cleanPath, "..") {
-		return fmt.Errorf("path contains directory traversal: %s", path)
-	}
-
-	return nil
-}
 
 var completionCmd = &cobra.Command{
 	Use:   "completion [bash|zsh|fish|powershell]",
@@ -121,7 +110,7 @@ func runCompletionInstall(cmd *cobra.Command, args []string) error {
 
 	// Generate completion to file
 	// Validate path for security
-	err = validateFilePath(installPath)
+	err = integrations.ValidateFilePath(installPath)
 	if err != nil {
 		return fmt.Errorf("invalid install path: %w", err)
 	}

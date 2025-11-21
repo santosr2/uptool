@@ -14,7 +14,38 @@ This page covers various methods to install uptool on your system.
 
 ## Installation Methods
 
-### Method 1: Go Install (Recommended for Go users)
+### Method 1: Docker (Recommended)
+
+The easiest way to get started with uptool is using Docker. This method requires no local installation and works across all platforms.
+
+```bash
+# Pull the latest stable image
+docker pull ghcr.io/santosr2/uptool:latest
+
+# Run uptool directly
+docker run --rm -v "$PWD:/workspace" ghcr.io/santosr2/uptool version
+
+# Create an alias for convenience
+echo 'alias uptool="docker run --rm -v \"\$PWD:/workspace\" ghcr.io/santosr2/uptool"' >> ~/.bashrc
+source ~/.bashrc
+
+# Now you can use uptool as a regular command
+uptool scan
+```
+
+!!! info "Docker Image Tags"
+    - `latest` - Latest stable release
+    - `v1.0.0` - Specific version (immutable)
+    - `v1` - Latest v1.x.x release (mutable)
+    - `v1.0` - Latest v1.0.x patch (mutable)
+    - `v1.0.0-rc1` - Pre-release versions
+
+!!! tip "Multi-platform Support"
+    The Docker image supports both `linux/amd64` and `linux/arm64` architectures automatically.
+
+---
+
+### Method 2: Go Install (For Go users)
 
 If you have Go 1.25+ installed:
 
@@ -32,7 +63,7 @@ This will install the latest version of uptool to your `$GOPATH/bin` directory.
 
 ---
 
-### Method 2: Pre-built Binaries
+### Method 3: Pre-built Binaries
 
 Download pre-compiled binaries from the [GitHub Releases](https://github.com/santosr2/uptool/releases) page.
 
@@ -138,6 +169,18 @@ After installation, you may want to configure uptool for your project. See the [
 ---
 
 ## Updating uptool
+
+### Docker
+
+Docker images are always up-to-date when you pull:
+
+```bash
+# Pull the latest stable release
+docker pull ghcr.io/santosr2/uptool:latest
+
+# Or pull a specific version
+docker pull ghcr.io/santosr2/uptool:v1.0.0
+```
 
 ### Go Install
 

@@ -122,7 +122,7 @@ Update policy for this integration.
 
 **Type**: `boolean` | **Default**: `false`
 
-When `true`, considers versions like `1.2.3-alpha.1`, `1.2.3-beta.2`, `1.2.3-rc.1`.
+When `true`, considers versions like `1.2.3-alpha20250708`, `1.2.3-beta2`, `1.2.3-rc1`.
 
 **policy.pin** - Write exact versions or ranges:
 

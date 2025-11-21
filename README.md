@@ -78,22 +78,47 @@ This ensures **declared dependencies** stay current, not just resolved versions.
 
 ### Installation
 
-```bash
-# Install from source (requires Go 1.25+)
-go install github.com/santosr2/uptool/cmd/uptool@latest
+#### Docker (Recommended)
 
-# Or download pre-built binaries from releases
+```bash
+# Pull the latest stable image
+docker pull ghcr.io/santosr2/uptool:latest
+
+# Run uptool (use an alias for convenience)
+alias uptool='docker run --rm -v "$PWD:/workspace" ghcr.io/santosr2/uptool'
+
+# Verify installation
+uptool version
+```
+
+#### Pre-built Binaries
+
+```bash
+# Download the latest release for your platform
 # Linux (AMD64)
-curl -LO https://github.com/santosr2/uptool/releases/download/v0.1.0/uptool-linux-amd64
+curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-linux-amd64
 chmod +x uptool-linux-amd64
 sudo mv uptool-linux-amd64 /usr/local/bin/uptool
 
 # macOS (Apple Silicon)
-curl -LO https://github.com/santosr2/uptool/releases/download/v0.1.0/uptool-darwin-arm64
+curl -LO https://github.com/santosr2/uptool/releases/latest/download/uptool-darwin-arm64
 chmod +x uptool-darwin-arm64
 sudo mv uptool-darwin-arm64 /usr/local/bin/uptool
 
-# Or build from source
+# Verify installation
+uptool version
+```
+
+#### Go Install
+
+```bash
+# Install from source (requires Go 1.25+)
+go install github.com/santosr2/uptool/cmd/uptool@latest
+```
+
+#### Build from Source
+
+```bash
 git clone https://github.com/santosr2/uptool.git
 cd uptool
 mise run build  # Binary will be in dist/uptool

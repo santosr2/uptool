@@ -134,7 +134,7 @@ When someone triggers the **Pre-Release** workflow:
 
 **Approval screen shows**:
 
-- Pre-release version (e.g., `v0.2.0-rc.1`)
+- Pre-release version (e.g., `v0.2.0-rc1`)
 - Commit SHA being released
 - Link to the release page (once approved)
 - Comment field for approval notes
@@ -154,7 +154,7 @@ When someone triggers the **Promote to Stable Release** workflow:
 
 **Approval screen shows**:
 
-- Pre-release being promoted (e.g., `v0.2.0-rc.1`)
+- Pre-release being promoted (e.g., `v0.2.0-rc1`)
 - Stable version (e.g., `v0.2.0`)
 - Link to the stable release page (once approved)
 
@@ -335,7 +335,7 @@ Export deployment logs regularly for compliance:
 
 ### Standard Release Flow
 
-1. **Pre-Release**: Trigger workflow → Reviewer approves → `v0.2.0-rc.1` created
+1. **Pre-Release**: Trigger workflow → Reviewer approves → `v0.2.0-rc1` created
 2. **Testing**: Test artifacts, fix issues, create new RC if needed
 3. **Promotion**: Trigger promote workflow → Multiple reviewers approve → `v0.2.0` created
 4. **Audit**: All approvals logged in environment history

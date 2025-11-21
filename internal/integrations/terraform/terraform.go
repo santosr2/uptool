@@ -54,19 +54,6 @@ func (i *Integration) Name() string {
 	return integrationName
 }
 
-// validateFilePath validates that a file path is safe to read/write
-func validateFilePath(path string) error {
-	// Clean the path to resolve any . or .. components
-	cleanPath := filepath.Clean(path)
-
-	// Check for directory traversal attempts
-	if strings.Contains(cleanPath, "..") {
-		return fmt.Errorf("path contains directory traversal: %s", path)
-	}
-
-	return nil
-}
-
 // Config represents terraform configuration structure.
 type Config struct {
 	Remain    hcl.Body        `hcl:",remain"`
@@ -137,7 +124,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 
 			// Parse the file
 			// Validate path for security
-			err = validateFilePath(path)
+			err = integrations.ValidateFilePath(path)
 			if err != nil {
 				return err
 			}
@@ -289,7 +276,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 
 		// Read old content
 		// Validate path for security
-		if err := validateFilePath(filePath); err != nil {
+		if err := integrations.ValidateFilePath(filePath); err != nil {
 			continue
 		}
 
@@ -401,7 +388,7 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 	for _, filename := range files {
 		filePath := filepath.Join(manifest.Path, filename)
 		// Validate path for security
-		if err := validateFilePath(filePath); err != nil {
+		if err := integrations.ValidateFilePath(filePath); err != nil {
 			continue
 		}
 
