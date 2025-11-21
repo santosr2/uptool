@@ -84,6 +84,55 @@ pre-commit run --all-files
 
 Hooks include Go formatting, linting, security checks, and tests. All checks also run in CI.
 
+### Docker Compose Development (Optional)
+
+For development with live-reload using [Air](https://github.com/air-verse/air):
+
+```bash
+# Start development environment with hot reload
+docker compose --profile dev up
+
+# Or run in background
+docker compose --profile dev up -d
+
+# View logs
+docker compose logs -f dev
+
+# Stop development environment
+docker compose --profile dev down
+```
+
+**What this provides:**
+
+- **Live reload**: Air automatically rebuilds and restarts uptool when Go files change
+- **Isolated environment**: All dependencies are containerized
+- **Consistent tooling**: Same Go version and tools as CI
+- **Fast iteration**: Changes are automatically reflected without manual rebuilds
+
+**Configuration:**
+
+- Air configuration: `.air.toml`
+- Docker Compose: `compose.yml` (dev profile)
+- Development Dockerfile: `Dockerfile.dev`
+
+**Other Docker Compose profiles:**
+
+```bash
+# Run tests with coverage
+docker compose --profile test up
+
+# Run benchmarks
+docker compose --profile benchmark up
+
+# Run linting
+docker compose --profile lint up
+
+# Production build
+docker compose --profile production up
+```
+
+See `compose.yml` for full configuration details.
+
 ## Development Workflow (Trunk-Based)
 
 We use **trunk-based development**—not Git Flow. All changes go directly to `main` after review.

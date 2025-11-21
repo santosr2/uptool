@@ -1,0 +1,204 @@
+# Auto-labeling configuration for PRs
+# https://github.com/actions/labeler
+# Version: 5.0.0 (actions/labeler@v5)
+
+# Documentation changes
+'documentation':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.md'
+      - 'docs/**/*'
+      - 'mkdocs.yml'
+      - '.github/MARKETPLACE.md'
+      - '.claude/**/*.md'
+
+# CI/CD and workflow changes
+'ci':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - 'action.yml'
+      - '.github/labeler.yml'
+
+# Dependency updates
+'dependencies':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'go.mod'
+      - 'go.sum'
+      - 'mise.toml'
+      - '.tool-versions'
+      - 'docs/requirements.txt'
+
+# Integration-specific labels
+'integration/npm':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/npm/**'
+      - 'internal/registry/npm.go'
+
+'integration/helm':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/helm/**'
+      - 'internal/registry/helm.go'
+
+'integration/terraform':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/terraform/**'
+      - 'internal/registry/terraform.go'
+
+'integration/tflint':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/tflint/**'
+
+'integration/precommit':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/precommit/**'
+
+'integration/asdf':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/asdf/**'
+
+'integration/mise':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/integrations/mise/**'
+
+# Core package changes
+'core/engine':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/engine/**'
+
+'core/registry':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/registry/**'
+
+'core/rewrite':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/rewrite/**'
+
+'core/resolve':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/resolve/**'
+
+'core/policy':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/policy/**'
+
+'core/datasource':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/datasource/**'
+
+'core/secureio':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/secureio/**'
+
+'core/version':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'internal/version/**'
+
+# CLI changes
+'cli':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'cmd/uptool/**'
+
+# Test changes
+'tests':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*_test.go'
+      - 'examples/**'
+
+# Security-related changes
+'security':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'SECURITY.md'
+      - 'docs/SECURITY.md'
+      - '.github/workflows/security*.yml'
+      - '.github/workflows/scorecard.yml'
+      - 'osv-scanner.toml'
+      - '.codecov.yml'
+
+# Governance and community files
+'governance':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'GOVERNANCE.md'
+      - 'LICENSE'
+
+# Release-related changes
+'release':
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/*release*.yml'
+      - '.github/workflows/changelog.yml'
+      - 'CHANGELOG.md'
+      - 'docs/CHANGELOG.md'
+      - 'git-cliff.toml'
+      - '.bumpversion.toml'
+      - '.goreleaser.yml'
+      - 'internal/version/**'
+
+# Build and tooling
+'build':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'mise.toml'
+      - '.golangci.yml'
+      - '.pre-commit-config.yaml'
+      - 'Makefile'
+      - 'scripts/**'
+
+# Docker-related changes
+'docker':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'Dockerfile'
+      - 'Dockerfile.dev'
+      - 'compose.yml'
+      - '.dockerignore'
+      - '.hadolint.yaml'
+      - '.github/workflows/docker.yml'
+      - '.air.toml'
+
+# Plugin system
+'plugins':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'examples/plugins/**'
+      - 'docs/plugin-development.md'
+
+# Examples and configuration
+'examples':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'examples/**'
+      - 'uptool.yaml'
+      - 'integrations.yaml'
+
+# GitHub Action-specific
+'github-action':
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'action.yml'
+      - '.github/MARKETPLACE.md'
+      - '.github/workflows/marketplace-publish.yml'
+      - 'docs/action-usage.md'
