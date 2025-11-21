@@ -36,12 +36,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix changelog workflow by @santosr2([6d2d596](https://github.com/santosr2/uptool/commit/6d2d596d28a2bfe2ffd2e4c940f8bcb5f29e809e))
 - Fix bumpversion configuration by @santosr2([c6a691a](https://github.com/santosr2/uptool/commit/c6a691a0292e9afcc57dba8ca0c83638c1307ec8))
 - Fix changelog file by @santosr2([efa5c82](https://github.com/santosr2/uptool/commit/efa5c82f4f1ab77cb92790583ab123bdf3257d8b))
+- Fix pre-release workflow by @santosr2([b0bb6f5](https://github.com/santosr2/uptool/commit/b0bb6f5c8ebfdf818b66b47af65cdefa84c1f35b))
 
 ### Documentation
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([6c59527](https://github.com/santosr2/uptool/commit/6c595274d5b6324c629142762cf0f04bbfb20a96))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([5ac2e03](https://github.com/santosr2/uptool/commit/5ac2e03fd433ace4a44045caed527557482d5974))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([4e2a2b1](https://github.com/santosr2/uptool/commit/4e2a2b1772e8d69fbf4ea25508c15e457272bc4d))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([f127f83](https://github.com/santosr2/uptool/commit/f127f836a53a3945d86337a28469727e54299ab8))
+- Update CHANGELOG.md [skip ci] by @github-actions[bot]([d97491c](https://github.com/santosr2/uptool/commit/d97491c5b3c946d88c77a64b6fd2857fe6ea8ef5))
 
 ### Features
 - Add community documentation by @santosr2([7256083](https://github.com/santosr2/uptool/commit/7256083915b365c67603502d06f662874c9cedf6))
