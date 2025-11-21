@@ -12,14 +12,17 @@ RUN apk add --no-cache \
     musl-dev \
     && rm -rf /var/cache/apk/*
 
+# Set shell to use pipefail (Alpine uses ash)
+SHELL ["/bin/ash", "-o", "pipefail", "-c"]
+
 # Install mise for tool management
 RUN curl https://mise.run | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /workspace
 
-# Install air for live reload
-RUN go install github.com/cosmtrek/air@latest
+# Install air for live reload (pinned version)
+RUN go install github.com/cosmtrek/air@v1.63.1
 
 # Install development tools via mise
 COPY mise.toml .
