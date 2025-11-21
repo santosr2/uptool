@@ -298,54 +298,6 @@ jobs:
         with:
           category: "/language:${{matrix.language}}"
 
-  # OpenSSF Scorecard
-  scorecard:
-    name: OpenSSF Scorecard
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-    permissions:
-      security-events: write
-      id-token: write
-      contents: read
-      actions: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-
-      - name: Run OpenSSF Scorecard
-        uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
-        with:
-          results_file: results.sarif
-          results_format: sarif
-          # repo_token: ${{ secrets.SCORECARD_TOKEN }}
-          publish_results: true
-
-      - name: Upload SARIF results
-        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
-        with:
-          sarif_file: results.sarif
-
-      - name: Upload Scorecard results artifact
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
-        with:
-          name: scorecard-sarif
-          path: results.sarif
-          retention-days: 30
-          if-no-files-found: error
-
-      - name: Scorecard summary
-        if: always()
-        run: |
-          {
-            echo "## 🔒 OpenSSF Scorecard Results"
-            echo ""
-            echo "✅ Scorecard analysis completed successfully"
-            echo ""
-            echo "View detailed results in the Security tab → Code scanning alerts"
-          } >> "$GITHUB_STEP_SUMMARY"
-
   # Summary
   summary:
     name: Security Summary
