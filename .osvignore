@@ -1,0 +1,38 @@
+# OSV Scanner ignore file
+# Directories and files to exclude from vulnerability scanning
+
+# mise tooling directory (contains Python packages for tooling only)
+.mise/
+
+# Git directory
+.git/
+
+# GitHub workflows (already scanned by other tools)
+.github/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Test fixtures and vendored code
+testdata/
+vendor/
+
+# Documentation build artifacts
+site/
+docs/api/
+docs/cli/
+
+# Cache directories
+cache/
+.cache/
+
+# Node modules (if present)
+node_modules/
+
+# Python virtual environments
+venv/
+.venv/
+env/
+.env/
