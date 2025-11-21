@@ -1932,13 +1932,13 @@
 <li>Maintainer triggers pre-release workflow</li>
 <li>System calculates version from commits</li>
 <li>Approval gate (designated reviewers)</li>
-<li>Creates pre-release (e.g., <code>v0.2.0-rc.1</code>)</li>
+<li>Creates pre-release (e.g., <code>v0.2.0-rc1</code>, <code>v0.2.0-beta3</code>, <code>v0.2.0-alpha20250708</code>)</li>
 <li>Builds artifacts</li>
 </ol>
 <h3 id="stable-release">Stable Release<a class="headerlink" href="#stable-release" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Maintainer triggers promote workflow</li>
-<li>Extracts stable version (<code>v0.2.0-rc.1</code> → <code>v0.2.0</code>)</li>
+<li>Extracts stable version (<code>v0.2.0-rc1</code> → <code>v0.2.0</code>)</li>
 <li>Approval gate (multiple reviewers)</li>
 <li>Promotes artifacts</li>
 <li>Updates CHANGELOG</li>
@@ -1947,14 +1947,14 @@
 <h2 id="version-tags">Version Tags<a class="headerlink" href="#version-tags" title="Permanent link">&para;</a></h2>
 <p><strong>Immutable</strong> (never change):</p>
 <ul>
-<li>Stable: <code>v0.1.0</code>, <code>v0.2.0</code></li>
-<li>Pre-release: <code>v0.2.0-rc.1</code>, <code>v1.0.0-beta.2</code></li>
+<li>Stable: <code>v0.1.0</code>, <code>v0.2.0</code>, <code>v1.13.0</code></li>
+<li>Pre-release: <code>v0.2.0-rc1</code>, <code>v1.0.0-beta3</code>, <code>v1.13.0-alpha20250708</code></li>
 </ul>
 <p><strong>Mutable</strong> (auto-updated for GitHub Actions):</p>
 <ul>
 <li><code>v0</code> → latest <code>v0.x.x</code> stable</li>
 <li><code>v0.1</code> → latest <code>v0.1.x</code> patch</li>
-<li><code>v0-rc</code> → latest <code>v0.x.x</code> pre-release</li>
+<li><code>v0-rc</code>, <code>v0-beta</code>, <code>v0-alpha</code> → latest <code>v0.x.x</code> pre-release of each type</li>
 </ul>
 <p><strong>Usage</strong>:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Recommended</span>
@@ -2020,7 +2020,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 20, 2025 23:05:01 UTC"><span class="timeago" datetime="2025-11-20T23:05:01+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 20, 2025 23:05:01 UTC">2025-11-20</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-timeago" title="November 21, 2025 16:08:34 UTC"><span class="timeago" datetime="2025-11-21T16:08:34+00:00" locale="en"></span></span><span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-iso_date" title="November 21, 2025 16:08:34 UTC">2025-11-21</span>
   </span>
 
     
