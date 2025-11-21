@@ -93,7 +93,7 @@ runs:
         echo "✅ Checksums generated"
 
     - name: Generate SBOM (SPDX)
-      uses: anchore/sbom-action@fc46e51e0a1fb8a11479054c4a0aefb49afc973c # v0.17.11
+      uses: anchore/sbom-action@fbfd9c6c189226748411491745178e0c2017392d # v0.20.10
       with:
         path: ./
         artifact-name: uptool-sbom.spdx.json
