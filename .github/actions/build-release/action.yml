@@ -33,11 +33,9 @@ runs:
       with:
         ref: ${{ inputs.ref }}
         fetch-depth: 0
-      shell: bash
 
     - name: Setup mise
       uses: ./.github/actions/setup-mise
-      shell: bash
 
     - name: Set output paths
       id: paths
@@ -101,18 +99,15 @@ runs:
         artifact-name: uptool-sbom.spdx.json
         output-file: ${{ steps.paths.outputs.dist }}/uptool-sbom.spdx.json
         format: spdx-json
-      shell: bash
 
     - name: Generate SBOM (CycloneDX)
       uses: CycloneDX/gh-gomod-generate-sbom@efc74245d6802c8cefd925620515442756c70d8f # v2.0.0
       with:
         version: v1
         args: mod -licenses -json -output ${{ steps.paths.outputs.dist }}/uptool-sbom.cyclonedx.json
-      shell: bash
 
     - name: Install Cosign
       uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
-      shell: bash
 
     - name: Sign artifacts with Cosign
       shell: bash
@@ -149,7 +144,6 @@ runs:
           ${{ steps.paths.outputs.dist }}/uptool-*
           ${{ steps.paths.outputs.dist }}/checksums.txt
         retention-days: 7
-      shell: bash
 
     - name: Summary
       shell: bash
