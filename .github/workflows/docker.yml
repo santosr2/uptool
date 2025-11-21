@@ -60,7 +60,7 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
           # Test basic functionality
-          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test version
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test --version
           docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test --help
 
           # Test scan command

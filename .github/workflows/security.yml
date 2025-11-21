@@ -16,10 +16,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name != 'schedule' }}
 
-permissions:
-  contents: read
-  security-events: write
-
 jobs:
   # Secret Scanning
   trufflehog:
@@ -38,7 +34,7 @@ jobs:
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@aade3bff5594fe8808578dd4db3dfeae9bf2abdc # v3.91.1
         with:
-          extra_args: --only-verified --json --github-actions
+          extra_args: --only-verified --json
 
       - name: Add scan summary
         if: always()
@@ -82,7 +78,7 @@ jobs:
       - name: Run detect-secrets scan
         run: |
           detect-secrets scan --all-files --force-use-all-plugins \
-            --exclude-files '\.git/.*|\.github/workflows/.*\.yml|go\.sum' \
+            --exclude-files '\.git/.*|\.github/workflows/.*\.yml|go\.sum|mise\.toml' \
             > .secrets.baseline
 
       - name: Check for secrets
@@ -120,7 +116,6 @@ jobs:
         with:
           scan-args: |-
             --recursive
-            --skip-git
             --format=json
             --output=osv-results.json
             ./
