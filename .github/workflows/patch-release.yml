@@ -128,6 +128,12 @@ jobs:
         env:
           NEW_VERSION: ${{ needs.validate.outputs.next }}
         run: |
+          # Get the current version from the VERSION file (source of truth)
+          CURRENT_VERSION=$(cat internal/version/VERSION)
+
+          # Update current_version in .bumpversion.toml to match what's in files
+          sed -i "s/^current_version = .*/current_version = \"$CURRENT_VERSION\"/" .bumpversion.toml
+
           # Update version using bump-my-version
           bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
 

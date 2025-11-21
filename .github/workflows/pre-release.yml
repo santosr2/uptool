@@ -110,6 +110,12 @@ jobs:
         env:
           NEW_VERSION: ${{ needs.calculate-version.outputs.new_version }}
         run: |
+          # Get the current version from the VERSION file (source of truth)
+          CURRENT_VERSION=$(cat internal/version/VERSION)
+
+          # Update current_version in .bumpversion.toml to match what's in files
+          sed -i "s/^current_version = .*/current_version = \"$CURRENT_VERSION\"/" .bumpversion.toml
+
           # Update all version references using bump-my-version (installed via mise)
           bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
 
