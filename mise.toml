@@ -48,11 +48,6 @@ hadolint = "latest"
 # License header checking
 "go:github.com/apache/skywalking-eyes/cmd/license-eye" = "latest"
 
-# Commit conventions
-node = "22"
-"npm:@commitlint/cli" = "latest"
-"npm:@commitlint/config-conventional" = "latest"
-
 # Package managers
 pipx = "1.8"
 uv = "latest"

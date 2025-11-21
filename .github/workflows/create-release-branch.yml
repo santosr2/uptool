@@ -1,0 +1,218 @@
+name: Create Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Minor version for branch (e.g., 0.1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate Release Branch Creation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      branch_name: ${{ steps.validate.outputs.branch_name }}
+      base_tag: ${{ steps.validate.outputs.base_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate version and find base tag
+        id: validate
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          # Validate version format (e.g., 0.1, 1.2)
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format. Expected: X.Y (e.g., 0.1)"
+            exit 1
+          fi
+
+          BRANCH_NAME="release-${VERSION}"
+
+          # Check if branch already exists
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+            echo "::error::Release branch $BRANCH_NAME already exists"
+            exit 1
+          fi
+
+          # Find the latest stable tag for this version
+          LATEST_TAG=$(git tag -l "v${VERSION}.*" | grep -v '\-' | sort -V | tail -n 1 || echo "")
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "::error::No stable tag found for v${VERSION}.x"
+            echo "::error::Please release v${VERSION}.0 first before creating the release branch"
+            exit 1
+          fi
+
+          {
+            echo "branch_name=$BRANCH_NAME"
+            echo "base_tag=$LATEST_TAG"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## ✅ Validation Passed"
+            echo ""
+            echo "**Branch to create**: \`$BRANCH_NAME\`"
+            echo "**Base tag**: \`$LATEST_TAG\`"
+            echo ""
+            echo "This branch will be used for security patches and bug fixes for the ${VERSION}.x release line."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  create-branch:
+    name: Create Release Branch
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code at base tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.base_tag }}
+          fetch-depth: 0
+
+      - name: Create and push release branch
+        env:
+          BRANCH_NAME: ${{ needs.validate.outputs.branch_name }}
+          BASE_TAG: ${{ needs.validate.outputs.base_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create the release branch
+          git checkout -b "$BRANCH_NAME"
+
+          # Create README for the branch
+          cat > .github/RELEASE_BRANCH_README.md <<'EOFREADME'
+          # Release Branch: $BRANCH_NAME
+
+          This is a **release branch** for long-term support of the $BASE_TAG release line.
+
+          ## Purpose
+
+          This branch receives:
+          - ✅ **Security patches** - Backported security fixes
+          - ✅ **Critical bug fixes** - High-priority bug fixes only
+          - ❌ **New features** - Not accepted (use `main` instead)
+
+          ## Support Window
+
+          According to our [Security Policy](../../SECURITY.md):
+          - **Security patches only** for 6 months after the next minor release
+          - After support ends, this branch will be archived
+
+          ## Workflow
+
+          ### For Maintainers: Creating a Patch Release
+
+          1. Cherry-pick fixes from `main`:
+             ```bash
+             git checkout $BRANCH_NAME
+             git cherry-pick <commit-sha>
+             git push origin $BRANCH_NAME
+             ```
+
+          2. Trigger patch release workflow:
+             - Go to Actions → "Patch Release"
+             - Select branch: `$BRANCH_NAME`
+             - Choose patch type: `security` or `bugfix`
+
+          3. Workflow will:
+             - Calculate next patch version
+             - Build and sign binaries
+             - Create GitHub release
+             - Update mutable tags if needed
+
+          ### For Users: Installing Patches
+
+          Users on this release line should update to the latest patch:
+
+          ```bash
+          # Check current version
+          uptool version
+
+          # Update to latest patch in this release line
+          # (e.g., from $BASE_TAG to ${BASE_TAG%-*}.1)
+          ```
+
+          ## Branch Protection
+
+          This branch has the same protection rules as `main`:
+          - Required status checks
+          - No force pushes
+          - No deletions
+
+          ## Contact
+
+          Questions about this release branch? See:
+          - [Security Policy](../../SECURITY.md)
+          - [GitHub Discussions](../../discussions)
+          EOFREADME
+
+          git add .github/RELEASE_BRANCH_README.md
+          git commit -m "docs: add release branch README for $BRANCH_NAME [skip ci]"
+
+          # Push the branch
+          git push origin "$BRANCH_NAME"
+
+          echo "✅ Created release branch: $BRANCH_NAME from $BASE_TAG"
+
+      - name: Configure branch protection
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH_NAME: ${{ needs.validate.outputs.branch_name }}
+        run: |
+          # Apply branch protection rules similar to main
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/${{ github.repository }}/branches/${BRANCH_NAME}/protection" \
+            -f required_status_checks='{"strict":true,"contexts":["CI"]}' \
+            -f enforce_admins=true \
+            -f required_pull_request_reviews='{"dismiss_stale_reviews":true,"require_code_owner_reviews":false,"required_approving_review_count":1}' \
+            -f restrictions=null \
+            -f allow_force_pushes=false \
+            -f allow_deletions=false || echo "Warning: Could not set branch protection (may need admin permissions)"
+
+  summary:
+    name: Creation Summary
+    needs: [validate, create-branch]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        env:
+          BRANCH_NAME: ${{ needs.validate.outputs.branch_name }}
+          BASE_TAG: ${{ needs.validate.outputs.base_tag }}
+          STATUS: ${{ needs.create-branch.result }}
+        run: |
+          {
+            echo "## 🌿 Release Branch Created"
+            echo ""
+            echo "**Branch**: \`$BRANCH_NAME\`"
+            echo "**Base tag**: \`$BASE_TAG\`"
+            echo "**Status**: $STATUS"
+            echo ""
+            echo "### Purpose"
+            echo "This branch will receive security patches and critical bug fixes for 6 months after the next minor release."
+            echo ""
+            echo "### Next Steps"
+            echo "- [ ] Cherry-pick security fixes from \`main\` when needed"
+            echo "- [ ] Use **Patch Release** workflow to create patch releases"
+            echo "- [ ] Monitor for end of support date (6 months after next minor release)"
+            echo ""
+            echo "📚 **Documentation**: See \`.github/RELEASE_BRANCH_README.md\` on the \`$BRANCH_NAME\` branch"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -77,7 +77,7 @@ repos:
     hooks:
       - id: codespell
         args:
-          - --ignore-words-list=crate,ans,te,ois
+          - --ignore-words-list=crate,ans,te,ois,intoto
           - --skip="*.sum,*.mod,vendor/*,dist/*,.git/*"
 
   # Terraform/HCL formatting (since uptool supports terraform/tflint)
@@ -106,6 +106,9 @@ repos:
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
         pass_filenames: true
+        args:
+          - -ignore
+          - 'property "(next|current|minor|can_merge|reason)" is not defined in object type'
 
   # Documentation validation
   - repo: local
