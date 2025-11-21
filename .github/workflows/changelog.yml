@@ -56,16 +56,24 @@ jobs:
       - name: Generate changelog
         id: generate
         run: |
-          # Generate changelog using repository config
-          git-cliff --config git-cliff.toml --unreleased --prepend CHANGELOG.md
-
-          # Check if there are changes
-          if git diff --quiet CHANGELOG.md; then
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "ℹ️ No new changes to add to CHANGELOG.md" >> "$GITHUB_STEP_SUMMARY"
-          else
+          # Create CHANGELOG.md if it doesn't exist
+          if [ ! -f CHANGELOG.md ]; then
+            echo "Creating initial CHANGELOG.md"
+            git-cliff --config git-cliff.toml -o CHANGELOG.md
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "✅ CHANGELOG.md updated successfully" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ Created initial CHANGELOG.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            # Generate changelog using repository config
+            git-cliff --config git-cliff.toml --unreleased --prepend CHANGELOG.md
+
+            # Check if there are changes
+            if git diff --quiet CHANGELOG.md; then
+              echo "has_changes=false" >> "$GITHUB_OUTPUT"
+              echo "ℹ️ No new changes to add to CHANGELOG.md" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "has_changes=true" >> "$GITHUB_OUTPUT"
+              echo "✅ CHANGELOG.md updated successfully" >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi
 
       - name: Display changelog preview
