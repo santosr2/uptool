@@ -126,10 +126,12 @@ runs:
 
         # Run uptool
         echo "Running: /tmp/uptool $CMD $ARGS"
-        if /tmp/uptool $CMD $ARGS | tee /tmp/uptool-output.txt; then
-          EXIT_CODE=0
-        else
-          EXIT_CODE=$?
+        set -o pipefail
+        /tmp/uptool $CMD $ARGS 2>&1 | tee /tmp/uptool-output.txt
+        EXIT_CODE=$?
+        set +o pipefail
+
+        if [ "$EXIT_CODE" -ne 0 ]; then
           echo "::error::uptool command failed with exit code $EXIT_CODE"
           exit "$EXIT_CODE"
         fi
