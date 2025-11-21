@@ -172,6 +172,12 @@ jobs:
     outputs:
       hashes: ${{ steps.build-release.outputs.checksums }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main  # Get the updated version from main branch
+          fetch-depth: 0
+
       - name: Build, sign, and generate SBOMs
         id: build-release
         uses: ./.github/actions/build-release
