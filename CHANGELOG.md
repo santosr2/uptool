@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([c5ee64a](https://github.com/santosr2/uptool/commit/c5ee64ae4c20fd04f868d5a48dee47fe4967fd20))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([04fbdad](https://github.com/santosr2/uptool/commit/04fbdadb92cad34f58e9ecce1402f857fa6c57f1))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([8617d5f](https://github.com/santosr2/uptool/commit/8617d5f1ec6b6ec7a7b4572a1dc998b42b8d3b31))
+- Update CHANGELOG.md [skip ci] by @github-actions[bot]([1aec2e1](https://github.com/santosr2/uptool/commit/1aec2e19148cdb68bbad0d1551fbc14f1b4495f9))
 
 ### Features
 - Add community documentation by @santosr2([7256083](https://github.com/santosr2/uptool/commit/7256083915b365c67603502d06f662874c9cedf6))
@@ -88,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Apply DRY in ValidateFilePath by @santosr2([a5478cf](https://github.com/santosr2/uptool/commit/a5478cfe03236c6e230a201edd2819b977acb9cd))
 - License headers by @santosr2([25fb24c](https://github.com/santosr2/uptool/commit/25fb24c02b5c053848202980a399896a9bc196be))
 - Remove .bumpversion.toml repeated logic by @santosr2([369e80b](https://github.com/santosr2/uptool/commit/369e80b6d4355469271b94e200d3a47bf4ae02fa))
+- : disable CGO in mise by @santosr2([f26acc9](https://github.com/santosr2/uptool/commit/f26acc905064ecdf2ae7ea60e4ee008db40ad312))
 
 ## [0.1.0] - 2025-11-14
 
