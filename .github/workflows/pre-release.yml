@@ -473,7 +473,7 @@ jobs:
             echo "### Artifacts"
             echo "- ✅ Linux (AMD64, ARM64)"
             echo "- ✅ macOS (AMD64, ARM64)"
-            echo "- ✅ Windows (AMD64)"
+            echo "- ✅ Windows (AMD64, ARM64)"
             echo "- ✅ Checksums (SHA256)"
             echo "- ✅ Signatures (Cosign)"
             echo "- ✅ SBOM (SPDX + CycloneDX)"

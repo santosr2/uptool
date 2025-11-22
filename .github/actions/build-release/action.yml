@@ -49,11 +49,13 @@ runs:
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
+        CGO_ENABLED: 0
       run: |
         DIST_DIR="${{ steps.paths.outputs.dist }}"
 
-        echo "🔨 Building uptool $VERSION for 5 platforms..."
+        echo "🔨 Building uptool $VERSION for 7 platforms..."
         echo "Using embedded VERSION file (no ldflags needed)"
+        echo "CGO disabled for static cross-compilation"
 
         # Linux AMD64
         echo "  Building linux-amd64..."
@@ -74,6 +76,10 @@ runs:
         # Windows AMD64
         echo "  Building windows-amd64..."
         GOOS=windows GOARCH=amd64 go build -o "$DIST_DIR/uptool-windows-amd64.exe" ./cmd/uptool
+
+        # Windows ARM64
+        echo "  Building windows-arm64..."
+        GOOS=windows GOARCH=arm64 go build -o "$DIST_DIR/uptool-windows-arm64.exe" ./cmd/uptool
 
         echo "✅ All binaries built successfully"
         ls -lh "$DIST_DIR"/uptool-*
@@ -156,7 +162,7 @@ runs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Artifacts Generated" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Binaries (5 platforms)**:" >> $GITHUB_STEP_SUMMARY
+        echo "**Binaries (7 platforms)**:" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         ls -lh uptool-* | grep -v '\.sig$' | grep -v '\.pem$' | grep -v 'sbom' | grep -v 'checksums.txt' >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY

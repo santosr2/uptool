@@ -280,6 +280,14 @@ jobs:
           \`\`\`
           </details>
 
+          <details>
+          <summary><b>Windows (ARM64)</b></summary>
+
+          \`\`\`powershell
+          Invoke-WebRequest -Uri "https://github.com/${{ github.repository }}/releases/download/$VERSION/uptool-windows-arm64.exe" -OutFile "uptool.exe"
+          \`\`\`
+          </details>
+
           ### Go Install
 
           \`\`\`bash
