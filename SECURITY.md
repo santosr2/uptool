@@ -6,19 +6,19 @@ We release patches for security vulnerabilities for the following versions:
 
 | Version | Supported          | Support Until |
 | ------- | ------------------ | ------------- |
-| 0.1.x   | :white_check_mark: | Current stable version |
+| 0.2.x   | :white_check_mark: | Current stable version |
 | < 0.1   | :x:                | No support    |
 
 **Support Policy**:
 
-- **Latest minor version** (currently 0.1.x): Full support including features, bug fixes, and security patches
+- **Latest minor version** (currently 0.2.x): Full support including features, bug fixes, and security patches
 - **Previous minor version**: Security patches only for 6 months after the next minor release
 - **Older versions**: No support
 
 **Example** (when 0.2.0 is released):
 
 - ✅ `0.2.x` - Full support
-- ⚠️ `0.1.x` - Security patches only (until 6 months after 0.2.0 release)
+- ⚠️ `0.2.x` - Security patches only (until 6 months after 0.2.0 release)
 - ❌ `< 0.1` - No support
 
 ## Reporting a Vulnerability
@@ -85,7 +85,7 @@ When using uptool:
 
 ```yaml
 # Pin to specific version (most secure)
-- uses: santosr2/uptool@v0.1.0
+- uses: santosr2/uptool@v0.2.0-alpha20251122
 
 # Or pin to major version (recommended for convenience)
 - uses: santosr2/uptool@v0
@@ -105,7 +105,7 @@ When pinning versions:
 
 - **Major version** (`@v0`) - Gets latest minor/patch updates automatically (e.g., 0.1.0 → 0.2.0)
 - **Minor version** (`@v0.1`) - Gets latest patch updates only (e.g., 0.1.0 → 0.1.1)
-- **Exact version** (`@v0.1.0`) - No automatic updates (most secure)
+- **Exact version** (`@v0.2.0-alpha20251122`) - No automatic updates (most secure)
 
 ### 2. Limit GitHub Token Permissions
 

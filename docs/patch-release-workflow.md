@@ -35,7 +35,7 @@ uptool supports **multiple minor versions simultaneously**:
 
 ```text
 Input: 0.1
-Result: Creates branch `release-0.1` from tag `v0.1.0`
+Result: Creates branch `release-0.1` from tag `v0.2.0-alpha20251122`
 ```
 
 ### 2. Patch Release (`patch-release.yml`)
@@ -64,7 +64,7 @@ Result: Creates branch `release-0.1` from tag `v0.1.0`
 
 **What it does**:
 
-- Calculates the next patch version (e.g., 0.1.0 → 0.1.1)
+- Calculates the next patch version (e.g., 0.2.0-alpha20251122 → 0.1.1)
 - Updates version files
 - Builds and signs binaries for all platforms
 - Generates SBOM
@@ -75,7 +75,7 @@ Result: Creates branch `release-0.1` from tag `v0.1.0`
 
 ```text
 Branch: release-0.1
-Current: v0.1.0
+Current: v0.2.0-alpha20251122
 Next: v0.1.1 (security patch)
 ```
 
@@ -146,7 +146,7 @@ Release branches have the same protection as `main`:
 ```text
 Timeline: Support for release-0.1
 
-0.1.0 released ─────────── 0.2.0 released ──────────── +6 months ──────────>
+0.2.0-alpha20251122 released ─────────── 0.2.0 released ──────────── +6 months ──────────>
      │                            │                            │
      ├─ Full support              ├─ Security patches only     ├─ Archive
      │                            │                            │
@@ -173,7 +173,7 @@ When a release branch reaches end of support:
 
 ### Version Tags
 
-- **Immutable tags**: `v0.1.0`, `v0.1.1`, `v0.2.0` (never change)
+- **Immutable tags**: `v0.2.0-alpha20251122`, `v0.1.1`, `v0.2.0` (never change)
 - **Mutable tags**: `v0.1`, `v0.2`, `v0` (updated with each patch)
 
 ### Tag Updates
@@ -190,10 +190,10 @@ Users can pin to different levels:
 
 ```yaml
 # Exact version (most secure, no automatic updates)
-- uses: santosr2/uptool@v0.1.0
+- uses: santosr2/uptool@v0.2.0-alpha20251122
 
 # Minor version (gets security patches automatically)
-- uses: santosr2/uptool@v0.1
+- uses: santosr2/uptool@v0.2
 
 # Major version (gets all updates in v0.x)
 - uses: santosr2/uptool@v0

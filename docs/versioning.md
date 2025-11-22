@@ -13,9 +13,9 @@ Automated semantic versioning via conventional commits and GitHub Actions.
 
 | Type | Bump | Example |
 |------|------|---------|
-| `feat:` | Minor (0.1.0 → 0.2.0) | `feat: add Python integration` |
-| `fix:` | Patch (0.1.0 → 0.1.1) | `fix: handle empty manifests` |
-| `feat!:` or `BREAKING CHANGE:` | Major (0.1.0 → 1.0.0) | `feat!: redesign API` |
+| `feat:` | Minor (0.2.0-alpha20251122 → 0.2.0) | `feat: add Python integration` |
+| `fix:` | Patch (0.2.0-alpha20251122 → 0.1.1) | `fix: handle empty manifests` |
+| `feat!:` or `BREAKING CHANGE:` | Major (0.2.0-alpha20251122 → 1.0.0) | `feat!: redesign API` |
 | `docs:`, `chore:`, `test:` | None | `docs: update README` |
 
 **Format**: `<type>(<scope>): <subject>`
@@ -29,9 +29,9 @@ Automated semantic versioning via conventional commits and GitHub Actions.
 mise run version-show
 
 # Bump for testing only (don't commit to PRs)
-mise run version-bump-patch   # 0.1.0 → 0.1.1
-mise run version-bump-minor   # 0.1.0 → 0.2.0
-mise run version-bump-major   # 0.1.0 → 1.0.0
+mise run version-bump-patch   # 0.2.0-alpha20251122 → 0.1.1
+mise run version-bump-minor   # 0.2.0-alpha20251122 → 0.2.0
+mise run version-bump-major   # 0.2.0-alpha20251122 → 1.0.0
 ```
 
 Production releases are automated via GitHub Actions.
@@ -60,7 +60,7 @@ See [environments.md](environments.md) for approval gate setup.
 
 **Immutable** (never change):
 
-- Stable: `v0.1.0`, `v0.2.0`, `v1.13.0`
+- Stable: `v0.2.0-alpha20251122`, `v0.2.0`, `v1.13.0`
 - Pre-release: `v0.2.0-rc1`, `v1.0.0-beta3`, `v1.13.0-alpha20250708`
 
 **Mutable** (auto-updated for GitHub Actions):
@@ -76,10 +76,10 @@ See [environments.md](environments.md) for approval gate setup.
 - uses: santosr2/uptool@v0
 
 # Pin to minor
-- uses: santosr2/uptool@v0.1
+- uses: santosr2/uptool@v0.2
 
 # Pin to exact version
-- uses: santosr2/uptool@v0.1.0
+- uses: santosr2/uptool@v0.2.0-alpha20251122
 ```
 
 ## Files Updated Automatically
