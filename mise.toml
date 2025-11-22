@@ -298,7 +298,7 @@ echo "✓ Documentation cleaned"
 # Environment variables for development
 [env]
 # Go configuration
-CGO_ENABLED = "1"
+CGO_ENABLED = "0"  # Disabled for cross-compilation and static binaries
 # GOOS = "{{ os }}"
 # GOARCH = "{{ arch }}"
 
