@@ -32,8 +32,8 @@ jobs:
 **Version pinning**:
 
 - `@v0` - Latest stable (auto-updates)
-- `@v0.1` - Latest patch
-- `@v0.1.0` - Exact version (most secure)
+- `@v0.2` - Latest patch
+- `@v0.2.0-alpha20251123` - Exact version (most secure)
 
 ## Common Patterns
 

@@ -13,6 +13,11 @@
 coverage.html
 coverage.out
 
+# Codecov uploader artifacts
+codecov
+codecov.SHA256SUM
+codecov.SHA256SUM.sig
+
 # Go workspace file
 go.work
 go.work.sum

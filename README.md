@@ -239,23 +239,23 @@ uptool supports **mutable tags** for convenient version pinning:
 - uses: santosr2/uptool@v0
 
 # Pin to minor version (gets latest patch updates only)
-- uses: santosr2/uptool@v0.1
+- uses: santosr2/uptool@v0.2
 
 # Pin to exact version (no automatic updates)
-- uses: santosr2/uptool@v0.1.0
+- uses: santosr2/uptool@v0.2.0-alpha20251123
 ```
 
 **How it works**:
 
 - `@v0` - Automatically updated to latest `v0.x.x` release
-- `@v0.1` - Automatically updated to latest `v0.1.x` patch
-- `@v0.1.0` - Fixed to exact release (never changes)
+- `@v0.2` - Automatically updated to latest `v0.2.x` patch
+- `@v0.2.0` - Fixed to exact release (never changes)
 
 **Pre-release tags** (for testing):
 
-- `@v0-rc` - Latest release candidate in v0
-- `@v0.1-rc` - Latest release candidate in v0.1
-- `@v0.1.0-rc.1` - Exact pre-release (immutable)
+- `@v0-alpha` - Latest alpha release in v0
+- `@v0.2-alpha` - Latest alpha release in v0.2
+- `@v0.2.0-alpha20251123` - Exact pre-release (immutable)
 
 ### Inputs
 

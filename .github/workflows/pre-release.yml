@@ -166,141 +166,109 @@ jobs:
             git-cliff --config git-cliff.toml --strip all > changelog-section.md
           fi
 
-          # Create release notes template
-          cat > release-notes.md <<'EOFNOTES'
-          # Pre-Release ${{ needs.calculate-version.outputs.new_tag }}
+          # Create release notes template (header section with version substitution)
+          cat > release-notes.md <<EOFNOTES
+            # Pre-Release ${{ needs.calculate-version.outputs.new_tag }}
 
-          ⚠️ **This is a pre-release version intended for testing and early feedback.**
+            ⚠️ **This is a pre-release version intended for testing and early feedback.**
 
-          ## What's Changed
+            ## What's Changed
 
-          $(cat changelog-section.md)
-
-          ---
-
-          ## 📦 Installation
-
-          ### Docker (Recommended for Testing)
-
-          ```bash
-          # Pull pre-release image
-          docker pull ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }}
-
-          # Run uptool
-          docker run --rm ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }} version
-
-          # Scan a repository
-          docker run --rm -v "\$PWD:/workspace" ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }} scan
-          ```
-
-          ### Quick Install (Linux/macOS)
-
-          ```bash
-          # Detect OS and architecture
-          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-          ARCH=$(uname -m)
-          case $ARCH in
-              x86_64) ARCH="amd64" ;;
-              aarch64|arm64) ARCH="arm64" ;;
-          esac
-
-          # Download
-          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.calculate-version.outputs.new_tag }}/uptool-${OS}-${ARCH}
-          chmod +x uptool-${OS}-${ARCH}
-          sudo mv uptool-${OS}-${ARCH} /usr/local/bin/uptool
-
-          # Verify
-          uptool version
-          ```
-
-          ### Go Install
-
-          ```bash
-          go install github.com/santosr2/uptool/cmd/uptool@${{ needs.calculate-version.outputs.new_tag }}
-          ```
-
-          ---
-
-          ## 🔐 Verification
-
-          ### Checksums
-
-          ```bash
-          # Download and verify
-          curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.calculate-version.outputs.new_tag }}/checksums.txt
-          sha256sum -c checksums.txt
-          ```
-
-          ### Signature Verification (Cosign)
-
-          ```bash
-          # Install cosign
-          go install github.com/sigstore/cosign/v2/cmd/cosign@latest
-
-          # Verify signature
-          cosign verify-blob \
-            --signature uptool-linux-amd64.sig \
-            --certificate uptool-linux-amd64.pem \
-            --certificate-identity-regexp="^https://github.com/santosr2/uptool/" \
-            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
-            uptool-linux-amd64
-          ```
-
-          ### SBOM
-
-          Software Bill of Materials available in:
-          - SPDX format: `uptool-sbom.spdx.json`
-          - CycloneDX format: `uptool-sbom.cyclonedx.json`
-
-          ---
-
-          ## 🐛 Reporting Issues
-
-          Please report any issues found in this pre-release at:
-          https://github.com/${{ github.repository }}/issues
-
-          **Note**: Pre-releases may contain bugs and are not recommended for production use.
           EOFNOTES
 
-      - name: Create Git Tag
-        env:
-          VERSION: ${{ needs.calculate-version.outputs.new_tag }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Append changelog content
+          cat changelog-section.md >> release-notes.md
 
-          # Pull the latest commit (the version bump we just pushed)
-          git pull origin main
+          # Append the rest of the release notes (literal, no substitution)
+          cat >> release-notes.md <<EOFNOTES
 
-          # Create immutable tag (e.g., v0.2.0-rc1, v0.2.0-beta3, v0.2.0-alpha20250708)
-          git tag -a "$VERSION" -m "Pre-release $VERSION"
-          git push origin "$VERSION"
+            ---
 
-          # Extract version components for mutable tags
-          # VERSION format: v0.2.0-rc1 or v0.2.0-beta3 or v0.2.0-alpha20250708
-          # Extract: MAJOR=0, MINOR=2, PRERELEASE_TYPE=rc
-          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
-          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
-          PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
+            ## 📦 Installation
 
-          # Create/update mutable tags for convenience
-          # These tags follow the latest pre-release
-          MAJOR_RC_TAG="v${MAJOR}-${PRERELEASE_TYPE}"
-          MINOR_RC_TAG="v${MAJOR}.${MINOR}-${PRERELEASE_TYPE}"
+            ### Docker (Recommended for Testing)
 
-          echo "Creating mutable tags: $MAJOR_RC_TAG, $MINOR_RC_TAG"
+            ```bash
+            # Pull pre-release image
+            docker pull ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }}
 
-          # Force update mutable tags to point to this commit
-          git tag -fa "$MAJOR_RC_TAG" -m "Latest ${PRERELEASE_TYPE} pre-release in v${MAJOR}"
-          git tag -fa "$MINOR_RC_TAG" -m "Latest ${PRERELEASE_TYPE} pre-release in v${MAJOR}.${MINOR}"
+            # Run uptool
+            docker run --rm ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }} version
 
-          # Push with --force to update existing tags
-          git push origin "$MAJOR_RC_TAG" --force
-          git push origin "$MINOR_RC_TAG" --force
+            # Scan a repository
+            docker run --rm -v "\$PWD:/workspace" ghcr.io/${{ github.repository }}:${{ needs.calculate-version.outputs.new_tag }} scan
+            ```
 
-          echo "✅ Created tags: $VERSION (immutable), $MINOR_RC_TAG (mutable), $MAJOR_RC_TAG (mutable)"
+            ### Quick Install (Linux/macOS)
 
-      - name: Create GitHub Pre-Release
+            ```bash
+            # Detect OS and architecture
+            OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+            ARCH=$(uname -m)
+            case $ARCH in
+                x86_64) ARCH="amd64" ;;
+                aarch64|arm64) ARCH="arm64" ;;
+            esac
+
+            # Download
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.calculate-version.outputs.new_tag }}/uptool-${OS}-${ARCH}
+            chmod +x uptool-${OS}-${ARCH}
+            sudo mv uptool-${OS}-${ARCH} /usr/local/bin/uptool
+
+            # Verify
+            uptool version
+            ```
+
+            ### Go Install
+
+            ```bash
+            go install github.com/santosr2/uptool/cmd/uptool@${{ needs.calculate-version.outputs.new_tag }}
+            ```
+
+            ---
+
+            ## 🔐 Verification
+
+            ### Checksums
+
+            ```bash
+            # Download and verify
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ needs.calculate-version.outputs.new_tag }}/checksums.txt
+            sha256sum -c checksums.txt
+            ```
+
+            ### Signature Verification (Cosign)
+
+            ```bash
+            # Install cosign
+            go install github.com/sigstore/cosign/v2/cmd/cosign@latest
+
+            # Verify signature
+            cosign verify-blob \
+              --signature uptool-linux-amd64.sig \
+              --certificate uptool-linux-amd64.pem \
+              --certificate-identity-regexp="^https://github.com/santosr2/uptool/" \
+              --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+              uptool-linux-amd64
+            ```
+
+            ### SBOM
+
+            Software Bill of Materials available in:
+            - SPDX format: `uptool-sbom.spdx.json`
+            - CycloneDX format: `uptool-sbom.cyclonedx.json`
+
+            ---
+
+            ## 🐛 Reporting Issues
+
+            Please report any issues found in this pre-release at:
+            https://github.com/${{ github.repository }}/issues
+
+            **Note**: Pre-releases may contain bugs and are not recommended for production use.
+          EOFNOTES
+
+      - name: Create GitHub Pre-Release with Verified Tag
         uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.2.0
         with:
           tag_name: ${{ needs.calculate-version.outputs.new_tag }}
@@ -311,8 +279,49 @@ jobs:
           draft: false
           prerelease: true
           fail_on_unmatched_files: true
+          make_latest: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Mutable Convenience Tags
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.new_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Pull the latest commit (the version bump we just pushed)
+          git pull origin main
+
+          # Extract version components for mutable tags
+          # VERSION format: v0.2.0-rc1 or v0.2.0-beta3 or v0.2.0-alpha20250708
+          # Extract: MAJOR=0, MINOR=2, PRERELEASE_TYPE=rc
+          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+          PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
+
+          # Create/update mutable tags for convenience using GitHub API (creates verified tags)
+          # These tags follow the latest pre-release
+          MAJOR_RC_TAG="v${MAJOR}-${PRERELEASE_TYPE}"
+          MINOR_RC_TAG="v${MAJOR}.${MINOR}-${PRERELEASE_TYPE}"
+
+          echo "Creating mutable tags via GitHub API: $MAJOR_RC_TAG, $MINOR_RC_TAG"
+
+          # Get the commit SHA
+          COMMIT_SHA=$(git rev-parse HEAD)
+
+          # Delete existing tags if they exist (via API)
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${MAJOR_RC_TAG}" 2>/dev/null || true
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${MINOR_RC_TAG}" 2>/dev/null || true
+
+          # Create new tags via GitHub API (these will be verified)
+          gh api -X POST "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/${MAJOR_RC_TAG}" \
+            -f sha="$COMMIT_SHA"
+
+          gh api -X POST "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/${MINOR_RC_TAG}" \
+            -f sha="$COMMIT_SHA"
+
+          echo "✅ Created verified tags: $VERSION (immutable), $MINOR_RC_TAG (mutable), $MAJOR_RC_TAG (mutable)"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
@@ -338,7 +347,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: main
+          ref: ${{ needs.calculate-version.outputs.new_tag }}
           fetch-depth: 0
 
       - name: Set up QEMU

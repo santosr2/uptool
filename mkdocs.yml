@@ -151,7 +151,7 @@ extra:
   # Usage in docs: {{ extra.uptool_version }}
   # When deploying with mike, override with: mike deploy --update-aliases <version> -p -F mkdocs.yml -t "uptool_version=v<version>"
   # This ensures documentation links point to files from the same version
-  uptool_version: v0.1.0
+  uptool_version: v0.2.0-alpha20251123
 
 # Navigation structure
 nav:
