@@ -109,7 +109,7 @@ jobs:
           STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
           git add .
           git commit -S -m "chore(release): release $STABLE_VERSION [skip ci]"
           git push origin HEAD:main
@@ -412,7 +412,7 @@ jobs:
           PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
 
           # Create immutable tag (e.g., v0.2.0)
           git tag -a "$VERSION" -m "Release $VERSION (promoted from $PRE_RELEASE)"
@@ -475,7 +475,7 @@ jobs:
           VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
 
           # Update changelog
           git-cliff --config git-cliff.toml --tag "$VERSION" --prepend CHANGELOG.md
@@ -681,7 +681,7 @@ jobs:
           NEW_VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
 
           # Checkout the base tag
           git checkout "$BASE_TAG"

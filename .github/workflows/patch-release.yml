@@ -152,7 +152,7 @@ jobs:
           BRANCH: ${{ github.event.inputs.release_branch }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
 
           git add .
           git commit -S -m "chore(release): patch release $NEXT_TAG [skip ci]"
@@ -460,7 +460,7 @@ jobs:
           BRANCH: ${{ github.event.inputs.release_branch }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
 
           # Create immutable tag for this patch
           git tag -a "$VERSION" -m "Patch release $VERSION from $BRANCH"
@@ -489,7 +489,7 @@ jobs:
           MINOR_VERSION: ${{ needs.validate.outputs.minor }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "github-actions-bot@users.noreply.github.com"
 
           # Update mutable minor tag (e.g., v0.1) to point to this patch
           MINOR_TAG="v${MINOR_VERSION}"
