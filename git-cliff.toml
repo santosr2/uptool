@@ -31,7 +31,7 @@ body = """
        | sort(attribute="scope") %}
         - **{{ commit.scope }}**: {{ commit.message | upper_first | trim_end_matches(pat=".") }}\
           {% if commit.breaking %} [**BREAKING**]{% endif %}\
-          {% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}\
+          {% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}){% endif %}\
           {% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/santosr2/uptool/pull/{{ commit.remote.pr_number }}){% endif %}\
           ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/santosr2/uptool/commit/{{ commit.id }}))
     {% endfor -%}
@@ -39,7 +39,7 @@ body = """
         {%- if not commit.scope -%}
         - {{ commit.message | upper_first | trim_end_matches(pat=".") }}\
           {% if commit.breaking %} [**BREAKING**]{% endif %}\
-          {% if commit.remote.username %} by @{{ commit.remote.username }}{% endif %}\
+          {% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}){% endif %}\
           {% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/santosr2/uptool/pull/{{ commit.remote.pr_number }}){% endif %}\
           ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/santosr2/uptool/commit/{{ commit.id }}))
         {% endif -%}
@@ -83,6 +83,9 @@ commit_parsers = [
     { message = "^chore\\(release\\): prepare for", skip = true },
     { message = "^chore\\(pr\\)", skip = true },
     { message = "^chore\\(pull\\)", skip = true },
+
+    # Skip changelog update commits
+    { message = "^docs: update CHANGELOG\\.md", skip = true },
 
     # Security-related commits (high priority)
     { body = ".*[Ss]ecurity", group = "Security" },
