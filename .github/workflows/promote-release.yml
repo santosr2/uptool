@@ -95,6 +95,15 @@ jobs:
           # Update all version references to stable version
           bump-my-version bump --new-version "$VERSION_NO_V" --no-commit --no-tag patch
 
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_config_global: true
+
       - name: Commit stable version
         env:
           STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
@@ -102,7 +111,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "chore(release): release $STABLE_VERSION [skip ci]"
+          git commit -S -m "chore(release): release $STABLE_VERSION [skip ci]"
           git push origin HEAD:main
 
   test:
@@ -452,6 +461,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Import GPG key for changelog
+        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_config_global: true
+
       - name: Update CHANGELOG.md
         env:
           VERSION: ${{ needs.validate.outputs.stable_version }}
@@ -464,7 +482,7 @@ jobs:
 
           # Commit and push
           git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG.md for $VERSION [skip ci]" || echo "No changes to commit"
+          git commit -S -m "docs: update CHANGELOG.md for $VERSION [skip ci]" || echo "No changes to commit"
           git push origin HEAD:main || echo "Failed to push changelog update"
 
   promote-docker:
