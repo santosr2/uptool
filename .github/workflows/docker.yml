@@ -64,7 +64,7 @@ jobs:
           docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test --help
 
           # Test scan command
-          docker run --rm -v "$PWD:/workspace" ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test scan --dry-run
+          docker run --rm -v "$PWD:/workspace" ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test scan
 
           {
             echo "✅ Image built and tested successfully"
