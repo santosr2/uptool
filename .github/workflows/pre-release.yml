@@ -23,7 +23,7 @@ jobs:
     name: Calculate Next Version
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     outputs:
       new_version: ${{ steps.bump.outputs.new_version }}
       new_tag: ${{ steps.bump.outputs.new_tag }}
@@ -91,12 +91,19 @@ jobs:
             echo "**New pre-release version**: $NEW_TAG"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  update-version:
-    name: Update Version Files
+  test-and-build:
+    name: Test and Build Pre-release
     needs: calculate-version
     runs-on: ubuntu-latest
+    environment:
+      name: pre-release
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.calculate-version.outputs.new_tag }}
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+    outputs:
+      hashes: ${{ steps.build-release.outputs.checksums }}
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -113,32 +120,6 @@ jobs:
           # Update all version references using bump-my-version (installed via mise)
           bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
 
-      - name: Commit version changes
-        env:
-          NEW_TAG: ${{ needs.calculate-version.outputs.new_tag }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore(release): bump version to $NEW_TAG [skip ci]"
-          git push origin HEAD:main
-
-  test:
-    name: Pre-release Tests
-    needs: [calculate-version, update-version]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: main  # Get the updated version from main branch
-          fetch-depth: 0
-
-      - name: Setup mise
-        uses: ./.github/actions/setup-mise
-
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
 
@@ -152,36 +133,23 @@ jobs:
           flags: pre-release
         continue-on-error: true
 
-  build:
-    name: Build Pre-release Artifacts
-    needs: [calculate-version, update-version, test]
-    runs-on: ubuntu-latest
-    environment:
-      name: pre-release
-      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.calculate-version.outputs.new_tag }}
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-    outputs:
-      hashes: ${{ steps.build-release.outputs.checksums }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: main  # Get the updated version from main branch
-          fetch-depth: 0
-
       - name: Build, sign, and generate SBOMs
         id: build-release
         uses: ./.github/actions/build-release
         with:
           version: ${{ needs.calculate-version.outputs.new_tag }}
-          ref: main
+          ref: ${{ github.sha }}
           upload-artifacts: 'false'
 
-      - name: Setup mise
-        uses: ./.github/actions/setup-mise
+      - name: Commit version changes
+        env:
+          NEW_TAG: ${{ needs.calculate-version.outputs.new_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(release): bump version to $NEW_TAG [skip ci]"
+          git push origin HEAD:main
 
       - name: Generate release notes
         env:
@@ -300,6 +268,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          # Pull the latest commit (the version bump we just pushed)
+          git pull origin main
+
           # Create immutable tag (e.g., v0.2.0-rc1, v0.2.0-beta3, v0.2.0-alpha20250708)
           git tag -a "$VERSION" -m "Pre-release $VERSION"
           git push origin "$VERSION"
@@ -352,7 +323,7 @@ jobs:
 
   publish-docker:
     name: Publish Pre-release Docker Image
-    needs: [calculate-version, update-version, test]
+    needs: [calculate-version, test-and-build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -442,7 +413,7 @@ jobs:
 
   provenance:
     name: Generate SLSA Provenance
-    needs: [build, calculate-version]
+    needs: [test-and-build, calculate-version]
     permissions:
       actions: read
       id-token: write
@@ -450,13 +421,13 @@ jobs:
       attestations: write
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
     with:
-      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      base64-subjects: "${{ needs.test-and-build.outputs.hashes }}"
       upload-assets: true
       provenance-name: "uptool-${{ needs.calculate-version.outputs.new_tag }}.intoto.jsonl"
 
   summary:
     name: Pre-Release Summary
-    needs: [calculate-version, build, publish-docker, provenance]
+    needs: [calculate-version, test-and-build, publish-docker, provenance]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -468,7 +439,7 @@ jobs:
             echo "## 🚀 Pre-Release Created"
             echo ""
             echo "**Version**: ${{ needs.calculate-version.outputs.new_tag }}"
-            echo "**Status**: ${{ needs.build.result }}"
+            echo "**Status**: ${{ needs.test-and-build.result }}"
             echo ""
             echo "### Artifacts"
             echo "- ✅ Linux (AMD64, ARM64)"

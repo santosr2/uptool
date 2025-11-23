@@ -49,9 +49,11 @@ runs:
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
+        # Disabled for cross-compilation and static binaries
         CGO_ENABLED: 0
       run: |
         DIST_DIR="${{ steps.paths.outputs.dist }}"
+        mise set CGO_ENABLED=${CGO_ENABLED}
 
         echo "🔨 Building uptool $VERSION for 7 platforms..."
         echo "Using embedded VERSION file (no ldflags needed)"
@@ -83,6 +85,7 @@ runs:
 
         echo "✅ All binaries built successfully"
         ls -lh "$DIST_DIR"/uptool-*
+        mise set CGO_ENABLED=1  # Re-enable CGO for subsequent steps
 
     - name: Generate checksums
       id: checksums
