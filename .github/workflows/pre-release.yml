@@ -140,6 +140,7 @@ jobs:
           version: ${{ needs.calculate-version.outputs.new_tag }}
           ref: ${{ github.sha }}
           upload-artifacts: 'false'
+          skip-checkout: 'true'
 
       - name: Commit version changes
         env:

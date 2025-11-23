@@ -16,6 +16,10 @@ inputs:
     description: 'Whether to upload artifacts (true) or just build locally (false)'
     required: false
     default: 'true'
+  skip-checkout:
+    description: 'Skip checkout step (use when code is already checked out)'
+    required: false
+    default: 'false'
 
 outputs:
   dist-path:
@@ -29,6 +33,7 @@ runs:
   using: 'composite'
   steps:
     - name: Checkout code
+      if: inputs.skip-checkout != 'true'
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         ref: ${{ inputs.ref }}
