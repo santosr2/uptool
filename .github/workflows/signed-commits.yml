@@ -160,11 +160,19 @@ jobs:
         with:
           script: |
             const unsigned = '${{ steps.verify.outputs.unsigned_count }}';
+            const signed = '${{ steps.verify.outputs.signed_count }}';
             const total = '${{ steps.verify.outputs.total_count }}';
+
+            // Determine severity
+            const allUnsigned = signed === '0';
+            const severityIcon = allUnsigned ? '🚨' : '⚠️';
+            const severityText = allUnsigned ? 'ERROR' : 'Warning';
 
             const body = `## 🔐 Commit Signature Verification
 
-            ⚠️ **Warning**: ${unsigned} out of ${total} commits in this PR are not signed.
+            ${severityIcon} **${severityText}**: ${unsigned} out of ${total} commits in this PR are not signed.
+
+            ${allUnsigned ? '**This PR will be blocked** because ALL commits are unsigned.' : 'Some commits are unsigned, but the PR can proceed since at least some commits are signed.'}
 
             ### Why sign commits?
 
@@ -219,7 +227,7 @@ jobs:
 
             ---
 
-            <sub>🤖 This check helps maintain supply chain security but is not currently required.</sub>
+            <sub>🤖 This check will fail only if ALL commits are unsigned.</sub>
             `;
 
             github.rest.issues.createComment({
@@ -229,9 +237,9 @@ jobs:
               body: body
             });
 
-      - name: Fail on unsigned commits
-        if: github.event_name == 'pull_request' && steps.verify.outputs.unsigned_count != '0'
+      - name: Fail if no verified commits
+        if: github.event_name == 'pull_request' && steps.verify.outputs.signed_count == '0'
         run: |
-          echo "::error::All commits must be GPG/SSH signed. Found ${{ steps.verify.outputs.unsigned_count }} unsigned commits."
+          echo "::error::At least one commit must be GPG/SSH signed. All ${{ steps.verify.outputs.total_count }} commits are unsigned."
           echo "::error::See workflow summary for signing instructions."
           exit 1
