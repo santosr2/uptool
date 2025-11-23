@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix changelog file by @santosr2([efa5c82](https://github.com/santosr2/uptool/commit/efa5c82f4f1ab77cb92790583ab123bdf3257d8b))
 - Fix pre-release workflow by @santosr2([b0bb6f5](https://github.com/santosr2/uptool/commit/b0bb6f5c8ebfdf818b66b47af65cdefa84c1f35b))
 - Fix pre-release workflow by @santosr2([a2ad39e](https://github.com/santosr2/uptool/commit/a2ad39ec78786c8200c1540c33462d32794fa21a))
+- Improve pre-release commit logic by @santosr2([63fd539](https://github.com/santosr2/uptool/commit/63fd5393c0e433e29d3c90a53c85538877ec9b60))
 
 ### Documentation
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([6c59527](https://github.com/santosr2/uptool/commit/6c595274d5b6324c629142762cf0f04bbfb20a96))
@@ -56,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([04fbdad](https://github.com/santosr2/uptool/commit/04fbdadb92cad34f58e9ecce1402f857fa6c57f1))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([8617d5f](https://github.com/santosr2/uptool/commit/8617d5f1ec6b6ec7a7b4572a1dc998b42b8d3b31))
 - Update CHANGELOG.md [skip ci] by @github-actions[bot]([1aec2e1](https://github.com/santosr2/uptool/commit/1aec2e19148cdb68bbad0d1551fbc14f1b4495f9))
+- Update CHANGELOG.md [skip ci] by @github-actions[bot]([0e3691b](https://github.com/santosr2/uptool/commit/0e3691bbe65af4a710ad8573dd638ca37a0ea636))
 
 ### Features
 - Add community documentation by @santosr2([7256083](https://github.com/santosr2/uptool/commit/7256083915b365c67603502d06f662874c9cedf6))
