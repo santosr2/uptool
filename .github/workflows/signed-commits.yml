@@ -32,7 +32,7 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config --global user.email "github-actions-bot@users.noreply.github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
       - name: Verify commit signatures
@@ -237,9 +237,17 @@ jobs:
               body: body
             });
 
-      - name: Fail if no verified commits
+      - name: Fail if no verified commits (PR)
         if: github.event_name == 'pull_request' && steps.verify.outputs.signed_count == '0'
         run: |
           echo "::error::At least one commit must be GPG/SSH signed. All ${{ steps.verify.outputs.total_count }} commits are unsigned."
           echo "::error::See workflow summary for signing instructions."
+          exit 1
+
+      - name: Fail if no verified commits (Push to main)
+        if: github.event_name == 'push' && steps.verify.outputs.signed_count == '0'
+        run: |
+          echo "::error::At least one commit must be GPG/SSH signed. All ${{ steps.verify.outputs.total_count }} recent commits are unsigned."
+          echo "::error::See workflow summary for signing instructions."
+          echo "::warning::This indicates commits were pushed to main without proper verification."
           exit 1

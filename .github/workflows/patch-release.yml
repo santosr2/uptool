@@ -57,6 +57,60 @@ jobs:
             exit 1
           fi
 
+      - name: Check version support status
+        env:
+          BRANCH: ${{ github.event.inputs.release_branch }}
+        run: |
+          # Extract minor version from branch name (e.g., release-0.1 -> 0.1)
+          MINOR_VERSION="${BRANCH#release-}"
+
+          # Check if this version is still supported according to SECURITY.md
+          if [ -f SECURITY.md ]; then
+            # Look for the version in the supported versions table
+            if grep -q "${MINOR_VERSION}.x.*:white_check_mark:" SECURITY.md; then
+              echo "✅ Version ${MINOR_VERSION}.x is still under full support"
+            elif grep -q "${MINOR_VERSION}.x.*:warning:" SECURITY.md; then
+              echo "⚠️ Version ${MINOR_VERSION}.x is under security-only support"
+
+              # Extract the support deadline
+              DEADLINE=$(awk -v ver="${MINOR_VERSION}" '
+                $0 ~ ver".x.*:warning:" && $0 ~ /[0-9]{4}-[0-9]{2}/ {
+                  match($0, /[0-9]{4}-[0-9]{2}/)
+                  print substr($0, RSTART, RLENGTH)
+                  exit
+                }
+              ' SECURITY.md)
+
+              if [ -n "$DEADLINE" ]; then
+                CURRENT_DATE=$(date +"%Y-%m")
+                echo "  Support deadline: $DEADLINE"
+                echo "  Current date: $CURRENT_DATE"
+
+                if [[ "$CURRENT_DATE" > "$DEADLINE" ]]; then
+                  echo "::error::Version ${MINOR_VERSION}.x support has EXPIRED (ended $DEADLINE). Cannot create patch release."
+                  echo "::error::Please refer to SECURITY.md for supported versions."
+                  exit 1
+                fi
+
+                echo "✅ Version is still within security support window"
+
+                # Verify this is a security patch
+                if [ "${{ github.event.inputs.patch_type }}" != "security" ]; then
+                  echo "::error::Version ${MINOR_VERSION}.x is under security-only support. Only 'security' patches are allowed."
+                  echo "::error::Change patch_type to 'security' or use a newer version branch."
+                  exit 1
+                fi
+              fi
+            else
+              echo "::error::Version ${MINOR_VERSION}.x is NOT listed in SECURITY.md as supported"
+              echo "::error::This version has reached end-of-support. Cannot create patch release."
+              echo "::error::Please refer to SECURITY.md for currently supported versions."
+              exit 1
+            fi
+          else
+            echo "::warning::SECURITY.md not found, skipping support validation"
+          fi
+
       - name: Calculate next patch version
         id: version
         env:
@@ -152,7 +206,7 @@ jobs:
           BRANCH: ${{ github.event.inputs.release_branch }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add .
           git commit -S -m "chore(release): patch release $NEXT_TAG [skip ci]"
@@ -460,7 +514,7 @@ jobs:
           BRANCH: ${{ github.event.inputs.release_branch }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Create immutable tag for this patch
           git tag -a "$VERSION" -m "Patch release $VERSION from $BRANCH"
@@ -489,7 +543,7 @@ jobs:
           MINOR_VERSION: ${{ needs.validate.outputs.minor }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Update mutable minor tag (e.g., v0.1) to point to this patch
           MINOR_TAG="v${MINOR_VERSION}"

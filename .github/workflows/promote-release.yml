@@ -95,6 +95,13 @@ jobs:
           # Update all version references to stable version
           bump-my-version bump --new-version "$VERSION_NO_V" --no-commit --no-tag patch
 
+      - name: Update SECURITY.md supported versions
+        env:
+          STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+        run: |
+          chmod +x scripts/update-security-versions.sh
+          ./scripts/update-security-versions.sh "$STABLE_VERSION"
+
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
         with:
@@ -109,7 +116,7 @@ jobs:
           STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -S -m "chore(release): release $STABLE_VERSION [skip ci]"
           git push origin HEAD:main
@@ -412,7 +419,7 @@ jobs:
           PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Create immutable tag (e.g., v0.2.0)
           git tag -a "$VERSION" -m "Release $VERSION (promoted from $PRE_RELEASE)"
@@ -475,7 +482,7 @@ jobs:
           VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Update changelog
           git-cliff --config git-cliff.toml --tag "$VERSION" --prepend CHANGELOG.md
@@ -681,7 +688,7 @@ jobs:
           NEW_VERSION: ${{ needs.validate.outputs.stable_version }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions-bot@users.noreply.github.com"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Checkout the base tag
           git checkout "$BASE_TAG"
