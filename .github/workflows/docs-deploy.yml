@@ -107,10 +107,18 @@ jobs:
       name: github-pages
       url: https://santosr2.github.io/uptool/
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup mise
         uses: ./.github/actions/setup-mise
@@ -151,9 +159,11 @@ jobs:
           echo "✅ Updated mkdocs.yml with version: ${VERSION}"
 
       - name: Configure Git for mike
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
       - name: Generate API documentation
         run: |

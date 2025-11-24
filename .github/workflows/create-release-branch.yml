@@ -76,12 +76,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout code at base tag
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ needs.validate.outputs.base_tag }}
-          fetch-depth: 0
-
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -89,16 +83,21 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
+      - name: Checkout code at base tag
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.validate.outputs.base_tag }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Create and push release branch
         env:
           BRANCH_NAME: ${{ needs.validate.outputs.branch_name }}
           BASE_TAG: ${{ needs.validate.outputs.base_tag }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
-
-          # Update remote URL to use the GitHub App token
-          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           # Create the release branch
           git checkout -b "$BRANCH_NAME"

@@ -70,11 +70,19 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout pre-release tag
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ needs.validate.outputs.pre_release_tag }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup mise
         uses: ./.github/actions/setup-mise
@@ -102,22 +110,13 @@ jobs:
           chmod +x scripts/update-security-versions.sh
           ./scripts/update-security-versions.sh "$STABLE_VERSION"
 
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Commit stable version
         env:
           STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
-
-          # Update remote URL to use the GitHub App token
-          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           git add .
           git commit -m "chore(release): release $STABLE_VERSION [skip ci]"
@@ -161,11 +160,19 @@ jobs:
       contents: write
       id-token: write
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout updated main
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Download pre-release assets
         env:
@@ -419,9 +426,10 @@ jobs:
         env:
           VERSION: ${{ needs.validate.outputs.stable_version }}
           PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           # Create immutable tag (e.g., v0.2.0)
           git tag -a "$VERSION" -m "Release $VERSION (promoted from $PRE_RELEASE)"
@@ -470,22 +478,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate GitHub App token for changelog
-        id: app-token-changelog
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Update CHANGELOG.md
         env:
           VERSION: ${{ needs.validate.outputs.stable_version }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
-
-          # Update remote URL to use the GitHub App token
-          git remote set-url origin "https://x-access-token:${{ steps.app-token-changelog.outputs.token }}@github.com/${{ github.repository }}.git"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           # Update changelog
           git-cliff --config git-cliff.toml --tag "$VERSION" --prepend CHANGELOG.md
@@ -618,12 +617,20 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: main
           fetch-depth: 0
           fetch-tags: true
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Determine if release branch is needed
         id: check
@@ -682,14 +689,6 @@ jobs:
             echo "prev_version=$PREV_VERSION"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Generate GitHub App token for branch creation
-        if: steps.check.outputs.create_branch == 'true'
-        id: app-token-branch
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Create release branch
         if: steps.check.outputs.create_branch == 'true'
         env:
@@ -697,12 +696,10 @@ jobs:
           BASE_TAG: ${{ steps.check.outputs.base_tag }}
           PREV_VERSION: ${{ steps.check.outputs.prev_version }}
           NEW_VERSION: ${{ needs.validate.outputs.stable_version }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
-
-          # Update remote URL to use the GitHub App token
-          git remote set-url origin "https://x-access-token:${{ steps.app-token-branch.outputs.token }}@github.com/${{ github.repository }}.git"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           # Checkout the base tag
           git checkout "$BASE_TAG"

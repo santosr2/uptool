@@ -169,11 +169,19 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout release branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.inputs.release_branch }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup mise
         uses: ./.github/actions/setup-mise
@@ -191,23 +199,14 @@ jobs:
           # Update version using bump-my-version
           bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
 
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Commit version update
         env:
           NEXT_TAG: ${{ needs.validate.outputs.next_tag }}
           BRANCH: ${{ github.event.inputs.release_branch }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
-
-          # Update remote URL to use the GitHub App token
-          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           git add .
           git commit -m "chore(release): patch release $NEXT_TAG [skip ci]"
@@ -366,11 +365,19 @@ jobs:
       contents: write
       id-token: write
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout updated branch
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ github.event.inputs.release_branch }}
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Download all artifacts
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
@@ -513,9 +520,10 @@ jobs:
         env:
           VERSION: ${{ needs.validate.outputs.next_tag }}
           BRANCH: ${{ github.event.inputs.release_branch }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           # Create immutable tag for this patch
           git tag -a "$VERSION" -m "Patch release $VERSION from $BRANCH"
@@ -542,9 +550,10 @@ jobs:
         env:
           VERSION: ${{ needs.validate.outputs.next_tag }}
           MINOR_VERSION: ${{ needs.validate.outputs.minor }}
+          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "santosr2[bot]@users.noreply.github.com"
+          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
 
           # Update mutable minor tag (e.g., v0.1) to point to this patch
           MINOR_TAG="v${MINOR_VERSION}"
