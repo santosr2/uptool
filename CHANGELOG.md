@@ -5,26 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0-alpha20251124] - 2025-11-24
 
 ### Bug Fixes
-
 - Ci, go.mod and golangci by [@santosr2](https://github.com/santosr2) ([a242141](https://github.com/santosr2/uptool/commit/a24214179371307d7bcf0c55ae49ed3d10a270d7))
 - Remove docs symlinks since it breaks action cache by [@santosr2](https://github.com/santosr2) ([109da98](https://github.com/santosr2/uptool/commit/109da985871eaffba17f0195983161c5237e0373))
 - Linters and CI by [@santosr2](https://github.com/santosr2) ([9cb444f](https://github.com/santosr2/uptool/commit/9cb444ffd30ab9a68f52db50aec9712818b41134))
 
 ### Container
-
 - Improve based on linter by [@santosr2](https://github.com/santosr2) ([97345cf](https://github.com/santosr2/uptool/commit/97345cf5b3e0e5495e13bd9a97292a92ec730177))
-- Use go1.25 base image in builder stage by [@santosr2](https://github.com/santosr2) ([1112efb](https://github.com/santosr2/uptool/commit/1112efb7419af8b4e5d1217dfc872962e2e3153f))
+- Use go1.25 base image in builder stage by [@santosr2](https://github.com/santosr2) ([341d4c8](https://github.com/santosr2/uptool/commit/341d4c8b3139efaa3d4d721fd12572dc6d23a07c))
 
 ### Continuous Integration
 
-- **changelog**: Ensure actors are tagged by [@santosr2](https://github.com/santosr2)([94841e0](https://github.com/santosr2/uptool/commit/94841e0ca238330c9a453da04fce84a8cc856471))
+- **changelog**: Ensure actors are tagged by [@santosr2](https://github.com/santosr2)([144ead3](https://github.com/santosr2/uptool/commit/144ead3e53720c337c8b907913c01add239b8ae5))
 
-- **docker**: Fix scan command by [@santosr2](https://github.com/santosr2)([0931d34](https://github.com/santosr2/uptool/commit/0931d34503c04c9ab992dc82d264eb648a84267c))
+- **docker**: Fix scan command by [@santosr2](https://github.com/santosr2)([2555912](https://github.com/santosr2/uptool/commit/25559121eea4ffc960152027e368d96ae182b6f7))
 
-- **docker**: Fix image build by [@santosr2](https://github.com/santosr2)([ee1d558](https://github.com/santosr2/uptool/commit/ee1d5580cef49eade347f4b5e562180436c74607))
+- **docker**: Fix image build by [@santosr2](https://github.com/santosr2)([b4d8178](https://github.com/santosr2/uptool/commit/b4d81785eab09a64331014923eb700d3ed42ec55))
 
 - **pre-release**: Remove unnecessary sed command by [@santosr2](https://github.com/santosr2)([7b2a8f2](https://github.com/santosr2/uptool/commit/7b2a8f2ee98fd31abfdb460afe9f3310cde3e959))
 
@@ -32,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **release**: Remove C dependency by [@santosr2](https://github.com/santosr2)([46c7b0b](https://github.com/santosr2/uptool/commit/46c7b0b6dce9e30a6494167cecb5183e654ffab8))
 
-- **signed-commits**: Ensure it fails when no-signed commits are found by [@santosr2](https://github.com/santosr2)([7d03c45](https://github.com/santosr2/uptool/commit/7d03c45841f7fea59b23c06b08f9c2eeeb9bd194))
+- **signed-commits**: Ensure it fails when no-signed commits are found by [@santosr2](https://github.com/santosr2)([967a16a](https://github.com/santosr2/uptool/commit/967a16ab66bacbffd3cee776af015ac3ce0863a0))
 - Add ci pipeline by [@santosr2](https://github.com/santosr2) ([627232e](https://github.com/santosr2/uptool/commit/627232e27ecde493434aa1ad3c46f1c9ad628b86))
 - Add doc deploy by [@santosr2](https://github.com/santosr2) ([e113950](https://github.com/santosr2/uptool/commit/e1139507d378cda3a2adcc0256111cf461e29c11))
 - Fix doc workflow by [@santosr2](https://github.com/santosr2) ([e2cb1ee](https://github.com/santosr2/uptool/commit/e2cb1ee4a2351c779f5bb6c9a82cac28951f87e3))
@@ -56,21 +54,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix pre-release workflow by [@santosr2](https://github.com/santosr2) ([615df0c](https://github.com/santosr2/uptool/commit/615df0ce5f767873147574145c5bbe4255105045))
 - Fix pre-release workflow by [@santosr2](https://github.com/santosr2) ([c83d83e](https://github.com/santosr2/uptool/commit/c83d83e4c623893d6a68fd673bf73f85fcbb4ef4))
 - Improve pre-release commit logic by [@santosr2](https://github.com/santosr2) ([e6f0123](https://github.com/santosr2/uptool/commit/e6f01230951b310e36b51f57d871de1a44ffa737))
-- Ensure commits are signed by [@santosr2](https://github.com/santosr2) ([3ce787c](https://github.com/santosr2/uptool/commit/3ce787ccc1d81e10383dfbc7d9fcf13c4aa09175))
-- Update github-action[bot] email by [@santosr2](https://github.com/santosr2) ([738c495](https://github.com/santosr2/uptool/commit/738c495eeb7d4111cf0fcfbbd26f43db734bc0e8))
-- Fix github-actions[bot] email by [@santosr2](https://github.com/santosr2) ([849f875](https://github.com/santosr2/uptool/commit/849f87543576b12360b5103b7d9a76f061577001))
-- Fix workflow linter by [@santosr2](https://github.com/santosr2) ([b3cb868](https://github.com/santosr2/uptool/commit/b3cb868a1d5365a0aa0d4d35319f5406791529ac))
+- Ensure commits are signed by [@santosr2](https://github.com/santosr2) ([15d6e70](https://github.com/santosr2/uptool/commit/15d6e704cf453373d969ace207462b0730091c98))
+- Update github-action[bot] email by [@santosr2](https://github.com/santosr2) ([37402ea](https://github.com/santosr2/uptool/commit/37402ea6ecb11900ef41d2e1b7a8571310c491b0))
+- Fix github-actions[bot] email by [@santosr2](https://github.com/santosr2) ([9af5d67](https://github.com/santosr2/uptool/commit/9af5d6705c65231ef65bb010fd0c44e8696aa342))
+- Fix workflow linter by [@santosr2](https://github.com/santosr2) ([8ed1f01](https://github.com/santosr2/uptool/commit/8ed1f017abee41e432f86cda5112cc96396b95b3))
 
 ### Documentation
-
 - Add community documentation by [@santosr2](https://github.com/santosr2) ([a633250](https://github.com/santosr2/uptool/commit/a6332506550814a8ec0534eac54e7cf7fba4a4fc))
 - Use mkdocs instead of manual approach by [@santosr2](https://github.com/santosr2) ([248b2e0](https://github.com/santosr2/uptool/commit/248b2e0551e6ad73b23f6e7488a76c731830abd3))
 - Minimize documentation verbosity by [@santosr2](https://github.com/santosr2) ([be57c28](https://github.com/santosr2/uptool/commit/be57c28bc5cf8886e3a0ca7388df9d0b7919ef13))
 
 ### Features
-
-- Init repository by [@santosr2](https://github.com/santosr2) ([ad9be8c](https://github.com/santosr2/uptool/commit/ad9be8c63e430d119948a886424c28a689ab17ac))
-- Add initial code structure by [@santosr2](https://github.com/santosr2) ([7ab22c5](https://github.com/santosr2/uptool/commit/7ab22c5db51fae4ec2e8a086120a2be1b6c66b3e))
 - Add docs, examples and config files and improve code by [@santosr2](https://github.com/santosr2) ([e3da30d](https://github.com/santosr2/uptool/commit/e3da30dd0bd25874e687ff494fc2ed0e85f07e13))
 - Add issues template by [@santosr2](https://github.com/santosr2) ([6829b5a](https://github.com/santosr2/uptool/commit/6829b5a8c8c98f44a30dc0816759dcc8ee25feda))
 - Add cache to setup-mise action by [@santosr2](https://github.com/santosr2) ([2dfcaf9](https://github.com/santosr2/uptool/commit/2dfcaf9b96473ab2c80375a43bbb79454232a93c))
@@ -88,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Miscellaneous Tasks
 
-- **release**: Bump version to v0.2.0-alpha20251124 [skip ci] by [@github-actions[bot]](https://github.com/github-actions[bot])([fec28f6](https://github.com/santosr2/uptool/commit/fec28f6c448026d8a72c0454cdb31d1b80f41fdd))
+- **release**: Bump version to v0.2.0-alpha20251124 [skip ci] by [@github-actions[bot]](https://github.com/github-actions[bot])([19b53b5](https://github.com/santosr2/uptool/commit/19b53b5e0574f60d76ad5d6dba77819b5f750d61))
 - Remove mkdocs-material from mise due to an issue by [@santosr2](https://github.com/santosr2) ([5052509](https://github.com/santosr2/uptool/commit/5052509f7de1f371650749d85c58c3e20a46cc39))
 - Migrate Makefile to mise tasks by [@santosr2](https://github.com/santosr2) ([9d12d54](https://github.com/santosr2/uptool/commit/9d12d5400f7f84122ab0ec7648d29318723d03d0))
 - Fix docs and code based on what the linter finds by [@santosr2](https://github.com/santosr2) ([6a9f45e](https://github.com/santosr2/uptool/commit/6a9f45e2539c9ecfab90f84f4881fd28e5a8da33))
@@ -102,6 +96,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - License headers by [@santosr2](https://github.com/santosr2) ([b56a476](https://github.com/santosr2/uptool/commit/b56a4763287adf73b4e0bc4f671fe8b2417ce764))
 - Remove .bumpversion.toml repeated logic by [@santosr2](https://github.com/santosr2) ([053d1cf](https://github.com/santosr2/uptool/commit/053d1cf8100f29a15e61d8f88826543cd8b58b11))
 - : disable CGO in mise by [@santosr2](https://github.com/santosr2) ([5d1fdf4](https://github.com/santosr2/uptool/commit/5d1fdf47ba7489e9e0de79256ef435364ebce2a8))
-- Improve bump version configuration by [@santosr2](https://github.com/santosr2) ([c1e42e1](https://github.com/santosr2/uptool/commit/c1e42e1ca971945114c34daf96fddc4e00589e72))
+- Improve bump version configuration by [@santosr2](https://github.com/santosr2) ([803f761](https://github.com/santosr2/uptool/commit/803f76142b93191bd4361ae9a8c894f70edafee6))
+- Fix latest alpha version by [@santosr2](https://github.com/santosr2) ([14ac6a7](https://github.com/santosr2/uptool/commit/14ac6a7721bd0becdf436423fa01eb9488bd02c2))
+
+## [0.1.0] - 2025-11-24
+
+### Features
+- Init repository by [@santosr2](https://github.com/santosr2) ([ad9be8c](https://github.com/santosr2/uptool/commit/ad9be8c63e430d119948a886424c28a689ab17ac))
+- Add initial code structure by [@santosr2](https://github.com/santosr2) ([7ab22c5](https://github.com/santosr2/uptool/commit/7ab22c5db51fae4ec2e8a086120a2be1b6c66b3e))
 
 <!-- generated by git-cliff -->
