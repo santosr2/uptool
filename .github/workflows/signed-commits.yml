@@ -32,8 +32,8 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
+          git config --global user.email "santosr2[bot]@users.noreply.github.com"
+          git config --global user.name "santosr2[bot]"
 
       - name: Verify commit signatures
         id: verify

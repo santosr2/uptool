@@ -80,19 +80,17 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Import GPG key
+      - name: Generate GitHub App token
         if: |
           github.event_name == 'push' &&
           github.ref == 'refs/heads/main' &&
           steps.generate.outputs.has_changes == 'true' &&
           (github.event.inputs.update_type == 'update' || github.event.inputs.update_type == '')
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+        id: app-token
+        uses: actions/create-github-app-token@v1
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-          git_config_global: true
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Commit and push changes
         if: |
@@ -101,10 +99,14 @@ jobs:
           steps.generate.outputs.has_changes == 'true' &&
           (github.event.inputs.update_type == 'update' || github.event.inputs.update_type == '')
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "santosr2[bot]"
+          git config user.email "santosr2[bot]@users.noreply.github.com"
+
+          # Update remote URL to use the GitHub App token
+          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
+
           git add CHANGELOG.md
-          git commit -S -m "docs: update CHANGELOG.md [skip ci]"
+          git commit -m "docs: update CHANGELOG.md [skip ci]"
           git push
 
       - name: Upload changelog artifact

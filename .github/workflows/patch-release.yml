@@ -191,25 +191,26 @@ jobs:
           # Update version using bump-my-version
           bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-          git_config_global: true
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Commit version update
         env:
           NEXT_TAG: ${{ needs.validate.outputs.next_tag }}
           BRANCH: ${{ github.event.inputs.release_branch }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "santosr2[bot]"
+          git config user.email "santosr2[bot]@users.noreply.github.com"
+
+          # Update remote URL to use the GitHub App token
+          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
 
           git add .
-          git commit -S -m "chore(release): patch release $NEXT_TAG [skip ci]"
+          git commit -m "chore(release): patch release $NEXT_TAG [skip ci]"
           git push origin "$BRANCH"
 
   build:
@@ -513,8 +514,8 @@ jobs:
           VERSION: ${{ needs.validate.outputs.next_tag }}
           BRANCH: ${{ github.event.inputs.release_branch }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "santosr2[bot]"
+          git config user.email "santosr2[bot]@users.noreply.github.com"
 
           # Create immutable tag for this patch
           git tag -a "$VERSION" -m "Patch release $VERSION from $BRANCH"
@@ -542,8 +543,8 @@ jobs:
           VERSION: ${{ needs.validate.outputs.next_tag }}
           MINOR_VERSION: ${{ needs.validate.outputs.minor }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "santosr2[bot]"
+          git config user.email "santosr2[bot]@users.noreply.github.com"
 
           # Update mutable minor tag (e.g., v0.1) to point to this patch
           MINOR_TAG="v${MINOR_VERSION}"

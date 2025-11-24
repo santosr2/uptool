@@ -142,23 +142,25 @@ jobs:
           upload-artifacts: 'false'
           skip-checkout: 'true'
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          git_user_signingkey: true
-          git_commit_gpgsign: true
-          git_config_global: true
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Commit version changes
         env:
           NEW_TAG: ${{ needs.calculate-version.outputs.new_tag }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "santosr2[bot]"
+          git config user.email "santosr2[bot]@users.noreply.github.com"
+
+          # Update remote URL to use the GitHub App token
+          git remote set-url origin "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ github.repository }}.git"
+
           git add .
-          git commit -S -m "chore(release): bump version to $NEW_TAG [skip ci]"
+          git commit -m "chore(release): bump version to $NEW_TAG [skip ci]"
           git push origin HEAD:main
 
       - name: Generate release notes

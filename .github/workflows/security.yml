@@ -228,42 +228,6 @@ jobs:
           path: trivy-config-results.sarif
           retention-days: 30
 
-  trivy-image:
-    name: Trivy Docker Image Scan
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Build Docker image
-        run: docker build -t uptool:latest .
-
-      - name: Run Trivy image scan
-        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # 0.29.0
-        with:
-          scan-type: 'image'
-          image-ref: 'uptool:latest'
-          format: 'sarif'
-          output: 'trivy-image-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'
-
-      - name: Upload image scan results
-        uses: github/codeql-action/upload-sarif@f09c1c0a94de965c15400f5634aa42fac8fb8f88 # v3.28.6
-        with:
-          sarif_file: 'trivy-image-results.sarif'
-
-      - name: Upload image scan artifact
-        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
-        with:
-          name: trivy-image-scan
-          path: trivy-image-results.sarif
-          retention-days: 30
-
   # CodeQL Analysis
   codeql:
     name: CodeQL Analysis
