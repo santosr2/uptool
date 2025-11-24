@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Container
 - Improve based on linter by [@santosr2](https://github.com/santosr2) ([97345cf](https://github.com/santosr2/uptool/commit/97345cf5b3e0e5495e13bd9a97292a92ec730177))
+- Use go1.25 base image in builder stage by [@santosr2](https://github.com/santosr2) ([1112efb](https://github.com/santosr2/uptool/commit/1112efb7419af8b4e5d1217dfc872962e2e3153f))
 
 ### Continuous Integration
 
