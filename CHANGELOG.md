@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure commits are signed by [@santosr2](https://github.com/santosr2) ([d15b43a](https://github.com/santosr2/uptool/commit/d15b43af360e64f42c41803cf1a309f65c7db0e4))
 - Update github-action[bot] email by [@santosr2](https://github.com/santosr2) ([4f2b70a](https://github.com/santosr2/uptool/commit/4f2b70a62563276fc814b4642c7c369801554784))
 - Fix github-actions[bot] email by [@santosr2](https://github.com/santosr2) ([917a39c](https://github.com/santosr2/uptool/commit/917a39cc29af6943af643b353aa9ea9ce767085f))
+- Fix workflow linter by [@santosr2](https://github.com/santosr2) ([e49eb04](https://github.com/santosr2/uptool/commit/e49eb0452847931c641b7e1b20e4b70d38d3c2ad))
 
 ### Features
 - Init repository by [@santosr2](https://github.com/santosr2) ([ad9be8c](https://github.com/santosr2/uptool/commit/ad9be8c63e430d119948a886424c28a689ab17ac))
