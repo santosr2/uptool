@@ -43,7 +43,7 @@ jobs:
       - name: Determine build type
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             echo "is_release=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_release=false" >> "$GITHUB_OUTPUT"
@@ -142,7 +142,7 @@ jobs:
       - name: Determine build type
         id: version
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "${{ github.ref }}" =~ ^refs/tags/ ]]; then
             echo "is_release=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_release=false" >> "$GITHUB_OUTPUT"
