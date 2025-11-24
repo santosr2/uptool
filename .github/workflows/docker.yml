@@ -106,16 +106,19 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # For main branch: latest
-            type=raw,value=latest,enable={{is_default_branch}}
-            # For tags: version tags (v1.2.3, v1.2, v1)
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
-            # For pre-releases: rc, beta, alpha tags
-            type=semver,pattern={{version}},suffix=-{{prerelease}},enable=${{ contains(github.ref, '-') }}
-            # Git commit SHA (only for branch builds, not tags)
-            type=sha,prefix={{branch}}-,enable={{is_default_branch}}
+            # Main branch: 'main' tag (mutable, always points to latest main commit)
+            type=raw,value=main,enable={{is_default_branch}}
+
+            # Stable releases: semantic version tags + 'latest'
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-') }}
+            type=semver,pattern={{version}},enable=${{ !contains(github.ref, '-') }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !contains(github.ref, '-') }}
+            type=semver,pattern={{major}},enable=${{ !contains(github.ref, '-') && !startsWith(github.ref, 'refs/tags/v0.') }}
+
+            # Pre-releases: full version + mutable pre-release type tags
+            type=semver,pattern={{version}},enable=${{ contains(github.ref, '-') }}
+            type=semver,pattern={{major}}.{{minor}}-{{prerelease}},enable=${{ contains(github.ref, '-') }}
+            type=semver,pattern={{major}}-{{prerelease}},enable=${{ contains(github.ref, '-') }}
 
       - name: Build and push Docker images
         id: build-push
