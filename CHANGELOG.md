@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Continuous Integration
 
-- **docker**: Fix tag generation when triggered from git tag by [@santosr2](https://github.com/santosr2) ([30daef1](https://github.com/santosr2/uptool/commit/30daef1838827aa82c15839a13ddbf1a8766237c))
+- **docker**: Fix tag generation when triggered from git tag by [@santosr2](https://github.com/santosr2) ([1d6e615](https://github.com/santosr2/uptool/commit/1d6e615074145d5d33461b975f7563d0d9e5fc1b))
+
+- **docker**: Improve image tag metadata by [@santosr2](https://github.com/santosr2) ([96b0f38](https://github.com/santosr2/uptool/commit/96b0f380c508512f2e6943d61a911f74aed456ff))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
