@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Continuous Integration
+
+- **docker**: Fix tag generation when triggered from git tag by [@santosr2](https://github.com/santosr2) ([30daef1](https://github.com/santosr2/uptool/commit/30daef1838827aa82c15839a13ddbf1a8766237c))
+
 ## [0.2.0-alpha20251124] - 2025-11-24
 
 ### Bug Fixes
@@ -18,19 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Continuous Integration
 
-- **changelog**: Ensure actors are tagged by [@santosr2](https://github.com/santosr2)([144ead3](https://github.com/santosr2/uptool/commit/144ead3e53720c337c8b907913c01add239b8ae5))
+- **changelog**: Ensure actors are tagged by [@santosr2](https://github.com/santosr2) ([144ead3](https://github.com/santosr2/uptool/commit/144ead3e53720c337c8b907913c01add239b8ae5))
 
-- **docker**: Fix scan command by [@santosr2](https://github.com/santosr2)([2555912](https://github.com/santosr2/uptool/commit/25559121eea4ffc960152027e368d96ae182b6f7))
+- **docker**: Fix scan command by [@santosr2](https://github.com/santosr2) ([2555912](https://github.com/santosr2/uptool/commit/25559121eea4ffc960152027e368d96ae182b6f7))
 
-- **docker**: Fix image build by [@santosr2](https://github.com/santosr2)([b4d8178](https://github.com/santosr2/uptool/commit/b4d81785eab09a64331014923eb700d3ed42ec55))
+- **docker**: Fix image build by [@santosr2](https://github.com/santosr2) ([b4d8178](https://github.com/santosr2/uptool/commit/b4d81785eab09a64331014923eb700d3ed42ec55))
 
-- **pre-release**: Remove unnecessary sed command by [@santosr2](https://github.com/santosr2)([7b2a8f2](https://github.com/santosr2/uptool/commit/7b2a8f2ee98fd31abfdb460afe9f3310cde3e959))
+- **pre-release**: Remove unnecessary sed command by [@santosr2](https://github.com/santosr2) ([7b2a8f2](https://github.com/santosr2/uptool/commit/7b2a8f2ee98fd31abfdb460afe9f3310cde3e959))
 
-- **pre-release**: Fix checkout strategy by [@santosr2](https://github.com/santosr2)([b5bc171](https://github.com/santosr2/uptool/commit/b5bc17174852cb1f3e6b10559da3b13156fcdd54))
+- **pre-release**: Fix checkout strategy by [@santosr2](https://github.com/santosr2) ([b5bc171](https://github.com/santosr2/uptool/commit/b5bc17174852cb1f3e6b10559da3b13156fcdd54))
 
-- **release**: Remove C dependency by [@santosr2](https://github.com/santosr2)([46c7b0b](https://github.com/santosr2/uptool/commit/46c7b0b6dce9e30a6494167cecb5183e654ffab8))
+- **release**: Remove C dependency by [@santosr2](https://github.com/santosr2) ([46c7b0b](https://github.com/santosr2/uptool/commit/46c7b0b6dce9e30a6494167cecb5183e654ffab8))
 
-- **signed-commits**: Ensure it fails when no-signed commits are found by [@santosr2](https://github.com/santosr2)([967a16a](https://github.com/santosr2/uptool/commit/967a16ab66bacbffd3cee776af015ac3ce0863a0))
+- **signed-commits**: Ensure it fails when no-signed commits are found by [@santosr2](https://github.com/santosr2) ([967a16a](https://github.com/santosr2/uptool/commit/967a16ab66bacbffd3cee776af015ac3ce0863a0))
 - Add ci pipeline by [@santosr2](https://github.com/santosr2) ([627232e](https://github.com/santosr2/uptool/commit/627232e27ecde493434aa1ad3c46f1c9ad628b86))
 - Add doc deploy by [@santosr2](https://github.com/santosr2) ([e113950](https://github.com/santosr2/uptool/commit/e1139507d378cda3a2adcc0256111cf461e29c11))
 - Fix doc workflow by [@santosr2](https://github.com/santosr2) ([e2cb1ee](https://github.com/santosr2/uptool/commit/e2cb1ee4a2351c779f5bb6c9a82cac28951f87e3))
@@ -72,17 +78,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### GitHub Actions
 
-- **build-release**: Remove unnecessary shell fields by [@santosr2](https://github.com/santosr2)([f6f48f6](https://github.com/santosr2/uptool/commit/f6f48f6306e3d1f429412dc396a37a67c714ddd5))
+- **build-release**: Remove unnecessary shell fields by [@santosr2](https://github.com/santosr2) ([f6f48f6](https://github.com/santosr2/uptool/commit/f6f48f6306e3d1f429412dc396a37a67c714ddd5))
 
-- **build-release**: Bump sbom-action to v0.20.10 by [@santosr2](https://github.com/santosr2)([b8513ad](https://github.com/santosr2/uptool/commit/b8513ad7234101619764b1f9d8ad680d47454202))
+- **build-release**: Bump sbom-action to v0.20.10 by [@santosr2](https://github.com/santosr2) ([b8513ad](https://github.com/santosr2/uptool/commit/b8513ad7234101619764b1f9d8ad680d47454202))
 
-- **build-release**: Bump upload-artifact to v5.0.0 by [@santosr2](https://github.com/santosr2)([0b330fe](https://github.com/santosr2/uptool/commit/0b330fe65017ea8ad6069d986d029fb14b2cfb46))
+- **build-release**: Bump upload-artifact to v5.0.0 by [@santosr2](https://github.com/santosr2) ([0b330fe](https://github.com/santosr2/uptool/commit/0b330fe65017ea8ad6069d986d029fb14b2cfb46))
 - Ensure it will execute in proper folder by [@santosr2](https://github.com/santosr2) ([00056a9](https://github.com/santosr2/uptool/commit/00056a92368ee7f2c32682c06c264a829b18b392))
 - Fix exit code by [@santosr2](https://github.com/santosr2) ([6cde855](https://github.com/santosr2/uptool/commit/6cde855566e6d78e138f98c4e6a99e4a56928edc))
 
 ### Miscellaneous Tasks
 
-- **release**: Bump version to v0.2.0-alpha20251124 [skip ci] by [@github-actions[bot]](https://github.com/github-actions[bot])([19b53b5](https://github.com/santosr2/uptool/commit/19b53b5e0574f60d76ad5d6dba77819b5f750d61))
+- **release**: Bump version to v0.2.0-alpha20251124 [skip ci] by [@github-actions[bot]](https://github.com/github-actions[bot]) ([19b53b5](https://github.com/santosr2/uptool/commit/19b53b5e0574f60d76ad5d6dba77819b5f750d61))
 - Remove mkdocs-material from mise due to an issue by [@santosr2](https://github.com/santosr2) ([5052509](https://github.com/santosr2/uptool/commit/5052509f7de1f371650749d85c58c3e20a46cc39))
 - Migrate Makefile to mise tasks by [@santosr2](https://github.com/santosr2) ([9d12d54](https://github.com/santosr2/uptool/commit/9d12d5400f7f84122ab0ec7648d29318723d03d0))
 - Fix docs and code based on what the linter finds by [@santosr2](https://github.com/santosr2) ([6a9f45e](https://github.com/santosr2/uptool/commit/6a9f45e2539c9ecfab90f84f4881fd28e5a8da33))
