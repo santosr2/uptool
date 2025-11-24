@@ -31,8 +31,8 @@ body = """
        | sort(attribute="scope") %}
         - **{{ commit.scope }}**: {{ commit.message | upper_first | trim_end_matches(pat=".") }}\
           {% if commit.breaking %} [**BREAKING**]{% endif %}\
-          {% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}){% endif %}\
-          {% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/santosr2/uptool/pull/{{ commit.remote.pr_number }}){% endif %}\
+          {% if commit.remote.username %} by [@{{ commit.remote.username }}](https://github.com/{{ commit.remote.username }}) {% endif %}\
+          {% if commit.remote.pr_number %} in [#{{ commit.remote.pr_number }}](https://github.com/santosr2/uptool/pull/{{ commit.remote.pr_number }}) {% endif %}\
           ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/santosr2/uptool/commit/{{ commit.id }}))
     {% endfor -%}
     {% for commit in commits %}

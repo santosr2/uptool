@@ -114,8 +114,8 @@ jobs:
             type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
             # For pre-releases: rc, beta, alpha tags
             type=semver,pattern={{version}},suffix=-{{prerelease}},enable=${{ contains(github.ref, '-') }}
-            # Git commit SHA
-            type=sha,prefix={{branch}}-
+            # Git commit SHA (only for branch builds, not tags)
+            type=sha,prefix={{branch}}-,enable={{is_default_branch}}
 
       - name: Build and push Docker images
         id: build-push
