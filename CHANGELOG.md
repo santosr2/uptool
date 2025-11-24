@@ -5,14 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Continuous Integration
-
-- **docker**: Fix tag generation when triggered from git tag by [@santosr2](https://github.com/santosr2) ([1d6e615](https://github.com/santosr2/uptool/commit/1d6e615074145d5d33461b975f7563d0d9e5fc1b))
-
-- **docker**: Improve image tag metadata by [@santosr2](https://github.com/santosr2) ([96b0f38](https://github.com/santosr2/uptool/commit/96b0f380c508512f2e6943d61a911f74aed456ff))
-
 ## [0.2.0-alpha20251124] - 2025-11-24
 
 ### Bug Fixes
@@ -31,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **docker**: Fix scan command by [@santosr2](https://github.com/santosr2) ([2555912](https://github.com/santosr2/uptool/commit/25559121eea4ffc960152027e368d96ae182b6f7))
 
 - **docker**: Fix image build by [@santosr2](https://github.com/santosr2) ([b4d8178](https://github.com/santosr2/uptool/commit/b4d81785eab09a64331014923eb700d3ed42ec55))
+
+- **docker**: Fix tag generation when triggered from git tag by [@santosr2](https://github.com/santosr2) ([1d6e615](https://github.com/santosr2/uptool/commit/1d6e615074145d5d33461b975f7563d0d9e5fc1b))
+
+- **docker**: Improve image tag metadata by [@santosr2](https://github.com/santosr2) ([96b0f38](https://github.com/santosr2/uptool/commit/96b0f380c508512f2e6943d61a911f74aed456ff))
+
+- **docker**: Avoid trigger for mutable tags by [@santosr2](https://github.com/santosr2) ([c695cb7](https://github.com/santosr2/uptool/commit/c695cb7714ce13bbde5ce1f05cae97158b9e67b1))
 
 - **pre-release**: Remove unnecessary sed command by [@santosr2](https://github.com/santosr2) ([7b2a8f2](https://github.com/santosr2/uptool/commit/7b2a8f2ee98fd31abfdb460afe9f3310cde3e959))
 
