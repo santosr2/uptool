@@ -63,3 +63,5 @@ Thumbs.db
 .terraform/
 .terraform.lock.hcl
 node_modules/
+
+bkp/

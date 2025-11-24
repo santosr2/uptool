@@ -8,11 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Bug Fixes
+
 - Ci, go.mod and golangci by [@santosr2](https://github.com/santosr2) ([a242141](https://github.com/santosr2/uptool/commit/a24214179371307d7bcf0c55ae49ed3d10a270d7))
 - Remove docs symlinks since it breaks action cache by [@santosr2](https://github.com/santosr2) ([109da98](https://github.com/santosr2/uptool/commit/109da985871eaffba17f0195983161c5237e0373))
 - Linters and CI by [@santosr2](https://github.com/santosr2) ([9cb444f](https://github.com/santosr2/uptool/commit/9cb444ffd30ab9a68f52db50aec9712818b41134))
 
 ### Container
+
 - Improve based on linter by [@santosr2](https://github.com/santosr2) ([97345cf](https://github.com/santosr2/uptool/commit/97345cf5b3e0e5495e13bd9a97292a92ec730177))
 - Use go1.25 base image in builder stage by [@santosr2](https://github.com/santosr2) ([1112efb](https://github.com/santosr2/uptool/commit/1112efb7419af8b4e5d1217dfc872962e2e3153f))
 
@@ -60,11 +62,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix workflow linter by [@santosr2](https://github.com/santosr2) ([b3cb868](https://github.com/santosr2/uptool/commit/b3cb868a1d5365a0aa0d4d35319f5406791529ac))
 
 ### Documentation
+
 - Add community documentation by [@santosr2](https://github.com/santosr2) ([a633250](https://github.com/santosr2/uptool/commit/a6332506550814a8ec0534eac54e7cf7fba4a4fc))
 - Use mkdocs instead of manual approach by [@santosr2](https://github.com/santosr2) ([248b2e0](https://github.com/santosr2/uptool/commit/248b2e0551e6ad73b23f6e7488a76c731830abd3))
 - Minimize documentation verbosity by [@santosr2](https://github.com/santosr2) ([be57c28](https://github.com/santosr2/uptool/commit/be57c28bc5cf8886e3a0ca7388df9d0b7919ef13))
 
 ### Features
+
 - Init repository by [@santosr2](https://github.com/santosr2) ([ad9be8c](https://github.com/santosr2/uptool/commit/ad9be8c63e430d119948a886424c28a689ab17ac))
 - Add initial code structure by [@santosr2](https://github.com/santosr2) ([7ab22c5](https://github.com/santosr2/uptool/commit/7ab22c5db51fae4ec2e8a086120a2be1b6c66b3e))
 - Add docs, examples and config files and improve code by [@santosr2](https://github.com/santosr2) ([e3da30d](https://github.com/santosr2/uptool/commit/e3da30dd0bd25874e687ff494fc2ed0e85f07e13))
@@ -84,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Miscellaneous Tasks
 
-- **release**: Bump version to v0.2.0-alpha20251123 [skip ci] by [@github-actions[bot]](https://github.com/github-actions[bot])([fec28f6](https://github.com/santosr2/uptool/commit/fec28f6c448026d8a72c0454cdb31d1b80f41fdd))
+- **release**: Bump version to v0.2.0-alpha20251124 [skip ci] by [@github-actions[bot]](https://github.com/github-actions[bot])([fec28f6](https://github.com/santosr2/uptool/commit/fec28f6c448026d8a72c0454cdb31d1b80f41fdd))
 - Remove mkdocs-material from mise due to an issue by [@santosr2](https://github.com/santosr2) ([5052509](https://github.com/santosr2/uptool/commit/5052509f7de1f371650749d85c58c3e20a46cc39))
 - Migrate Makefile to mise tasks by [@santosr2](https://github.com/santosr2) ([9d12d54](https://github.com/santosr2/uptool/commit/9d12d5400f7f84122ab0ec7648d29318723d03d0))
 - Fix docs and code based on what the linter finds by [@santosr2](https://github.com/santosr2) ([6a9f45e](https://github.com/santosr2/uptool/commit/6a9f45e2539c9ecfab90f84f4881fd28e5a8da33))

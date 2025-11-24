@@ -286,7 +286,7 @@ package main
 
 const (
     PluginVersion = "1.0.0"
-    RequiredUptoolVersion = "0.2.0-alpha20251123"
+    RequiredUptoolVersion = "0.2.0-alpha20251124"
 )
 ```
 
