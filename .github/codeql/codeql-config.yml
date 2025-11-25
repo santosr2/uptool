@@ -1,9 +1,5 @@
 name: "CodeQL Config"
 
-paths-ignore:
-  - bkp/**
-  - docs/**
-
 queries:
   - uses: security-extended
   - uses: security-and-quality

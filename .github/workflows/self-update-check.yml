@@ -1,0 +1,235 @@
+name: Self Update Check
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.pre-commit-config.yaml'
+      - 'mise.toml'
+      - '.opencode/package.json'
+      - 'go.mod'
+      - 'go.sum'
+
+# Cancel in-progress runs for the same workflow on the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-dependencies:
+    name: Check Dependencies with uptool
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build uptool from source
+        run: |
+          echo "Building uptool from current source..."
+          mise run build
+
+          # Verify build
+          ./dist/uptool version
+
+          echo "✅ Build successful"
+
+      - name: Scan for dependency updates
+        id: scan
+        run: |
+          {
+            echo "## 🔍 Dependency Scan Results"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Run uptool scan
+          ./dist/uptool scan --verbose | tee scan-output.txt
+
+          # Add scan results to summary
+          {
+            echo '```'
+            cat scan-output.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate update plan
+        id: plan
+        run: |
+          {
+            echo ""
+            echo "## 📋 Update Plan"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Run uptool plan
+          if ./dist/uptool plan --verbose > plan-output.txt 2>&1; then
+            # Count updates
+            UPDATE_COUNT=$(grep -c "→" plan-output.txt || echo "0")
+
+            if [ "$UPDATE_COUNT" -gt 0 ]; then
+              {
+                echo "**Found $UPDATE_COUNT dependency updates available:**"
+                echo ""
+                echo '```'
+                cat plan-output.txt
+                echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+
+              # Set output for PR creation
+              echo "updates_available=true" >> "$GITHUB_OUTPUT"
+              echo "update_count=$UPDATE_COUNT" >> "$GITHUB_OUTPUT"
+            else
+              echo "✅ **All dependencies are up to date!**" >> "$GITHUB_STEP_SUMMARY"
+              echo "updates_available=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            {
+              echo "⚠️ **No updates available or error occurred**"
+              echo ""
+              echo '```'
+              cat plan-output.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "updates_available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate diff preview
+        if: steps.plan.outputs.updates_available == 'true'
+        run: |
+          {
+            echo ""
+            echo "## 📝 Proposed Changes (Dry Run)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Run dry-run with diff
+          ./dist/uptool update --dry-run --diff > diff-output.txt 2>&1 || true
+
+          if [ -s diff-output.txt ]; then
+            {
+              echo '```diff'
+              cat diff-output.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload scan artifacts
+        if: always()
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
+        with:
+          name: dependency-scan-results
+          path: |
+            scan-output.txt
+            plan-output.txt
+            diff-output.txt
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Comment on issue (if updates found)
+        if: steps.plan.outputs.updates_available == 'true' && github.event_name == 'schedule'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const updateCount = '${{ steps.plan.outputs.update_count }}';
+
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('plan-output.txt', 'utf8');
+            } catch (e) {
+              planOutput = 'Unable to read plan output';
+            }
+
+            const body = `## 🔄 Dependency Updates Available
+
+            The weekly dependency scan found **${updateCount} updates** available for uptool's own dependencies.
+
+            ### Update Plan
+
+            \`\`\`
+            ${planOutput}
+            \`\`\`
+
+            ### Next Steps
+
+            1. Review the changes in the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            2. Run \`uptool update --diff\` locally to preview changes
+            3. Apply updates: \`uptool update\`
+            4. Test the changes
+            5. Create a PR with the updates
+
+            ---
+
+            🤖 *This issue was automatically created by the Self Update Check workflow*`;
+
+            // Search for existing open issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'dependencies,automated',
+              per_page: 100
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Dependency Updates Available')
+            );
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🔄 Dependency Updates Available (Week ${new Date().toISOString().slice(0, 10)})`,
+                body: body,
+                labels: ['dependencies', 'automated', 'enhancement']
+              });
+            }
+
+  summary:
+    name: Dependency Check Summary
+    needs: [check-dependencies]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Generate summary
+        run: |
+          {
+            echo "## 🔍 Self Update Check Complete"
+            echo ""
+            echo "**Status**: ${{ needs.check-dependencies.result }}"
+            echo ""
+            echo "### What was checked?"
+            echo "- ✅ \`.pre-commit-config.yaml\` (pre-commit hooks)"
+            echo "- ✅ \`mise.toml\` (runtime versions - detection only)"
+            echo "- ✅ \`.opencode/package.json\` (npm dependencies)"
+            echo ""
+            echo "### Notes"
+            echo "- This workflow uses uptool to check its own dependencies (dogfooding)"
+            echo "- Runs weekly on Mondays and on changes to manifest files"
+            echo "- Creates/updates an issue when updates are found"
+            echo ""
+            echo "📚 See [scan artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed results"
+          } >> "$GITHUB_STEP_SUMMARY"
