@@ -13,7 +13,7 @@ This plugin demonstrates how to create an external integration for uptool. It:
 
 ## Structure
 
-```
+```tree
 python/
 ├── README.md              # This file
 ├── go.mod                 # Go module definition
@@ -121,7 +121,7 @@ uptool update --only=python
 
 ### Simple Version
 
-```
+```python
 requests==2.28.0
 flask==2.2.0
 pytest>=7.0.0
@@ -129,7 +129,7 @@ pytest>=7.0.0
 
 ### Version Constraints
 
-```
+```python
 requests>=2.28.0,<3.0.0
 flask~=2.2.0
 pytest>=7.0.0
@@ -137,7 +137,7 @@ pytest>=7.0.0
 
 ### Comments
 
-```
+```python
 # Web framework
 flask==2.2.0
 
@@ -147,7 +147,7 @@ pytest>=7.0.0  # Latest stable
 
 ### Extras
 
-```
+```python
 requests[security]==2.28.0
 flask[async]>=2.2.0
 ```
@@ -237,7 +237,7 @@ uptool scan --only=python
 
 ### Data Flow
 
-```
+```text
 uptool
   ↓
 RegisterWith() - Plugin registration
@@ -307,5 +307,5 @@ Same as uptool - MIT License
 ## See Also
 
 - [Plugin Development Guide](../../../docs/plugin-development.md)
-- [uptool Documentation](../../../docs/README.md)
+- [uptool Documentation](../../../docs/index.md)
 - [PyPI JSON API](https://warehouse.pypa.io/api-reference/json.html)

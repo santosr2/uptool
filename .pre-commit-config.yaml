@@ -41,7 +41,7 @@ repos:
       # Build and test
       - id: go-mod-tidy
       - id: go-build-mod
-        args: [./cmd/uptool]
+        args: [./...]  # Build all packages in the module
       - id: go-test-mod
         args: [-v, -race, ./...]
 
@@ -132,4 +132,4 @@ repos:
 # Configuration
 default_stages: [pre-commit]
 fail_fast: false
-exclude: ^(\.mise/|vendor/|dist/|\.terraform/|node_modules/|examples/plugins/)
+exclude: ^(\.mise/|vendor/|dist/|\.terraform/|node_modules/)

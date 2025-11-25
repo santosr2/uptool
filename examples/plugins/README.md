@@ -105,7 +105,7 @@ See the comprehensive [Plugin Development Guide](../../docs/plugin-development.m
 
 Each plugin follows this standard structure:
 
-```
+```tree
 plugin-name/
 ├── README.md              # Documentation
 ├── go.mod                 # Go module definition
@@ -359,7 +359,7 @@ func RegisterWith(register func(name string, constructor func() engine.Integrati
 ### Documentation
 
 - [Plugin Development Guide](../../docs/plugin-development.md) - Comprehensive guide
-- [uptool Documentation](../../docs/README.md) - Main documentation
+- [uptool Documentation](../../docs/index.md) - Main documentation
 - [CONTRIBUTING.md](../../CONTRIBUTING.md) - Built-in integration development
 
 ### Code Examples
