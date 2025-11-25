@@ -47,6 +47,20 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build uptool from source
+        run: |
+          echo "Building uptool from current source for dogfooding..."
+          mise run build
+
+          # Add to PATH so the action can use it
+          echo "$PWD/dist" >> "$GITHUB_PATH"
+
+          # Verify
+          ./dist/uptool version
+
       - name: Determine action mode
         id: mode
         run: |
@@ -67,6 +81,7 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           command: plan
+          skip-install: true
           create-issue: true
           issue-title: '🔄 Dependency Updates Available'
           issue-labels: 'dependencies,automated,enhancement'
@@ -77,6 +92,7 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           command: update
+          skip-install: true
           create-pr: true
           pr-title: 'chore(deps): update dependencies'
           pr-branch: 'uptool/dependency-updates-${{ github.run_number }}'
@@ -87,6 +103,7 @@ jobs:
         with:
           token: ${{ steps.app-token.outputs.token }}
           command: plan
+          skip-install: true
 
   summary:
     name: Dependency Check Summary
