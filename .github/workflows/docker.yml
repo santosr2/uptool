@@ -100,20 +100,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract prerelease type for mutable tags
-        id: prerelease
-        if: startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-')
+      - name: Extract version metadata
+        id: version-meta
         run: |
-          VERSION="${{ github.ref_name }}"
-          # Extract prerelease type (alpha/beta/rc) from version like v0.2.0-alpha20251124
-          PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
-          echo "type=$PRERELEASE_TYPE" >> "$GITHUB_OUTPUT"
+          # Always extract major and minor for all tags
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
+            VERSION="${{ github.ref_name }}"
+            MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+            MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+            echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+            echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
 
-          # Extract major and minor
-          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
-          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
-          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
-          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+            # Extract prerelease type if this is a pre-release
+            if [[ "$VERSION" =~ - ]]; then
+              PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
+              echo "prerelease_type=$PRERELEASE_TYPE" >> "$GITHUB_OUTPUT"
+              echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
 
       - name: Extract Docker metadata
         id: meta
@@ -136,8 +142,8 @@ jobs:
 
             # Pre-releases: full version + mutable pre-release type tags
             type=semver,pattern={{version}},enable=${{ contains(github.ref, '-') }}
-            type=raw,value=${{ steps.prerelease.outputs.major }}.${{ steps.prerelease.outputs.minor }}-${{ steps.prerelease.outputs.type }},enable=${{ contains(github.ref, '-') }}
-            type=raw,value=${{ steps.prerelease.outputs.major }}-${{ steps.prerelease.outputs.type }},enable=${{ contains(github.ref, '-') }}
+            type=raw,value=${{ steps.version-meta.outputs.major }}.${{ steps.version-meta.outputs.minor }}-${{ steps.version-meta.outputs.prerelease_type }},enable=${{ steps.version-meta.outputs.is_prerelease == 'true' }}
+            type=raw,value=${{ steps.version-meta.outputs.major }}-${{ steps.version-meta.outputs.prerelease_type }},enable=${{ steps.version-meta.outputs.is_prerelease == 'true' }}
 
       - name: Build and push Docker images
         id: build-push
@@ -205,14 +211,19 @@ jobs:
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             # Main branch uses 'main' tag
             echo "tag=main" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]] && [[ ! "${{ github.ref }}" =~ - ]]; then
-            # Stable release - scan 'latest' tag
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
-          else
-            # Pre-release or patch - scan exact version tag
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
+            # Any tag: check if it's a pre-release or stable
             VERSION="${{ github.ref_name }}"
-            VERSION="${VERSION#v}"
-            echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
+            if [[ "$VERSION" =~ - ]]; then
+              # Pre-release (contains hyphen) - scan exact version tag
+              echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
+            else
+              # Stable release (no hyphen) - scan 'latest' tag
+              echo "tag=latest" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            # Fallback to main for other refs
+            echo "tag=main" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run Trivy vulnerability scanner

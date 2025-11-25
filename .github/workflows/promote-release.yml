@@ -113,13 +113,12 @@ jobs:
       - name: Commit stable version
         env:
           STABLE_VERSION: ${{ needs.validate.outputs.stable_version }}
-          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
+          git config user.email "${{ vars.BOT_USER_ID }}+santosr2[bot]@users.noreply.github.com"
 
           git add .
-          git commit -m "chore(release): release $STABLE_VERSION [skip ci]"
+          git commit --signoff -m "chore(release): release $STABLE_VERSION [skip ci]"
           git push origin HEAD:main
 
   test:
@@ -426,10 +425,9 @@ jobs:
         env:
           VERSION: ${{ needs.validate.outputs.stable_version }}
           PRE_RELEASE: ${{ needs.validate.outputs.pre_release_tag }}
-          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
+          git config user.email "${{ vars.BOT_USER_ID }}+santosr2[bot]@users.noreply.github.com"
 
           # Create immutable tag (e.g., v0.2.0)
           git tag -a "$VERSION" -m "Release $VERSION (promoted from $PRE_RELEASE)"
@@ -481,17 +479,16 @@ jobs:
       - name: Update CHANGELOG.md
         env:
           VERSION: ${{ needs.validate.outputs.stable_version }}
-          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
+          git config user.email "${{ vars.BOT_USER_ID }}+santosr2[bot]@users.noreply.github.com"
 
           # Update changelog
           git-cliff --config git-cliff.toml --tag "$VERSION" --prepend CHANGELOG.md
 
           # Commit and push
           git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG.md for $VERSION [skip ci]" || echo "No changes to commit"
+          git commit --signoff -m "docs: update CHANGELOG.md for $VERSION [skip ci]" || echo "No changes to commit"
           git push origin HEAD:main || echo "Failed to push changelog update"
 
   promote-docker:
@@ -696,10 +693,9 @@ jobs:
           BASE_TAG: ${{ steps.check.outputs.base_tag }}
           PREV_VERSION: ${{ steps.check.outputs.prev_version }}
           NEW_VERSION: ${{ needs.validate.outputs.stable_version }}
-          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
+          git config user.email "${{ vars.BOT_USER_ID }}+santosr2[bot]@users.noreply.github.com"
 
           # Checkout the base tag
           git checkout "$BASE_TAG"
@@ -750,7 +746,7 @@ jobs:
           EOFREADME
 
           git add .github/RELEASE_BRANCH_README.md
-          git commit -m "docs: add release branch README for $BRANCH_NAME [skip ci]"
+          git commit --signoff -m "docs: add release branch README for $BRANCH_NAME [skip ci]"
 
           # Push the branch
           git push origin "$BRANCH_NAME"

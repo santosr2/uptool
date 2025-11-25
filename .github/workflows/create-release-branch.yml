@@ -94,10 +94,9 @@ jobs:
         env:
           BRANCH_NAME: ${{ needs.validate.outputs.branch_name }}
           BASE_TAG: ${{ needs.validate.outputs.base_tag }}
-          APP_ID: ${{ secrets.APP_ID }}
         run: |
           git config user.name "santosr2[bot]"
-          git config user.email "${APP_ID}+santosr2[bot]@users.noreply.github.com"
+          git config user.email "${{ vars.BOT_USER_ID }}+santosr2[bot]@users.noreply.github.com"
 
           # Create the release branch
           git checkout -b "$BRANCH_NAME"
@@ -175,7 +174,7 @@ jobs:
           EOFREADME
 
           git add .github/RELEASE_BRANCH_README.md
-          git commit -m "docs: add release branch README for $BRANCH_NAME [skip ci]"
+          git commit --signoff -m "docs: add release branch README for $BRANCH_NAME [skip ci]"
 
           # Push the branch
           git push origin "$BRANCH_NAME"
