@@ -172,11 +172,11 @@ We use **trunk-based development**—not Git Flow. All changes go directly to `m
 
    ```bash
    git add .
-   git commit -m "feat: add support for Python pip"
+   git commit --signoff -m "feat: add support for Python pip"
    # or
-   git commit -m "fix: handle empty package.json files"
+   git commit --signoff -m "fix: handle empty package.json files"
    # or
-   git commit -m "docs: update integration guide"
+   git commit --signoff -m "docs: update integration guide"
    ```
 
    **Commit message format**:
@@ -361,7 +361,7 @@ go test -cover ./internal/integrations/yourintegration  # Target >70%
 3. Commit with conventional commit:
 
    ```bash
-   git commit -m "feat(integration): add yourname support
+   git commit --signoff -m "feat(integration): add yourname support
 
    - Detects your-manifest.yaml files
    - Queries your-registry for versions

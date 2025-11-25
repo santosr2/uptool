@@ -120,7 +120,7 @@ Commit the changes:
 
 ```bash
 git add .
-git commit -m "chore(deps): update dependencies via uptool"
+git commit --signoff -m "chore(deps): update dependencies via uptool"
 git push
 ```
 

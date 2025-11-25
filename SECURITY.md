@@ -160,7 +160,7 @@ uptool update --diff
 
 # Commit and create PR
 git add .
-git commit -m "chore(deps): update dependencies"
+git commit --signoff -m "chore(deps): update dependencies"
 git push
 ```
 
