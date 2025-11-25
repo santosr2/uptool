@@ -72,6 +72,11 @@ inputs:
     required: false
     default: ${{ github.token }}
 
+  skip-install:
+    description: 'Skip uptool installation (use when uptool is already available in PATH)'
+    required: false
+    default: 'false'
+
 outputs:
   updates-available:
     description: 'Whether updates are available (true/false)'
@@ -88,19 +93,55 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup Go
-      uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
-      with:
-        go-version-file: 'go.mod'
-        check-latest: true
-        cache: false
-
     - name: Install uptool
+      if: inputs.skip-install != 'true'
       shell: bash
       run: |
-        cd "${{ github.action_path }}"
-        go build -o /tmp/uptool ./cmd/uptool
+        # Detect OS and architecture
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+
+        case "$ARCH" in
+          x86_64) ARCH="amd64" ;;
+          aarch64|arm64) ARCH="arm64" ;;
+          *) echo "::error::Unsupported architecture: $ARCH"; exit 1 ;;
+        esac
+
+        # Get the latest release version
+        LATEST_VERSION=$(curl -s https://api.github.com/repos/santosr2/uptool/releases/latest | grep '"tag_name"' | sed -E 's/.*"v([^"]+)".*/\1/')
+
+        if [ -z "$LATEST_VERSION" ]; then
+          echo "::error::Failed to get latest uptool version"
+          exit 1
+        fi
+
+        echo "Installing uptool v${LATEST_VERSION} for ${OS}/${ARCH}..."
+
+        # Download and install uptool
+        DOWNLOAD_URL="https://github.com/santosr2/uptool/releases/download/v${LATEST_VERSION}/uptool_${LATEST_VERSION}_${OS}_${ARCH}.tar.gz"
+
+        curl -sL "$DOWNLOAD_URL" | tar -xz -C /tmp
         chmod +x /tmp/uptool
+
+        # Verify installation
+        /tmp/uptool version
+
+        echo "✅ uptool v${LATEST_VERSION} installed successfully"
+
+    - name: Verify uptool availability
+      shell: bash
+      run: |
+        if [ "${{ inputs.skip-install }}" == "true" ]; then
+          echo "Installation skipped - verifying uptool is available in PATH..."
+          if ! command -v uptool >/dev/null 2>&1; then
+            echo "::error::skip-install is true but uptool not found in PATH"
+            exit 1
+          fi
+          echo "UPTOOL_CMD=uptool" >> "$GITHUB_ENV"
+          uptool version
+        else
+          echo "UPTOOL_CMD=/tmp/uptool" >> "$GITHUB_ENV"
+        fi
 
     - name: Run uptool
       id: uptool
@@ -140,9 +181,9 @@ runs:
         fi
 
         # Run uptool
-        echo "Running: /tmp/uptool $CMD $ARGS"
+        echo "Running: $UPTOOL_CMD $CMD $ARGS"
         set -o pipefail
-        /tmp/uptool $CMD $ARGS 2>&1 | tee /tmp/uptool-output.txt
+        $UPTOOL_CMD $CMD $ARGS 2>&1 | tee /tmp/uptool-output.txt
         EXIT_CODE=$?
         set +o pipefail
 
@@ -183,7 +224,7 @@ runs:
         cd "$GITHUB_WORKSPACE"
 
         # Run uptool plan with JSON output to get detailed update information
-        /tmp/uptool plan --format=json > /tmp/plan-output.json
+        $UPTOOL_CMD plan --format=json > /tmp/plan-output.json
 
         # Generate PR body with detailed information
         cat > /tmp/pr-body.md <<'EOFMARKER'
@@ -290,7 +331,7 @@ runs:
         cd "$GITHUB_WORKSPACE"
 
         # Run uptool plan with JSON output to get detailed update information
-        /tmp/uptool plan --format=json > /tmp/plan-output.json
+        $UPTOOL_CMD plan --format=json > /tmp/plan-output.json
 
         # Generate issue body
         cat > /tmp/issue-body.md <<'EOFMARKER'
