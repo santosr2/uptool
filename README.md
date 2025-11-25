@@ -1,3 +1,5 @@
+<center>
+
 # uptool
 
 [![Go Version](https://img.shields.io/github/go-mod/go-version/santosr2/uptool)](https://go.dev/)
@@ -17,7 +19,11 @@
 [![Security Policy](https://img.shields.io/badge/security-policy-blue)](SECURITY.md)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
+---
+
 **Universal, Manifest-First Dependency Updater**
+
+</center>
 
 `uptool` combines the ecosystem breadth of [Topgrade](https://github.com/topgrade-rs/topgrade), the precision of [Dependabot](https://github.com/dependabot/dependabot-core), and the flexibility of [Renovate](https://github.com/renovatebot/renovate) — but with a **manifest-first philosophy** that works across ANY project toolchain defined in configuration files.
 

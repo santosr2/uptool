@@ -7,7 +7,7 @@ MD013: false
 
 # Allow 'name' elements to have inline code without triggering line length rule
 MD033:
-  allowed_elements: ["name", "div", "small"]
+  allowed_elements: ["name", "div", "small", "center"]
 
 # Disable rule for enforcing consistent heading styles
 MD036: false
@@ -21,3 +21,6 @@ MD034: false
 
 # Disable link fragments validation (can have false positives)
 MD051: false
+
+# Disable first line heading requirement (README has styled header)
+MD041: false
