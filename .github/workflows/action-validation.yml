@@ -46,12 +46,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build uptool from source
+        run: |
+          echo "Building uptool from current source for action validation..."
+          mise run build
+
+          # Add to PATH so the action can use it
+          echo "$PWD/dist" >> "$GITHUB_PATH"
+
+          # Verify
+          ./dist/uptool --version
+
       - name: Test scan command
         uses: ./
         id: scan
         with:
           command: scan
           format: json
+          skip-install: true
 
       - name: Verify scan output
         run: |
@@ -67,12 +82,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build uptool from source
+        run: |
+          echo "Building uptool from current source for action validation..."
+          mise run build
+
+          # Add to PATH so the action can use it
+          echo "$PWD/dist" >> "$GITHUB_PATH"
+
+          # Verify
+          ./dist/uptool --version
+
       - name: Test plan command
         uses: ./
         id: plan
         with:
           command: plan
           format: table
+          skip-install: true
 
       - name: Verify plan output
         run: |
@@ -89,6 +119,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build uptool from source
+        run: |
+          echo "Building uptool from current source for action validation..."
+          mise run build
+
+          # Add to PATH so the action can use it
+          echo "$PWD/dist" >> "$GITHUB_PATH"
+
+          # Verify
+          ./dist/uptool --version
+
       - name: Test update command (dry-run)
         uses: ./
         id: update
@@ -96,6 +140,7 @@ jobs:
           command: update
           dry-run: 'true'
           diff: 'true'
+          skip-install: true
 
       - name: Verify update output
         run: |
@@ -110,14 +155,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: Setup mise
+        uses: ./.github/actions/setup-mise
+
+      - name: Build uptool from source
+        run: |
+          echo "Building uptool from current source for action validation..."
+          mise run build
+
+          # Add to PATH so the action can use it
+          echo "$PWD/dist" >> "$GITHUB_PATH"
+
+          # Verify
+          ./dist/uptool --version
+
       - name: Test with --only filter
         uses: ./
         with:
           command: scan
           only: npm,helm
+          skip-install: true
 
       - name: Test with --exclude filter
         uses: ./
         with:
           command: scan
           exclude: precommit
+          skip-install: true
