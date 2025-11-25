@@ -212,15 +212,10 @@ jobs:
             # Main branch uses 'main' tag
             echo "tag=main" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
-            # Any tag: check if it's a pre-release or stable
+            # For tagged releases, always scan the exact version that was just built
+            # This ensures we scan what we actually published
             VERSION="${{ github.ref_name }}"
-            if [[ "$VERSION" =~ - ]]; then
-              # Pre-release (contains hyphen) - scan exact version tag
-              echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
-            else
-              # Stable release (no hyphen) - scan 'latest' tag
-              echo "tag=latest" >> "$GITHUB_OUTPUT"
-            fi
+            echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
           else
             # Fallback to main for other refs
             echo "tag=main" >> "$GITHUB_OUTPUT"
