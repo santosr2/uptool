@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Continuous Integration
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
+- Use bot_user_id in email insteawd app_id by [@santosr2](https://github.com/santosr2) ([c73b593](https://github.com/santosr2/uptool/commit/c73b5930376d1cbfbce350ffe4e4ae9fee6ee907))
+
+### Documentation
+- Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([283069c](https://github.com/santosr2/uptool/commit/283069c7ccfcfb52af8c4fb878e654d932f24f6f))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
