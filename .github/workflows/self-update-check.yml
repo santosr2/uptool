@@ -59,7 +59,7 @@ jobs:
           echo "$PWD/dist" >> "$GITHUB_PATH"
 
           # Verify
-          ./dist/uptool version
+          ./dist/uptool --version
 
       - name: Determine action mode
         id: mode
