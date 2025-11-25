@@ -159,7 +159,6 @@ jobs:
           echo "✅ Updated mkdocs.yml with version: ${VERSION}"
 
       - name: Configure Git for mike
-        env:
         run: |
           git config user.name "santosr2[bot]"
           git config user.email "${{ vars.BOT_USER_ID }}+santosr2[bot]@users.noreply.github.com"
