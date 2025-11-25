@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Continuous Integration
 
+- **action-validation**: Avoid uptool action install to use latest code by [@santosr2](https://github.com/santosr2) ([afcb4a5](https://github.com/santosr2/uptool/commit/afcb4a5fb13afec89f9f5405ecbc51169d23f73a))
+
 - **changelog**: Use github commit api to sign commit by [@santosr2](https://github.com/santosr2) ([b33c092](https://github.com/santosr2/uptool/commit/b33c09213ad4c78cf32ea868e4924999ad78dff0))
 
 - **docker**: Fix scan when triggered manually by [@santosr2](https://github.com/santosr2) ([828b080](https://github.com/santosr2/uptool/commit/828b08002d5b7c45babfc1af3c31f7cac61b94de))
@@ -18,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **self-update-check**: Replace cli to action usage by [@santosr2](https://github.com/santosr2) ([2cb85a8](https://github.com/santosr2/uptool/commit/2cb85a891873e3e15f30a3fa15bd71340d89ca8b))
 
 - **self-update-check**: Skip uptool action tool install by [@santosr2](https://github.com/santosr2) ([3f3b25e](https://github.com/santosr2/uptool/commit/3f3b25ec7424152fef70a2a9abf16e58df7322d6))
+
+- **self-update-check**: Fix version flag call by [@santosr2](https://github.com/santosr2) ([7243307](https://github.com/santosr2/uptool/commit/7243307ffed75a1a77a6d6df4c812066281e7a8e))
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
 - Use bot_user_id in email instead app_id by [@santosr2](https://github.com/santosr2) ([9194325](https://github.com/santosr2/uptool/commit/91943259b9a07462224637762021f7bc000384a7))
