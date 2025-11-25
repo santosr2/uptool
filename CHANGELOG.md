@@ -20,6 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([2d8570a](https://github.com/santosr2/uptool/commit/2d8570a99f49925bacf9bc52af594e0b5e77b16f))
 - Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a214a03](https://github.com/santosr2/uptool/commit/a214a038617233f0a00b1f7e7975ad276860d0e6))
 
+### Miscellaneous Tasks
+- Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([1c9cc4b](https://github.com/santosr2/uptool/commit/1c9cc4be391a7029aa3b9bef85ed2ff17768f6fa))
+
 ## [0.2.0-alpha20251124] - 2025-11-24
 
 ### Bug Fixes
