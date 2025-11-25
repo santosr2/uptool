@@ -4,12 +4,14 @@
 # Core MkDocs with Material theme
 mkdocs>=1.6.0,<2.0.0
 mkdocs-material>=9.5.0,<10.0.0
+mkdocs-material-extensions>=1.3.0  # Required for material.extensions.emoji
 
 # Version management
 mike>=2.0.0,<3.0.0
 
 # Plugins
 mkdocs-git-revision-date-localized-plugin>=1.2.0
+mkdocs-macros-plugin>=1.0.0  # Enable Jinja2 templating in markdown
 
 # Optional but recommended for full feature support
 # These provide enhanced markdown rendering and features
