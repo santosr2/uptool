@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 - Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([283069c](https://github.com/santosr2/uptool/commit/283069c7ccfcfb52af8c4fb878e654d932f24f6f))
+- Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([2d8570a](https://github.com/santosr2/uptool/commit/2d8570a99f49925bacf9bc52af594e0b5e77b16f))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
