@@ -124,7 +124,7 @@ runs:
         chmod +x /tmp/uptool
 
         # Verify installation
-        /tmp/uptool version
+        /tmp/uptool --version
 
         echo "✅ uptool v${LATEST_VERSION} installed successfully"
 
@@ -138,7 +138,7 @@ runs:
             exit 1
           fi
           echo "UPTOOL_CMD=uptool" >> "$GITHUB_ENV"
-          uptool version
+          uptool --version
         else
           echo "UPTOOL_CMD=/tmp/uptool" >> "$GITHUB_ENV"
         fi
