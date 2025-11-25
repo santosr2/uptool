@@ -84,34 +84,33 @@ table thead {
   border-left-color: #f44336;
 }
 
-/* Code copy button styling */
+/* Code copy button styling - hide text, show only icon */
+button[data-clipboard-text]::after {
+  content: none !important;
+}
+
+/* Hide clipboard button text content */
 .md-clipboard {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  z-index: 1;
-  color: var(--md-default-fg-color--light);
-  cursor: pointer;
-  border: none;
-  background-color: transparent;
-  transition: color 0.25s;
+  font-size: 0 !important;
 }
 
-.md-clipboard:hover {
-  color: var(--md-accent-fg-color);
+/* Restore icon size */
+.md-clipboard svg {
+  font-size: 1rem;
+  width: 1.125em;
+  height: 1.125em;
 }
 
-.md-clipboard:focus,
-.md-clipboard:active {
-  outline: none;
+/* Alternative: completely hide the text node */
+button.md-clipboard {
+  text-indent: -9999px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: inline-block;
 }
 
-/* Hide the "Copy" text, show only icon */
-.md-clipboard__message {
-  display: none;
-}
-
-/* Success state after copying */
-.md-clipboard--copied .md-clipboard__icon::before {
-  content: "✓";
+button.md-clipboard svg {
+  text-indent: 0;
+  display: inline-block;
+  vertical-align: middle;
 }
