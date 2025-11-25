@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **uptool**: Add support to create issue besides PR by [@santosr2](https://github.com/santosr2) ([34f9303](https://github.com/santosr2/uptool/commit/34f9303be863faa51c3a7e779a94a00ced2bf559))
 
 - **uptool**: Add option to skip install by [@santosr2](https://github.com/santosr2) ([39bfc0d](https://github.com/santosr2/uptool/commit/39bfc0dc91addabed32ff9a4eec3056892feb22e))
+- Fix version flag call by [@santosr2](https://github.com/santosr2) ([60c1411](https://github.com/santosr2/uptool/commit/60c14113bd9ef0c1aeb1dc51719c44f119297cb6))
 
 ### Miscellaneous Tasks
 
