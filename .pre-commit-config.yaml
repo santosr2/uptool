@@ -79,6 +79,12 @@ repos:
         args:
           - --ignore-words-list=crate,ans,te,ois,intoto
           - --skip="*.sum,*.mod,vendor/*,dist/*,.git/*"
+        stages: [pre-commit]
+      - id: codespell
+        name: codespell (commit message)
+        stages: [commit-msg]
+        args:
+          - --ignore-words-list=crate,ans,te,ois,intoto
 
   # Terraform/HCL formatting (since uptool supports terraform/tflint)
   - repo: https://github.com/antonbabenko/pre-commit-terraform
