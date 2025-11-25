@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Continuous Integration
 
 - **changelog**: Use github commit api to sign commit by [@santosr2](https://github.com/santosr2) ([44932ca](https://github.com/santosr2/uptool/commit/44932ca9d60888a69f23d0941922afda5de544d4))
+
+- **docker**: Fix scan when triggered manually by [@santosr2](https://github.com/santosr2) ([407156e](https://github.com/santosr2/uptool/commit/407156ebc9c9e7572b9a25c89938b7ea78da85ff))
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
 - Use bot_user_id in email insteawd app_id by [@santosr2](https://github.com/santosr2) ([c73b593](https://github.com/santosr2/uptool/commit/c73b5930376d1cbfbce350ffe4e4ae9fee6ee907))
@@ -19,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([283069c](https://github.com/santosr2/uptool/commit/283069c7ccfcfb52af8c4fb878e654d932f24f6f))
 - Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([2d8570a](https://github.com/santosr2/uptool/commit/2d8570a99f49925bacf9bc52af594e0b5e77b16f))
 - Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a214a03](https://github.com/santosr2/uptool/commit/a214a038617233f0a00b1f7e7975ad276860d0e6))
+- Fix `copy` icon from code blocks by [@santosr2](https://github.com/santosr2) ([90427ed](https://github.com/santosr2/uptool/commit/90427edb50e31e4d108e9f12d7c1f1b139cd2140))
 
 ### Miscellaneous Tasks
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([1c9cc4b](https://github.com/santosr2/uptool/commit/1c9cc4be391a7029aa3b9bef85ed2ff17768f6fa))
