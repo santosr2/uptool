@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Miscellaneous Tasks
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([1c9cc4b](https://github.com/santosr2/uptool/commit/1c9cc4be391a7029aa3b9bef85ed2ff17768f6fa))
+- Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([e47dc80](https://github.com/santosr2/uptool/commit/e47dc80155b2564dd6efe8e1d7f65680d9ae6f7a))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
