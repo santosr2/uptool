@@ -9,31 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Continuous Integration
 
-- **changelog**: Use github commit api to sign commit by [@santosr2](https://github.com/santosr2) ([44932ca](https://github.com/santosr2/uptool/commit/44932ca9d60888a69f23d0941922afda5de544d4))
+- **changelog**: Use github commit api to sign commit by [@santosr2](https://github.com/santosr2) ([b33c092](https://github.com/santosr2/uptool/commit/b33c09213ad4c78cf32ea868e4924999ad78dff0))
 
-- **docker**: Fix scan when triggered manually by [@santosr2](https://github.com/santosr2) ([407156e](https://github.com/santosr2/uptool/commit/407156ebc9c9e7572b9a25c89938b7ea78da85ff))
+- **docker**: Fix scan when triggered manually by [@santosr2](https://github.com/santosr2) ([828b080](https://github.com/santosr2/uptool/commit/828b08002d5b7c45babfc1af3c31f7cac61b94de))
 
-- **self-update-check**: Add it to self-update packages by [@santosr2](https://github.com/santosr2) ([5e4c6eb](https://github.com/santosr2/uptool/commit/5e4c6eb74e0bedc837f5299bfb50892dcccfdb21))
+- **self-update-check**: Add it to self-update packages by [@santosr2](https://github.com/santosr2) ([c85d85e](https://github.com/santosr2/uptool/commit/c85d85ed468856a12a7888ecc07b02ac73d9298a))
 
-- **self-update-check**: Replace cli to action usage by [@santosr2](https://github.com/santosr2) ([101dfba](https://github.com/santosr2/uptool/commit/101dfba0c7d23f0b959aced88f2edb129e7ec105))
+- **self-update-check**: Replace cli to action usage by [@santosr2](https://github.com/santosr2) ([2cb85a8](https://github.com/santosr2/uptool/commit/2cb85a891873e3e15f30a3fa15bd71340d89ca8b))
+
+- **self-update-check**: Skip uptool action tool install by [@santosr2](https://github.com/santosr2) ([3f3b25e](https://github.com/santosr2/uptool/commit/3f3b25ec7424152fef70a2a9abf16e58df7322d6))
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
-- Use bot_user_id in email insteawd app_id by [@santosr2](https://github.com/santosr2) ([c73b593](https://github.com/santosr2/uptool/commit/c73b5930376d1cbfbce350ffe4e4ae9fee6ee907))
-- Remove empty env field by [@santosr2](https://github.com/santosr2) ([57a6926](https://github.com/santosr2/uptool/commit/57a6926689dbd33a096f058abe070e6d77e8c657))
+- Use bot_user_id in email instead app_id by [@santosr2](https://github.com/santosr2) ([9194325](https://github.com/santosr2/uptool/commit/91943259b9a07462224637762021f7bc000384a7))
+- Remove empty env field by [@santosr2](https://github.com/santosr2) ([f6b1afd](https://github.com/santosr2/uptool/commit/f6b1afd3e74fc6429d504dfba92de3b79ca98cc2))
 
 ### Documentation
-- Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([283069c](https://github.com/santosr2/uptool/commit/283069c7ccfcfb52af8c4fb878e654d932f24f6f))
-- Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([2d8570a](https://github.com/santosr2/uptool/commit/2d8570a99f49925bacf9bc52af594e0b5e77b16f))
-- Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a214a03](https://github.com/santosr2/uptool/commit/a214a038617233f0a00b1f7e7975ad276860d0e6))
-- Fix `copy` icon from code blocks by [@santosr2](https://github.com/santosr2) ([90427ed](https://github.com/santosr2/uptool/commit/90427edb50e31e4d108e9f12d7c1f1b139cd2140))
+
+- **README**: Centralize the header by [@santosr2](https://github.com/santosr2) ([ba01bdd](https://github.com/santosr2/uptool/commit/ba01bdd0095da47c94e226bf6d6f6d9b3fedba73))
+- Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([fe43871](https://github.com/santosr2/uptool/commit/fe438713adf969bb0c7e1fc8317bfc1db03f671d))
+- Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([3b37908](https://github.com/santosr2/uptool/commit/3b3790876c6aa6a42bf5555390774fe7c38a4601))
+- Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a408029](https://github.com/santosr2/uptool/commit/a408029bc2520e1133cc55e4d9cf3583516ef88d))
+- Fix `copy` icon from code blocks by [@santosr2](https://github.com/santosr2) ([dc0a5ae](https://github.com/santosr2/uptool/commit/dc0a5ae2b0664d901d3210cb06cf3900aef03657))
 
 ### GitHub Actions
 
-- **uptool**: Add suport to create issue besides PR by [@santosr2](https://github.com/santosr2) ([71f3f9f](https://github.com/santosr2/uptool/commit/71f3f9f05c445a792e211939fd98df4c94171b46))
+- **uptool**: Add support to create issue besides PR by [@santosr2](https://github.com/santosr2) ([34f9303](https://github.com/santosr2/uptool/commit/34f9303be863faa51c3a7e779a94a00ced2bf559))
+
+- **uptool**: Add option to skip install by [@santosr2](https://github.com/santosr2) ([39bfc0d](https://github.com/santosr2/uptool/commit/39bfc0dc91addabed32ff9a4eec3056892feb22e))
 
 ### Miscellaneous Tasks
-- Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([1c9cc4b](https://github.com/santosr2/uptool/commit/1c9cc4be391a7029aa3b9bef85ed2ff17768f6fa))
-- Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([e47dc80](https://github.com/santosr2/uptool/commit/e47dc80155b2564dd6efe8e1d7f65680d9ae6f7a))
+
+- **pre-commit**: Check commit message spelling by [@santosr2](https://github.com/santosr2) ([dec4d9c](https://github.com/santosr2/uptool/commit/dec4d9c586982edbb94e1002e426bc34754a28a0))
+- Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([7a54070](https://github.com/santosr2/uptool/commit/7a54070922dcd994795751c5704bf950424ec27a))
+- Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([660dea2](https://github.com/santosr2/uptool/commit/660dea204d686e5b024f00e9c852a936bd989605))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
