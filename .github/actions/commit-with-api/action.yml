@@ -1,0 +1,157 @@
+name: 'Commit with GitHub API (Signed)'
+description: 'Create a verified commit using GitHub API instead of git commands'
+author: 'santosr2'
+
+inputs:
+  token:
+    description: 'GitHub App token for authentication'
+    required: true
+  message:
+    description: 'Commit message'
+    required: true
+  files:
+    description: 'Space-separated list of files to commit'
+    required: true
+  branch:
+    description: 'Branch to commit to'
+    default: ${{ github.ref_name }}
+    required: false
+  bot-user-id:
+    description: 'Bot user ID for commit attribution'
+    required: true
+  bot-name:
+    description: 'Bot name for commit attribution'
+    default: 'santosr2[bot]'
+    required: false
+
+outputs:
+  commit_sha:
+    description: 'SHA of the created commit'
+    value: ${{ steps.create-commit.outputs.sha }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get current commit SHA
+      id: get-sha
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        echo "Fetching current HEAD for branch: ${{ inputs.branch }}"
+        CURRENT_SHA=$(gh api "/repos/${{ github.repository }}/git/refs/heads/${{ inputs.branch }}" --jq .object.sha 2>&1)
+
+        if [ $? -ne 0 ]; then
+          echo "::error::Failed to get current commit SHA"
+          echo "Error: $CURRENT_SHA"
+          exit 1
+        fi
+
+        echo "sha=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
+        echo "Current HEAD: $CURRENT_SHA"
+
+    - name: Create tree with changes
+      id: create-tree
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        FILES: ${{ inputs.files }}
+        BASE_TREE: ${{ steps.get-sha.outputs.sha }}
+      run: |
+        # Get the base tree from current commit
+        BASE_TREE_RESPONSE=$(gh api "/repos/${{ github.repository }}/git/commits/$BASE_TREE" --jq .tree.sha)
+
+        # Build tree entries array as proper JSON
+        TREE_JSON="[]"
+
+        for file in $FILES; do
+          if [ ! -f "$file" ]; then
+            echo "::error::File not found: $file"
+            exit 1
+          fi
+
+          # Read file content and properly escape for JSON
+          CONTENT=$(jq -Rs . < "$file")
+
+          # Add entry to tree array
+          TREE_JSON=$(echo "$TREE_JSON" | jq --arg path "$file" \
+                                              --arg mode "100644" \
+                                              --arg type "blob" \
+                                              --argjson content "$CONTENT" \
+                                              '. + [{path: $path, mode: $mode, type: $type, content: $content}]')
+        done
+
+        # Create tree with base_tree
+        PAYLOAD=$(jq -n --arg base_tree "$BASE_TREE_RESPONSE" \
+                        --argjson tree "$TREE_JSON" \
+                        '{base_tree: $base_tree, tree: $tree}')
+
+        TREE_SHA=$(echo "$PAYLOAD" | gh api "/repos/${{ github.repository }}/git/trees" \
+          --input - --jq .sha)
+
+        echo "sha=$TREE_SHA" >> "$GITHUB_OUTPUT"
+        echo "Created tree: $TREE_SHA"
+
+    - name: Create commit
+      id: create-commit
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        MESSAGE: ${{ inputs.message }}
+        TREE: ${{ steps.create-tree.outputs.sha }}
+        PARENT: ${{ steps.get-sha.outputs.sha }}
+        BOT_NAME: ${{ inputs.bot-name }}
+        BOT_EMAIL: ${{ inputs.bot-user-id }}+${{ inputs.bot-name }}@users.noreply.github.com
+      run: |
+        echo "Creating commit as: $BOT_NAME <$BOT_EMAIL>"
+
+        COMMIT_SHA=$(gh api "/repos/${{ github.repository }}/git/commits" \
+          -f message="$MESSAGE" \
+          -f tree="$TREE" \
+          -f parents[]="$PARENT" \
+          -f author[name]="$BOT_NAME" \
+          -f author[email]="$BOT_EMAIL" \
+          -f committer[name]="$BOT_NAME" \
+          -f committer[email]="$BOT_EMAIL" \
+          --jq .sha 2>&1)
+
+        if [ $? -ne 0 ]; then
+          echo "::error::Failed to create commit"
+          echo "Error: $COMMIT_SHA"
+          exit 1
+        fi
+
+        echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+        echo "✅ Created commit: $COMMIT_SHA by $BOT_NAME <$BOT_EMAIL>"
+
+    - name: Update reference
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        COMMIT: ${{ steps.create-commit.outputs.sha }}
+      run: |
+        gh api "/repos/${{ github.repository }}/git/refs/heads/${{ inputs.branch }}" \
+          -X PATCH \
+          -f sha="$COMMIT" \
+          -F force=false
+
+        echo "✅ Updated branch ${{ inputs.branch }} to $COMMIT"
+
+    - name: Verify commit signature
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        COMMIT: ${{ steps.create-commit.outputs.sha }}
+      run: |
+        VERIFICATION=$(gh api "/repos/${{ github.repository }}/commits/$COMMIT" --jq .commit.verification)
+        VERIFIED=$(echo "$VERIFICATION" | jq -r .verified)
+        REASON=$(echo "$VERIFICATION" | jq -r .reason)
+
+        echo "Verification status: $VERIFIED"
+        echo "Reason: $REASON"
+
+        if [ "$VERIFIED" = "true" ]; then
+          echo "✅ Commit is verified!"
+        else
+          echo "⚠️ Commit verification: $REASON"
+        fi
