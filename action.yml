@@ -52,8 +52,23 @@ inputs:
     required: false
     default: 'uptool/dependency-updates'
 
+  create-issue:
+    description: 'Create an issue when updates are available'
+    required: false
+    default: 'false'
+
+  issue-title:
+    description: 'Title for the issue'
+    required: false
+    default: 'Dependency Updates Available'
+
+  issue-labels:
+    description: 'Comma-separated labels for the issue'
+    required: false
+    default: 'dependencies,automated'
+
   token:
-    description: 'GitHub token for creating PRs'
+    description: 'GitHub token for creating PRs or issues'
     required: false
     default: ${{ github.token }}
 
@@ -265,3 +280,144 @@ runs:
         labels: |
           dependencies
           automated
+
+    - name: Generate issue body
+      if: inputs.create-issue == 'true' && steps.uptool.outputs.updates-available == 'true'
+      id: issue-body
+      shell: bash
+      run: |
+        # Change to workspace directory
+        cd "$GITHUB_WORKSPACE"
+
+        # Run uptool plan with JSON output to get detailed update information
+        /tmp/uptool plan --format=json > /tmp/plan-output.json
+
+        # Generate issue body
+        cat > /tmp/issue-body.md <<'EOFMARKER'
+        ## 🔄 Dependency Updates Available
+
+        Dependency scan found updates available for your project.
+
+        EOFMARKER
+
+        # Parse JSON and create detailed tables per manifest
+        jq -r '
+          .plans[] |
+          "### " + (.manifest.path | gsub("^\\./"; "")) + "\n\n" +
+          "| Package | Update | Type | Links |\n" +
+          "|---------|--------|------|-------|\n" +
+          (
+            .updates[] |
+            "| **" + .dependency.name + "** | `" + .dependency.current_version + "` → `" + .target_version + "` | " +
+            (if .impact == "major" then "🔴 Major"
+             elif .impact == "minor" then "🟡 Minor"
+             elif .impact == "patch" then "🟢 Patch"
+             else "⚪ " + .impact end) +
+            " | " +
+            (if .changelog_url != "" and .changelog_url != null then
+              "[Changelog](" + .changelog_url + ")"
+             else
+              "N/A"
+             end) +
+            " |\n"
+          ) +
+          "\n"
+        ' /tmp/plan-output.json >> /tmp/issue-body.md
+
+        # Add update statistics
+        TOTAL_UPDATES=$(jq '[.plans[].updates[]] | length' /tmp/plan-output.json)
+        MANIFEST_COUNT=$(jq '[.plans[]] | length' /tmp/plan-output.json)
+        MAJOR_COUNT=$(jq '[.plans[].updates[] | select(.impact == "major")] | length' /tmp/plan-output.json)
+        MINOR_COUNT=$(jq '[.plans[].updates[] | select(.impact == "minor")] | length' /tmp/plan-output.json)
+        PATCH_COUNT=$(jq '[.plans[].updates[] | select(.impact == "patch")] | length' /tmp/plan-output.json)
+
+        cat >> /tmp/issue-body.md <<EOFMARKER
+
+        ---
+
+        ### 📊 Update Summary
+
+        - **Total updates:** $TOTAL_UPDATES
+        - **Manifests affected:** $MANIFEST_COUNT
+        - **Update types:** 🔴 $MAJOR_COUNT major · 🟡 $MINOR_COUNT minor · 🟢 $PATCH_COUNT patch
+
+        <details>
+        <summary>ℹ️ <strong>Update Type Definitions</strong></summary>
+
+        - 🔴 **Major** - Breaking changes may be introduced
+        - 🟡 **Minor** - New features, backwards compatible
+        - 🟢 **Patch** - Bug fixes and minor improvements
+
+        </details>
+
+        ### 📋 Next Steps
+
+        1. Review the dependency changes above
+        2. Check changelogs for breaking changes (especially major updates)
+        3. Run \`uptool plan\` locally to review planned updates
+        4. Apply updates: \`uptool update\`
+        5. Test your application
+        6. Create a PR with the changes
+
+        ### 🔗 Resources
+
+        - [uptool Documentation](https://github.com/santosr2/uptool)
+        - [Manifest-First Philosophy](https://github.com/santosr2/uptool#manifest-first)
+
+        ---
+
+        <sub>🤖 This issue was automatically created by [uptool](https://github.com/santosr2/uptool)</sub>
+        EOFMARKER
+
+        # Output the issue body for the next step (escape for GitHub Actions)
+        {
+          echo 'issue-body<<EOF_ISSUE_BODY_DELIMITER'
+          cat /tmp/issue-body.md
+          echo 'EOF_ISSUE_BODY_DELIMITER'
+        } >> $GITHUB_OUTPUT
+
+    - name: Create or Update Issue
+      if: inputs.create-issue == 'true' && steps.uptool.outputs.updates-available == 'true'
+      uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const issueTitle = '${{ inputs.issue-title }}';
+          const issueBody = `${{ steps.issue-body.outputs.issue-body }}`;
+          const labelString = '${{ inputs.issue-labels }}';
+          const labels = labelString.split(',').map(l => l.trim()).filter(l => l);
+
+          // Search for existing open issue with the same title
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            per_page: 100
+          });
+
+          const existingIssue = issues.data.find(issue =>
+            issue.title === issueTitle
+          );
+
+          if (existingIssue) {
+            // Update existing issue with a comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              body: `### 🔄 Update (${new Date().toISOString().slice(0, 10)})\n\n${issueBody}`
+            });
+
+            console.log(`Updated existing issue #${existingIssue.number}`);
+          } else {
+            // Create new issue
+            const newIssue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: labels
+            });
+
+            console.log(`Created new issue #${newIssue.data.number}`);
+          }
