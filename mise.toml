@@ -36,6 +36,7 @@ hadolint = "latest"
 # https://github.com/astral-sh/uv/issues/14142
 # "pipx:mkdocs-material" = "9.5"
 "go:github.com/princjef/gomarkdoc/cmd/gomarkdoc" = "latest"
+"pipx:mike" = "latest"
 
 # Security scanning
 "go:github.com/securego/gosec/v2/cmd/gosec" = "latest"

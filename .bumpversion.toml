@@ -78,23 +78,9 @@ filename = "SECURITY.md"
 search = "currently {current_major}.{current_minor}.x"
 replace = "currently {new_major}.{new_minor}.x"
 
-# docs/action-usage.md - Action version examples
-[[tool.bumpversion.files]]
-filename = "docs/action-usage.md"
-search = "@v{current_version}"
-replace = "@v{new_version}"
-
-# docs/action-usage.md - Also update major.minor references
-[[tool.bumpversion.files]]
-filename = "docs/action-usage.md"
-search = "@v{current_major}"
-replace = "@v{new_major}"
-
-# docs/action-usage.md - Also update major.minor references
-[[tool.bumpversion.files]]
-filename = "docs/action-usage.md"
-search = "@v{current_major}.{current_minor}"
-replace = "@v{new_major}.{new_minor}"
+# Note: docs/action-usage.md now uses dynamic Jinja variables from mkdocs.yml
+# ({{ extra.uptool_version }}, {{ extra.uptool_version_major }}, {{ extra.uptool_version_minor }})
+# So we don't need to update it directly - just update mkdocs.yml variables
 
 # examples/plugins/README.md - Plugin compatibility version
 [[tool.bumpversion.files]]
@@ -108,11 +94,23 @@ filename = "examples/plugins/python/go.mod"
 search = "require github.com/santosr2/uptool v{current_version}"
 replace = "require github.com/santosr2/uptool v{new_version}"
 
-# mkdocs.yml - uptool_version variable for GitHub URLs
+# mkdocs.yml - uptool_version variable for GitHub URLs (full version)
 [[tool.bumpversion.files]]
 filename = "mkdocs.yml"
 search = "uptool_version: v{current_version}"
 replace = "uptool_version: v{new_version}"
+
+# mkdocs.yml - uptool_version_major variable (e.g., v0) - note the indentation
+[[tool.bumpversion.files]]
+filename = "mkdocs.yml"
+search = "  uptool_version_major: v{current_major}"
+replace = "  uptool_version_major: v{new_major}"
+
+# mkdocs.yml - uptool_version_minor variable (e.g., v0.2) - note the indentation
+[[tool.bumpversion.files]]
+filename = "mkdocs.yml"
+search = "  uptool_version_minor: v{current_major}.{current_minor}"
+replace = "  uptool_version_minor: v{new_major}.{new_minor}"
 
 # .github/MARKETPLACE.md - GitHub Action version references
 # [[tool.bumpversion.files]]
@@ -120,11 +118,8 @@ replace = "uptool_version: v{new_version}"
 # search = "@v{current_major}"
 # replace = "@v{new_major}"
 
-# docs/quickstart.md - Action version references (major.minor)
-[[tool.bumpversion.files]]
-filename = "docs/quickstart.md"
-search = "@v{current_major}.{current_minor}"
-replace = "@v{new_major}.{new_minor}"
+# Note: docs/quickstart.md now uses dynamic Jinja variables from mkdocs.yml
+# ({{ extra.uptool_version }}) - no direct version bumping needed
 
 # docs/migration.md - Action version references (major only)
 # [[tool.bumpversion.files]]

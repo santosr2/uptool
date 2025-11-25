@@ -190,13 +190,13 @@ Users can pin to different levels:
 
 ```yaml
 # Exact version (most secure, no automatic updates)
-- uses: santosr2/uptool@v0.1.0
+- uses: santosr2/uptool@{{ extra.uptool_version }}
 
 # Minor version (gets security patches automatically)
-- uses: santosr2/uptool@v0.1
+- uses: santosr2/uptool@{{ extra.uptool_version_minor }}
 
 # Major version (gets all updates in v0.x)
-- uses: santosr2/uptool@v0
+- uses: santosr2/uptool@{{ extra.uptool_version_major }}
 ```
 
 ## Troubleshooting

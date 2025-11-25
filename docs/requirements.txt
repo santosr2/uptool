@@ -10,6 +10,7 @@ mike>=2.0.0,<3.0.0
 
 # Plugins
 mkdocs-git-revision-date-localized-plugin>=1.2.0
+mkdocs-macros-plugin>=1.0.0  # Enable Jinja2 templating in markdown
 
 # Optional but recommended for full feature support
 # These provide enhanced markdown rendering and features

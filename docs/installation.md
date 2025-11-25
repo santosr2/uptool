@@ -157,7 +157,7 @@ uptool version
 Expected output:
 
 ```text
-uptool version 0.1.0
+uptool version {{ extra.uptool_version.lstrip('v') }}
 ```
 
 ---

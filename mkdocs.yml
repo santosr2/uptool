@@ -80,6 +80,10 @@ plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
 
+  - macros:
+      # Enable Jinja2 templating in markdown files
+      # Allows using {{ extra.uptool_version }} in documentation
+
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
@@ -146,12 +150,15 @@ extra:
     provider: mike
     default: latest
 
-  # Version variable for GitHub URLs in documentation
-  # This should match the git tag (e.g., v0.1.0, v0.2.0)
-  # Usage in docs: {{ extra.uptool_version }}
-  # When deploying with mike, override with: mike deploy --update-aliases <version> -p -F mkdocs.yml -t "uptool_version=v<version>"
-  # This ensures documentation links point to files from the same version
+  # Version variables for GitHub URLs in documentation
+  # These are automatically updated by the docs-deploy workflow
+  # Usage in docs:
+  #   - {{ extra.uptool_version }} → v0.2.0-alpha20251124 (full tag)
+  #   - {{ extra.uptool_version_major }} → v0 (major version)
+  #   - {{ extra.uptool_version_minor }} → v0.2 (major.minor version)
   uptool_version: v0.2.0-alpha20251124
+  uptool_version_major: v0
+  uptool_version_minor: v0.2
 
 # Navigation structure
 nav:

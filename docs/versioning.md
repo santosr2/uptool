@@ -73,13 +73,13 @@ See [environments.md](environments.md) for approval gate setup.
 
 ```yaml
 # Recommended
-- uses: santosr2/uptool@v0
+- uses: santosr2/uptool@{{ extra.uptool_version_major }}
 
 # Pin to minor
-- uses: santosr2/uptool@v0.1
+- uses: santosr2/uptool@{{ extra.uptool_version_minor }}
 
 # Pin to exact version
-- uses: santosr2/uptool@v0.1.0
+- uses: santosr2/uptool@{{ extra.uptool_version }}
 ```
 
 ## Files Updated Automatically

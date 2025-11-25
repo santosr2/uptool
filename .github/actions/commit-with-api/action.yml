@@ -135,6 +135,7 @@ runs:
           -f sha="$COMMIT" \
           -F force=false
 
+        echo ""
         echo "✅ Updated branch ${{ inputs.branch }} to $COMMIT"
 
     - name: Verify commit signature

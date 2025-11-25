@@ -213,7 +213,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run uptool
-        uses: santosr2/uptool@v0.2
+        uses: santosr2/uptool@{{ extra.uptool_version }}
         with:
           command: update
           create-pr: true

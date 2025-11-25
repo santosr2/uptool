@@ -131,16 +131,39 @@ jobs:
         id: deploy_version
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            # For version tags (e.g., v0.2.0), deploy as "0.2" with "latest" alias
             TAG_VERSION="${GITHUB_REF#refs/tags/v}"
-            MAJOR_MINOR=$(echo "$TAG_VERSION" | cut -d. -f1,2)
-            {
-              echo "version=${MAJOR_MINOR}"
-              echo "alias=latest"
-              echo "is_release=true"
-              echo "uptool_version=v${TAG_VERSION}"
-            } >> "$GITHUB_OUTPUT"
-            echo "📌 Deploying version: ${MAJOR_MINOR} (latest)" >> "$GITHUB_STEP_SUMMARY"
+
+            # Extract major and minor versions
+            MAJOR=$(echo "$TAG_VERSION" | cut -d. -f1)
+            MINOR=$(echo "$TAG_VERSION" | cut -d. -f2)
+            MAJOR_MINOR="${MAJOR}.${MINOR}"
+
+            # Check if this is a pre-release (contains -, like alpha, beta, rc)
+            if [[ "$TAG_VERSION" =~ - ]]; then
+              # Pre-release: extract version with prerelease suffix (e.g., 0.2-alpha, 0.2-beta)
+              PRERELEASE_TYPE=$(echo "$TAG_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9]*/\1/')
+              VERSION="${MAJOR_MINOR}-${PRERELEASE_TYPE}"
+              {
+                echo "version=${VERSION}"
+                echo "alias=latest"
+                echo "is_release=false"
+                echo "uptool_version=v${TAG_VERSION}"
+                echo "uptool_version_major=v${MAJOR}"
+                echo "uptool_version_minor=v${MAJOR_MINOR}"
+              } >> "$GITHUB_OUTPUT"
+              echo "📌 Deploying pre-release version: ${VERSION} (latest)" >> "$GITHUB_STEP_SUMMARY"
+            else
+              # Stable release: use major.minor (e.g., 0.2)
+              {
+                echo "version=${MAJOR_MINOR}"
+                echo "alias=latest"
+                echo "is_release=true"
+                echo "uptool_version=v${TAG_VERSION}"
+                echo "uptool_version_major=v${MAJOR}"
+                echo "uptool_version_minor=v${MAJOR_MINOR}"
+              } >> "$GITHUB_OUTPUT"
+              echo "📌 Deploying stable version: ${MAJOR_MINOR} (latest)" >> "$GITHUB_STEP_SUMMARY"
+            fi
           elif [[ "${GITHUB_REF}" == refs/heads/main ]]; then
             # For main branch, deploy as "main"
             {
@@ -148,15 +171,26 @@ jobs:
               echo "alias=dev"
               echo "is_release=false"
               echo "uptool_version=main"
+              echo "uptool_version_major=v0"
+              echo "uptool_version_minor=v0.2"
             } >> "$GITHUB_OUTPUT"
             echo "📌 Deploying version: main (dev)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Update MkDocs version variable
+      - name: Update MkDocs version variables
         run: |
           VERSION="${{ steps.deploy_version.outputs.uptool_version }}"
+          VERSION_MAJOR="${{ steps.deploy_version.outputs.uptool_version_major }}"
+          VERSION_MINOR="${{ steps.deploy_version.outputs.uptool_version_minor }}"
+
           sed -i "s/uptool_version: .*/uptool_version: ${VERSION}/" mkdocs.yml
-          echo "✅ Updated mkdocs.yml with version: ${VERSION}"
+          sed -i "s/uptool_version_major: .*/uptool_version_major: ${VERSION_MAJOR}/" mkdocs.yml
+          sed -i "s/uptool_version_minor: .*/uptool_version_minor: ${VERSION_MINOR}/" mkdocs.yml
+
+          echo "✅ Updated mkdocs.yml with versions:"
+          echo "  - Full: ${VERSION}"
+          echo "  - Major: ${VERSION_MAJOR}"
+          echo "  - Minor: ${VERSION_MINOR}"
 
       - name: Configure Git for mike
         run: |
@@ -190,15 +224,14 @@ jobs:
             mike deploy --push "$VERSION"
           fi
 
-          # Set default version
-          # - For releases: set the release version as default
-          # - For main branch: set main as default (until a release is made)
+          # Set default version only for stable releases
+          # - For stable releases: set as default
+          # - For pre-releases and main: don't change default
           if [ "$IS_RELEASE" = "true" ]; then
             echo "📌 Setting $VERSION as default version (stable release)"
             mike set-default --push "$VERSION"
           else
-            echo "📌 Setting $VERSION as default version (development)"
-            mike set-default --push "$VERSION"
+            echo "ℹ️ Not changing default version (current deployment is not a stable release)"
           fi
 
           # Deployment summary

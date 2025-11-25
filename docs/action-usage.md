@@ -26,14 +26,14 @@ jobs:
         with:
           command: update
           create-pr: 'true'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: {% raw %}${{  secrets.GITHUB_TOKEN  }}{% endraw %}
 ```
 
 **Version pinning**:
 
-- `@v0` - Latest stable (auto-updates)
-- `@v0.2` - Latest patch
-- `@v0.2.0-alpha20251124` - Exact version (most secure)
+- `@{{ extra.uptool_version_major }}` - Latest stable (auto-updates)
+- `@{{ extra.uptool_version_minor }}` - Latest patch
+- `@{{ extra.uptool_version }}` - Exact version (most secure)
 
 ## Common Patterns
 
@@ -74,7 +74,7 @@ strategy:
 steps:
   - uses: santosr2/uptool@v0
     with:
-      working-directory: packages/${{ matrix.package }}
+      working-directory: packages/{% raw %}${{  matrix.package  }}{% endraw %}
       command: update
 ```
 
@@ -94,7 +94,7 @@ steps:
 |-------|----------|---------|-------------|
 | `command` | Yes | - | Command: `scan`, `plan`, or `update` |
 | `create-pr` | No | `false` | Create pull request |
-| `token` | No | `${{ github.token }}` | GitHub token |
+| `token` | No | `{% raw %}${{  github.token  }}{% endraw %}` | GitHub token |
 | `only` | No | - | Comma-separated integrations |
 | `exclude` | No | - | Exclude integrations |
 | `dry-run` | No | `false` | Preview without applying |
@@ -124,7 +124,7 @@ steps:
 
 - name: Check results
   if: steps.uptool.outputs.updates-available == 'true'
-  run: echo "Found ${{ steps.uptool.outputs.updates-count }} updates"
+  run: echo "Found {% raw %}${{  steps.uptool.outputs.updates-count  }}{% endraw %} updates"
 ```
 
 ## Permissions
@@ -169,7 +169,7 @@ permissions:
   with:
     payload: |
       {
-        "text": "uptool failed: ${{ steps.uptool.outputs.error }}"
+        "text": "uptool failed: {% raw %}${{  steps.uptool.outputs.error  }}{% endraw %}"
       }
 ```
 
@@ -197,8 +197,8 @@ steps:
   - uses: santosr2/uptool@v0
     with:
       command: update
-      working-directory: environments/${{ matrix.env }}
-      pr-branch: uptool/updates-${{ matrix.env }}
+      working-directory: environments/{% raw %}${{  matrix.env  }}{% endraw %}
+      pr-branch: uptool/updates-{% raw %}${{  matrix.env  }}{% endraw %}
 ```
 
 ## Troubleshooting
@@ -225,11 +225,11 @@ steps:
 
 ```yaml
 - name: Setup npm auth
-  run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+  run: echo "//registry.npmjs.org/:_authToken={% raw %}${{  secrets.NPM_TOKEN  }}{% endraw %}" > ~/.npmrc
 
 - uses: santosr2/uptool@v0
   env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_TOKEN: {% raw %}${{  secrets.GITHUB_TOKEN  }}{% endraw %}
 ```
 
 ### Action Times Out
