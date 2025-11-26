@@ -76,6 +76,7 @@ jobs:
           fi
 
       - name: Run uptool action (create issue)
+        id: uptool-issue
         if: steps.mode.outputs.mode == 'issue'
         uses: ./
         with:
@@ -87,6 +88,7 @@ jobs:
           issue-labels: 'dependencies,automated,enhancement'
 
       - name: Run uptool action (create PR)
+        id: uptool-pr
         if: steps.mode.outputs.mode == 'pr'
         uses: ./
         with:
@@ -98,12 +100,81 @@ jobs:
           pr-branch: 'uptool/dependency-updates-${{ github.run_number }}'
 
       - name: Run uptool action (check only)
+        id: uptool-check
         if: steps.mode.outputs.mode == 'check'
         uses: ./
         with:
           token: ${{ steps.app-token.outputs.token }}
           command: plan
           skip-install: true
+
+      - name: Capture uptool plan output
+        id: capture-plan
+        run: |
+          echo "Capturing uptool plan output for summary..."
+
+          # Run uptool plan with JSON format to get structured output
+          uptool plan --format=json > /tmp/plan-output.json 2>/dev/null || true
+
+          # Check if we have valid JSON output
+          if [ -s /tmp/plan-output.json ] && jq -e . /tmp/plan-output.json >/dev/null 2>&1; then
+            # Extract update counts
+            TOTAL_UPDATES=$(jq '[.plans[].updates[]] | length' /tmp/plan-output.json)
+            MANIFEST_COUNT=$(jq '[.plans[]] | length' /tmp/plan-output.json)
+            MAJOR_COUNT=$(jq '[.plans[].updates[] | select(.impact == "major")] | length' /tmp/plan-output.json)
+            MINOR_COUNT=$(jq '[.plans[].updates[] | select(.impact == "minor")] | length' /tmp/plan-output.json)
+            PATCH_COUNT=$(jq '[.plans[].updates[] | select(.impact == "patch")] | length' /tmp/plan-output.json)
+
+            {
+              echo "updates-available=true"
+              echo "total-updates=$TOTAL_UPDATES"
+              echo "manifest-count=$MANIFEST_COUNT"
+              echo "major-count=$MAJOR_COUNT"
+              echo "minor-count=$MINOR_COUNT"
+              echo "patch-count=$PATCH_COUNT"
+            } >> "$GITHUB_OUTPUT"
+
+            # Generate markdown table of updates
+            {
+              echo 'updates-table<<EOF_UPDATES_TABLE'
+              jq -r '
+                .plans[] |
+                "#### " + (.manifest.path | gsub("^\\./"; "")) + "\n" +
+                "| Package | Current | Target | Type |\n" +
+                "|---------|---------|--------|------|\n" +
+                (
+                  .updates[] |
+                  "| " + .dependency.name + " | `" + .dependency.current_version + "` | `" + .target_version + "` | " +
+                  (if .impact == "major" then "Major"
+                   elif .impact == "minor" then "Minor"
+                   elif .impact == "patch" then "Patch"
+                   else .impact end) +
+                  " |\n"
+                )
+              ' /tmp/plan-output.json
+              echo 'EOF_UPDATES_TABLE'
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "updates-available=false"
+              echo "total-updates=0"
+              echo "manifest-count=0"
+              echo "major-count=0"
+              echo "minor-count=0"
+              echo "patch-count=0"
+              echo "updates-table="
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+    outputs:
+      updates-available: ${{ steps.capture-plan.outputs.updates-available }}
+      total-updates: ${{ steps.capture-plan.outputs.total-updates }}
+      manifest-count: ${{ steps.capture-plan.outputs.manifest-count }}
+      major-count: ${{ steps.capture-plan.outputs.major-count }}
+      minor-count: ${{ steps.capture-plan.outputs.minor-count }}
+      patch-count: ${{ steps.capture-plan.outputs.patch-count }}
+      updates-table: ${{ steps.capture-plan.outputs.updates-table }}
+      mode: ${{ steps.mode.outputs.mode }}
 
   summary:
     name: Dependency Check Summary
@@ -114,22 +185,79 @@ jobs:
       contents: read
     steps:
       - name: Generate summary
+        env:
+          UPDATES_AVAILABLE: ${{ needs.check-dependencies.outputs.updates-available }}
+          TOTAL_UPDATES: ${{ needs.check-dependencies.outputs.total-updates }}
+          MANIFEST_COUNT: ${{ needs.check-dependencies.outputs.manifest-count }}
+          MAJOR_COUNT: ${{ needs.check-dependencies.outputs.major-count }}
+          MINOR_COUNT: ${{ needs.check-dependencies.outputs.minor-count }}
+          PATCH_COUNT: ${{ needs.check-dependencies.outputs.patch-count }}
+          UPDATES_TABLE: ${{ needs.check-dependencies.outputs.updates-table }}
+          MODE: ${{ needs.check-dependencies.outputs.mode }}
         run: |
           {
-            echo "## 🔍 Self Update Check Complete"
+            echo "## Self Update Check Complete"
             echo ""
             echo "**Status**: ${{ needs.check-dependencies.result }}"
             echo ""
-            echo "### What was checked?"
-            echo "- ✅ \`.pre-commit-config.yaml\` (pre-commit hooks)"
-            echo "- ✅ \`mise.toml\` (runtime versions - detection only)"
-            echo "- ✅ \`go.mod\` and \`go.sum\` (Go dependencies)"
+
+            # What was changed section
+            echo "### What was changed?"
             echo ""
+            if [ "$UPDATES_AVAILABLE" == "true" ] && [ "${TOTAL_UPDATES:-0}" -gt 0 ]; then
+              echo "**${TOTAL_UPDATES} updates** found across **${MANIFEST_COUNT} manifests**"
+              echo ""
+              echo "| Type | Count |"
+              echo "|------|-------|"
+              if [ "${MAJOR_COUNT:-0}" -gt 0 ]; then
+                echo "| Major | ${MAJOR_COUNT} |"
+              fi
+              if [ "${MINOR_COUNT:-0}" -gt 0 ]; then
+                echo "| Minor | ${MINOR_COUNT} |"
+              fi
+              if [ "${PATCH_COUNT:-0}" -gt 0 ]; then
+                echo "| Patch | ${PATCH_COUNT} |"
+              fi
+              echo ""
+
+              # Show detailed updates table if available
+              if [ -n "$UPDATES_TABLE" ]; then
+                echo "<details>"
+                echo "<summary>View all updates</summary>"
+                echo ""
+                echo "$UPDATES_TABLE"
+                echo "</details>"
+                echo ""
+              fi
+
+              # Show action taken based on mode
+              echo "**Action taken:**"
+              case "$MODE" in
+                issue)
+                  echo "- Created/updated issue with available updates"
+                  ;;
+                pr)
+                  echo "- Created pull request with dependency updates"
+                  ;;
+                check)
+                  echo "- Check only (no PR or issue created)"
+                  ;;
+              esac
+            else
+              echo "No updates available - all dependencies are up to date!"
+            fi
+            echo ""
+
+            # What was checked section
+            echo "### What was checked?"
+            echo "- \`.pre-commit-config.yaml\` (pre-commit hooks)"
+            echo "- \`mise.toml\` (runtime versions - detection only)"
+            echo "- \`go.mod\` and \`go.sum\` (Go dependencies)"
+            echo ""
+
             echo "### Notes"
             echo "- This workflow uses uptool to check its own dependencies (dogfooding)"
             echo "- Runs weekly on Mondays at 9:00 AM UTC"
             echo "- Creates an issue when updates are found (scheduled runs)"
             echo "- Can create a PR via workflow_dispatch with \`create-pr: true\`"
-            echo ""
-            echo "📚 See workflow run for detailed results"
           } >> "$GITHUB_STEP_SUMMARY"
