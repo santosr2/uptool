@@ -7,7 +7,7 @@ MD013: false
 
 # Allow 'name' elements to have inline code without triggering line length rule
 MD033:
-  allowed_elements: ["name", "div", "small", "center"]
+  allowed_elements: ["name", "div", "small"]
 
 # Disable rule for enforcing consistent heading styles
 MD036: false
