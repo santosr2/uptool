@@ -169,15 +169,33 @@ jobs:
       - name: Generate release notes
         env:
           VERSION: ${{ needs.calculate-version.outputs.new_tag }}
+          PRERELEASE_TYPE: ${{ github.event.inputs.prerelease_type }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Generate changelog section
-          PREV_TAG=$(git describe --tags --abbrev=0 "${VERSION}^" 2>/dev/null || echo "")
+          # Find the previous release of the same type for better changelog context
+          # For alpha: find last alpha tag
+          # For rc/beta: find last rc/beta tag of same base version
+          BASE_VERSION=$(echo "$VERSION" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+)-.*/\1/')
 
+          if [ "$PRERELEASE_TYPE" = "alpha" ]; then
+            PREV_TAG=$(git tag -l "v${BASE_VERSION}-alpha*" | sort -V | tail -n 2 | head -n 1 || echo "")
+          else
+            PREV_TAG=$(git tag -l "v${BASE_VERSION}-${PRERELEASE_TYPE}[0-9]*" | sort -V | tail -n 2 | head -n 1 || echo "")
+          fi
+
+          # If no previous pre-release of this type, fall back to last stable or any tag
+          if [ -z "$PREV_TAG" ]; then
+            PREV_TAG=$(git describe --tags --abbrev=0 "${VERSION}^" 2>/dev/null || echo "")
+          fi
+
+          # Generate changelog for this specific release range
           if [ -n "$PREV_TAG" ]; then
             git-cliff --config git-cliff.toml "$PREV_TAG..$VERSION" --strip all > changelog-section.md
+            CHANGELOG_RANGE="$PREV_TAG..$VERSION"
           else
+            # First release ever
             git-cliff --config git-cliff.toml --strip all > changelog-section.md
+            CHANGELOG_RANGE="Initial release"
           fi
 
           # Create release notes template (header section with version substitution)
@@ -192,6 +210,16 @@ jobs:
 
           # Append changelog content
           cat changelog-section.md >> release-notes.md
+
+          # Add changelog link if we have a range
+          if [ "$CHANGELOG_RANGE" != "Initial release" ]; then
+            cat >> release-notes.md <<EOFNOTES
+
+              ---
+
+              **Full Changelog**: https://github.com/${{ github.repository }}/compare/${CHANGELOG_RANGE}
+          EOFNOTES
+          fi
 
           # Append the rest of the release notes (literal, no substitution)
           cat >> release-notes.md <<EOFNOTES
@@ -344,6 +372,14 @@ jobs:
           path: dist/
           retention-days: 90
           if-no-files-found: error
+
+      - name: Trigger Docker build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Trigger Docker workflow to build and push container images
+          gh workflow run docker.yml \
+            --ref "${{ needs.calculate-version.outputs.new_tag }}"
 
   provenance:
     name: Generate SLSA Provenance
