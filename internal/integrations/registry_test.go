@@ -42,7 +42,7 @@ func (m *mockIntegration) Detect(ctx context.Context, repoRoot string) ([]*engin
 	return nil, nil
 }
 
-func (m *mockIntegration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+func (m *mockIntegration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	return nil, nil
 }
 

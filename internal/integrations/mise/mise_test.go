@@ -510,7 +510,7 @@ func TestPlan(t *testing.T) {
 				Metadata:     map[string]interface{}{},
 			}
 
-			plan, err := integration.Plan(context.Background(), manifest)
+			plan, err := integration.Plan(context.Background(), manifest, nil)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Plan() error = %v, wantErr %v", err, tt.wantErr)
@@ -667,7 +667,7 @@ ruby = "3.2.0"
 	}
 
 	// Step 2: Plan
-	plan, err := integration.Plan(ctx, manifest)
+	plan, err := integration.Plan(ctx, manifest, nil)
 	if err != nil {
 		t.Fatalf("Plan() error: %v", err)
 	}

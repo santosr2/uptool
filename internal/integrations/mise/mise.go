@@ -172,7 +172,12 @@ func (i *Integration) parseMiseToml(manifest *engine.Manifest, content []byte) (
 //
 // Future enhancement: Could implement version checking via tool-specific datasources
 // (npm registry, python.org, ruby gems, etc.) or by calling mise native commands.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+//
+// The planCtx parameter is accepted for interface compatibility but not currently used.
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
+	// Note: planCtx is not currently used as mise version resolution is not implemented.
+	_ = planCtx
+
 	return &engine.UpdatePlan{
 		Manifest: manifest,
 		Updates:  []engine.Update{},

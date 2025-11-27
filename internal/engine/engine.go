@@ -34,8 +34,10 @@ import (
 // Engine orchestrates the scan, plan, and update operations.
 type Engine struct {
 	integrations map[string]Integration
+	policies     map[string]IntegrationPolicy
 	logger       *slog.Logger
 	concurrency  int
+	cliFlags     *CLIFlags
 }
 
 // NewEngine creates a new engine with the given integrations.
@@ -46,9 +48,44 @@ func NewEngine(logger *slog.Logger) *Engine {
 
 	return &Engine{
 		integrations: make(map[string]Integration),
+		policies:     make(map[string]IntegrationPolicy),
 		logger:       logger,
 		concurrency:  4,
 	}
+}
+
+// SetPolicies configures integration policies from uptool.yaml.
+// These policies have the highest precedence in determining allowed updates.
+func (e *Engine) SetPolicies(policies map[string]IntegrationPolicy) {
+	e.policies = policies
+	e.logger.Debug("set integration policies", "count", len(policies))
+}
+
+// SetCLIFlags configures CLI flag overrides for update behavior.
+// These override manifest constraints but not uptool.yaml policies.
+func (e *Engine) SetCLIFlags(flags *CLIFlags) {
+	e.cliFlags = flags
+	if flags != nil {
+		e.logger.Debug("set CLI flags", "update_level", flags.UpdateLevel)
+	}
+}
+
+// getPlanContext creates a PlanContext for a specific integration.
+// It combines the integration's policy (if any) with CLI flags.
+func (e *Engine) getPlanContext(integrationName string) *PlanContext {
+	ctx := NewPlanContext()
+
+	// Set policy if one exists for this integration
+	if policy, ok := e.policies[integrationName]; ok {
+		ctx = ctx.WithPolicy(&policy)
+	}
+
+	// Set CLI flags if provided
+	if e.cliFlags != nil {
+		ctx = ctx.WithCLIFlags(e.cliFlags)
+	}
+
+	return ctx
 }
 
 // Register adds an integration to the engine.
@@ -108,6 +145,7 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 }
 
 // Plan generates update plans for all manifests.
+// It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
 func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, error) {
 	e.logger.Info("starting plan", "manifests", len(manifests))
 	start := time.Now()
@@ -136,7 +174,17 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 				return
 			}
 
-			plan, err := integration.Plan(ctx, m)
+			// Get the plan context with policy and CLI flags for this integration
+			planCtx := e.getPlanContext(m.Type)
+
+			e.logger.Debug("planning manifest",
+				"manifest", m.Path,
+				"integration", m.Type,
+				"update_level", planCtx.EffectiveUpdateLevel(),
+				"allow_prerelease", planCtx.EffectiveAllowPrerelease(),
+			)
+
+			plan, err := integration.Plan(ctx, m, planCtx)
 			mu.Lock()
 			defer mu.Unlock()
 
@@ -146,9 +194,13 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 				return
 			}
 
+			// Always include plans, even if they have no updates
+			// This allows the output layer to decide whether to show them
+			plans = append(plans, plan)
 			if len(plan.Updates) > 0 {
-				plans = append(plans, plan)
 				e.logger.Info("plan created", "manifest", m.Path, "updates", len(plan.Updates))
+			} else {
+				e.logger.Debug("plan created with no updates", "manifest", m.Path)
 			}
 		}(manifest)
 	}

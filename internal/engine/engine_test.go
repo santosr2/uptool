@@ -63,7 +63,7 @@ func (m *mockIntegration) Detect(ctx context.Context, repoRoot string) ([]*Manif
 	return m.detectManifests, nil
 }
 
-func (m *mockIntegration) Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error) {
+func (m *mockIntegration) Plan(ctx context.Context, manifest *Manifest, planCtx *PlanContext) (*UpdatePlan, error) {
 	m.mu.Lock()
 	m.planCalls++
 	m.mu.Unlock()
@@ -349,7 +349,7 @@ func TestPlan(t *testing.T) {
 		}
 	})
 
-	t.Run("skips plans with no updates", func(t *testing.T) {
+	t.Run("includes plans with no updates", func(t *testing.T) {
 		e := NewEngine(nil)
 
 		mock := &mockIntegration{
@@ -367,9 +367,14 @@ func TestPlan(t *testing.T) {
 			t.Fatalf("Plan() error = %v", err)
 		}
 
-		// Should not include plans with no updates
-		if len(result.Plans) != 0 {
-			t.Errorf("Plan() plans count = %d, want 0 (no updates)", len(result.Plans))
+		// Should include plans even with no updates (for --show-up-to-date flag)
+		if len(result.Plans) != 1 {
+			t.Errorf("Plan() plans count = %d, want 1", len(result.Plans))
+		}
+
+		// But the plan should have 0 updates
+		if len(result.Plans[0].Updates) != 0 {
+			t.Errorf("Plan() updates count = %d, want 0 (no updates)", len(result.Plans[0].Updates))
 		}
 	})
 

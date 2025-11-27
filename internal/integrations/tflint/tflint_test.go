@@ -282,7 +282,7 @@ func TestPlan(t *testing.T) {
 			Content:      []byte(hcl),
 		}
 
-		plan, err := integ.Plan(ctx, manifest)
+		plan, err := integ.Plan(ctx, manifest, nil)
 		if err != nil {
 			t.Fatalf("Plan() error = %v", err)
 		}
@@ -306,7 +306,7 @@ func TestPlan(t *testing.T) {
 			Content: []byte(hcl),
 		}
 
-		plan, err := integ.Plan(ctx, manifest)
+		plan, err := integ.Plan(ctx, manifest, nil)
 		if err != nil {
 			t.Fatalf("Plan() error = %v", err)
 		}
@@ -328,7 +328,7 @@ func TestPlan(t *testing.T) {
 			Content: []byte(hcl),
 		}
 
-		plan, err := integ.Plan(ctx, manifest)
+		plan, err := integ.Plan(ctx, manifest, nil)
 		if err != nil {
 			t.Fatalf("Plan() error = %v", err)
 		}
@@ -364,7 +364,7 @@ func TestPlan(t *testing.T) {
 					Content: []byte(hcl),
 				}
 
-				_, err := integ.Plan(ctx, manifest)
+				_, err := integ.Plan(ctx, manifest, nil)
 				if err != nil {
 					t.Fatalf("Plan() error = %v", err)
 				}

@@ -33,10 +33,12 @@ import (
 )
 
 var (
-	planFormat  string
-	planOut     string
-	planOnly    string
-	planExclude string
+	planFormat           string
+	planOut              string
+	planOnly             string
+	planExclude          string
+	planShowPolicySource bool
+	planShowUpToDate     bool
 )
 
 var planCmd = &cobra.Command{
@@ -68,6 +70,8 @@ func init() {
 	planCmd.Flags().StringVarP(&planOut, "out", "o", "", "write plan to file")
 	planCmd.Flags().StringVar(&planOnly, "only", "", "comma-separated integrations to include")
 	planCmd.Flags().StringVar(&planExclude, "exclude", "", "comma-separated integrations to exclude")
+	planCmd.Flags().BoolVar(&planShowPolicySource, "show-policy-source", false, "show where the policy originated (uptool.yaml, cli-flag, constraint, default)")
+	planCmd.Flags().BoolVar(&planShowUpToDate, "show-up-to-date", false, "show packages that are already up-to-date")
 
 	// Add shell completion for flags
 	if err := planCmd.RegisterFlagCompletionFunc("format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
@@ -141,31 +145,75 @@ func outputPlanTable(result *engine.PlanResult) error {
 		return nil
 	}
 
+	totalUpdates := 0
+	manifestsWithUpdates := 0
+	manifestsUpToDate := 0
+
 	for _, plan := range result.Plans {
+		hasUpdates := len(plan.Updates) > 0
+
+		// Skip manifests with no updates unless --show-up-to-date is set
+		if !hasUpdates && !planShowUpToDate {
+			continue
+		}
+
 		fmt.Printf("\n%s (%s):\n", plan.Manifest.Path, plan.Manifest.Type)
-		fmt.Printf("%-40s %-15s %-15s %-10s\n", "Package", "Current", "Target", "Impact")
-		fmt.Println(strings.Repeat("-", 80))
+
+		if !hasUpdates {
+			// Show up-to-date message
+			fmt.Println("✓ All dependencies are up-to-date")
+			manifestsUpToDate++
+			continue
+		}
+
+		manifestsWithUpdates++
+
+		// Dynamic header based on whether policy source should be shown
+		if planShowPolicySource {
+			fmt.Printf("%-35s %-15s %-15s %-10s %-15s\n", "Package", "Current", "Target", "Impact", "Policy Source")
+			fmt.Println(strings.Repeat("-", 90))
+		} else {
+			fmt.Printf("%-40s %-15s %-15s %-10s\n", "Package", "Current", "Target", "Impact")
+			fmt.Println(strings.Repeat("-", 80))
+		}
 
 		for i := range plan.Updates {
 			update := &plan.Updates[i]
 			pkg := update.Dependency.Name
-			if len(pkg) > 40 {
-				pkg = pkg[:37] + "..."
+			pkgWidth := 40
+			if planShowPolicySource {
+				pkgWidth = 35
 			}
-			fmt.Printf("%-40s %-15s %-15s %-10s\n",
-				pkg,
-				update.Dependency.CurrentVersion,
-				update.TargetVersion,
-				update.Impact)
-		}
-	}
+			if len(pkg) > pkgWidth {
+				pkg = pkg[:pkgWidth-3] + "..."
+			}
 
-	totalUpdates := 0
-	for _, plan := range result.Plans {
+			if planShowPolicySource {
+				fmt.Printf("%-35s %-15s %-15s %-10s %-15s\n",
+					pkg,
+					update.Dependency.CurrentVersion,
+					update.TargetVersion,
+					update.Impact,
+					update.PolicySource)
+			} else {
+				fmt.Printf("%-40s %-15s %-15s %-10s\n",
+					pkg,
+					update.Dependency.CurrentVersion,
+					update.TargetVersion,
+					update.Impact)
+			}
+		}
+
 		totalUpdates += len(plan.Updates)
 	}
 
-	fmt.Printf("\nTotal: %d updates across %d manifests\n", totalUpdates, len(result.Plans))
+	// Summary
+	if planShowUpToDate && manifestsUpToDate > 0 {
+		fmt.Printf("\nTotal: %d updates across %d manifests (%d up-to-date)\n",
+			totalUpdates, manifestsWithUpdates, manifestsUpToDate)
+	} else {
+		fmt.Printf("\nTotal: %d updates across %d manifests\n", totalUpdates, manifestsWithUpdates)
+	}
 
 	if len(result.Errors) > 0 {
 		fmt.Printf("\nErrors:\n")

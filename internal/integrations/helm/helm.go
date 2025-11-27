@@ -35,6 +35,7 @@ import (
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
+	"github.com/santosr2/uptool/internal/resolve"
 )
 
 func init() {
@@ -167,6 +168,7 @@ func (i *Integration) extractDependencies(chart *Chart) []engine.Dependency {
 		deps = append(deps, engine.Dependency{
 			Name:           dep.Name,
 			CurrentVersion: dep.Version,
+			Constraint:     dep.Version, // Store original constraint (e.g., "^12.0.0", "~18.0.0")
 			Type:           "chart",
 			Registry:       dep.Repository,
 		})
@@ -176,27 +178,46 @@ func (i *Integration) extractDependencies(chart *Chart) []engine.Dependency {
 }
 
 // Plan determines available updates for helm chart dependencies.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+// It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
+//
+// The planCtx parameter provides the policy context. If nil, default behavior
+// is used (respect constraints only).
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
-		// Get latest version from chart repository
+		// Get all versions from chart repository
 		// Datasource expects format: "repository_url|chart_name"
 		pkg := fmt.Sprintf("%s|%s", dep.Registry, dep.Name)
-		latest, err := i.ds.GetLatestVersion(ctx, pkg)
+
+		availableVersions, err := i.ds.GetVersions(ctx, pkg)
 		if err != nil {
-			// Skip charts we can't query
+			// Fallback: try to get just the latest version
+			latest, latestErr := i.ds.GetLatestVersion(ctx, pkg)
+			if latestErr != nil {
+				// Skip charts we can't query
+				continue
+			}
+			availableVersions = []string{latest}
+		}
+
+		// Use policy-aware version selection
+		targetVersion, impact, err := resolve.SelectVersionWithContext(
+			dep.CurrentVersion,
+			dep.Constraint,
+			availableVersions,
+			planCtx,
+		)
+		if err != nil || targetVersion == "" {
 			continue
 		}
 
-		// Compare versions
-		if latest != dep.CurrentVersion {
-			updates = append(updates, engine.Update{
-				Dependency:    dep,
-				TargetVersion: latest,
-				Impact:        determineImpact(dep.CurrentVersion, latest),
-			})
-		}
+		updates = append(updates, engine.Update{
+			Dependency:    dep,
+			TargetVersion: targetVersion,
+			Impact:        string(impact),
+			PolicySource:  planCtx.GetPolicySource(),
+		})
 	}
 
 	return &engine.UpdatePlan{

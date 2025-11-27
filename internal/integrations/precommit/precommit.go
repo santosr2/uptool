@@ -151,7 +151,11 @@ func (i *Integration) extractDependencies(config *Config) []engine.Dependency {
 
 // Plan determines available updates for pre-commit hooks.
 // For pre-commit, we use the native autoupdate command in dry-run mode.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+//
+// Note: The pre-commit native command doesn't support policy-based filtering.
+// The planCtx parameter is accepted for interface compatibility but not currently used.
+// Future versions may implement policy filtering by parsing the autoupdate output.
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	// Check if pre-commit is available
 	if !i.isPreCommitAvailable() {
 		return &engine.UpdatePlan{
@@ -161,8 +165,18 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 		}, nil
 	}
 
+	// Convert relative path to absolute path for secureio
+	absPath := manifest.Path
+	if !filepath.IsAbs(absPath) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return nil, fmt.Errorf("get working directory: %w", err)
+		}
+		absPath = filepath.Join(cwd, manifest.Path)
+	}
+
 	// Run pre-commit autoupdate in dry-run mode by checking output
-	updates, err := i.detectUpdates(ctx, manifest.Path)
+	updates, err := i.detectUpdates(ctx, absPath, planCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +189,7 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 }
 
 // detectUpdates runs pre-commit autoupdate and parses the output to detect changes.
-func (i *Integration) detectUpdates(ctx context.Context, manifestPath string) ([]engine.Update, error) {
+func (i *Integration) detectUpdates(ctx context.Context, manifestPath string, planCtx *engine.PlanContext) ([]engine.Update, error) {
 	// Create a temporary copy to test updates
 	tmpDir, err := os.MkdirTemp("", "precommit-*")
 	if err != nil {
@@ -205,14 +219,14 @@ func (i *Integration) detectUpdates(ctx context.Context, manifestPath string) ([
 	_ = err // Explicitly ignore error - we parse output regardless
 
 	// Parse the output to find updates
-	updates := i.parseAutoupdateOutput(string(output))
+	updates := i.parseAutoupdateOutput(string(output), planCtx)
 
 	return updates, nil
 }
 
 // parseAutoupdateOutput parses pre-commit autoupdate output.
 // Format: "[<repo>] updating <old> -> <new>"
-func (i *Integration) parseAutoupdateOutput(output string) []engine.Update {
+func (i *Integration) parseAutoupdateOutput(output string, planCtx *engine.PlanContext) []engine.Update {
 	var updates []engine.Update
 
 	// Regex to match update lines
@@ -235,6 +249,7 @@ func (i *Integration) parseAutoupdateOutput(output string) []engine.Update {
 				},
 				TargetVersion: newVer,
 				Impact:        i.determineImpact(oldVer, newVer),
+				PolicySource:  planCtx.GetPolicySource(),
 			})
 		}
 	}
@@ -311,7 +326,7 @@ func (i *Integration) Apply(ctx context.Context, plan *engine.UpdatePlan) (*engi
 	diff := generateDiff(string(oldContent), string(newContent))
 
 	// Count actual updates from output
-	applied := len(i.parseAutoupdateOutput(string(output)))
+	applied := len(i.parseAutoupdateOutput(string(output), nil))
 
 	return &engine.ApplyResult{
 		Manifest:     plan.Manifest,

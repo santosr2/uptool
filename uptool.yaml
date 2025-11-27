@@ -54,18 +54,18 @@ integrations:
       pin: true
 
 # Optional: Organization-level policy settings
-org_policy:
-# Require sign-off from specific teams/users
-# require_signoff_from:
-#   - "platform-team@company.com"
+# org_policy:
+#   # Require sign-off from specific teams/users
+#   require_signoff_from:
+#     - "platform-team@company.com"
 
-# Artifact signing verification
-# signing:
-#   cosign_verify: false
+#   # Artifact signing verification
+#   signing:
+#     cosign_verify: false
 
-  # Auto-merge settings for GitHub Actions
-  # auto_merge:
-  #   enabled: true
-  #   guards:
-  #     - "ci-green"
-  #     - "codeowners-approve"
+#   # Auto-merge settings for GitHub Actions
+#   auto_merge:
+#     enabled: true
+#     guards:
+#       - "ci-green"
+#       - "codeowners-approve"

@@ -122,7 +122,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 }
 
 // Plan generates an update plan for a requirements.txt file.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
@@ -141,6 +141,7 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 				Dependency:    dep,
 				TargetVersion: latestVersion,
 				Impact:        string(engine.ImpactMinor), // Simplified for example
+				PolicySource:  planCtx.GetPolicySource(),
 			})
 		}
 	}

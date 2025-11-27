@@ -35,7 +35,9 @@ import (
 	"github.com/santosr2/uptool/internal/policy"
 )
 
-// setupEngine creates and configures an engine instance
+// setupEngine creates and configures an engine instance.
+// It loads the uptool.yaml configuration and sets up integration policies
+// for policy-aware version selection (precedence: uptool.yaml > CLI flags > constraints).
 func setupEngine() *engine.Engine {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: GetLogLevel(),
@@ -84,6 +86,14 @@ func setupEngine() *engine.Engine {
 				logger.Debug("skipped integration (disabled in config)", "id", id)
 			}
 		}
+
+		// Set integration policies for policy-aware version selection
+		// This implements the precedence: uptool.yaml > CLI flags > constraints
+		policies := buildPolicies(cfg)
+		if len(policies) > 0 {
+			eng.SetPolicies(policies)
+			logger.Debug("set integration policies", "count", len(policies))
+		}
 	} else {
 		// No config file - register all integrations
 		for _, integration := range allIntegrations {
@@ -92,6 +102,30 @@ func setupEngine() *engine.Engine {
 	}
 
 	return eng
+}
+
+// buildPolicies extracts IntegrationPolicy objects from the config.
+// It uses the ToPolicyMap method to get policies for all integrations,
+// then filters to only include enabled integrations with policy settings.
+func buildPolicies(cfg *policy.Config) map[string]engine.IntegrationPolicy {
+	// Get all policies from config
+	allPolicies := cfg.ToPolicyMap()
+
+	// Filter to only enabled integrations with actual policy settings
+	policies := make(map[string]engine.IntegrationPolicy)
+	for _, ic := range cfg.Integrations {
+		if !ic.Enabled {
+			continue
+		}
+
+		// Only add policy if it has settings
+		p := allPolicies[ic.ID]
+		if p.Update != "" || p.AllowPrerelease {
+			policies[ic.ID] = p
+		}
+	}
+
+	return policies
 }
 
 // parseFilters parses comma-separated filter strings

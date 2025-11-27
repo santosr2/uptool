@@ -39,6 +39,7 @@ import (
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
+	"github.com/santosr2/uptool/internal/resolve"
 )
 
 func init() {
@@ -173,7 +174,11 @@ func (i *Integration) extractDependencies(config *Config) []engine.Dependency {
 }
 
 // Plan determines available updates for tflint plugins.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+// It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
+//
+// The planCtx parameter provides the policy context. If nil, default behavior
+// is used (respect constraints only).
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	var config Config
 	if err := hclsimple.Decode(manifest.Path, manifest.Content, nil, &config); err != nil {
 		return nil, fmt.Errorf("parse HCL: %w", err)
@@ -200,25 +205,40 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 		}
 		pkg := parts[0] + "/" + parts[1]
 
-		// Get latest version using datasource
-		latest, err := i.ds.GetLatestVersion(ctx, pkg)
+		// Get all available versions using datasource
+		availableVersions, err := i.ds.GetVersions(ctx, pkg)
 		if err != nil {
+			// Fallback: try to get just the latest version
+			latest, latestErr := i.ds.GetLatestVersion(ctx, pkg)
+			if latestErr != nil {
+				continue
+			}
+			availableVersions = []string{latest}
+		}
+
+		// Use policy-aware version selection
+		// tflint plugins typically use exact versions, so constraint is the version itself
+		targetVersion, impact, err := resolve.SelectVersionWithContext(
+			plugin.Version,
+			"", // No constraint syntax for tflint - use policy only
+			availableVersions,
+			planCtx,
+		)
+		if err != nil || targetVersion == "" {
 			continue
 		}
 
-		// Compare versions
-		if latest != plugin.Version && !strings.HasPrefix(latest, "v"+plugin.Version) {
-			updates = append(updates, engine.Update{
-				Dependency: engine.Dependency{
-					Name:           plugin.Source,
-					CurrentVersion: plugin.Version,
-					Type:           "direct",
-					Registry:       "github",
-				},
-				TargetVersion: latest,
-				Impact:        determineImpact(plugin.Version, latest),
-			})
-		}
+		updates = append(updates, engine.Update{
+			Dependency: engine.Dependency{
+				Name:           plugin.Source,
+				CurrentVersion: plugin.Version,
+				Type:           "direct",
+				Registry:       "github",
+			},
+			TargetVersion: targetVersion,
+			Impact:        string(impact),
+			PolicySource:  planCtx.GetPolicySource(),
+		})
 	}
 
 	return &engine.UpdatePlan{

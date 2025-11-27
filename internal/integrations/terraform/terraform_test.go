@@ -313,7 +313,7 @@ func TestPlan(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			integration := New()
-			plan, err := integration.Plan(context.Background(), tt.manifest)
+			plan, err := integration.Plan(context.Background(), tt.manifest, nil)
 			if err != nil {
 				t.Errorf("Plan() error: %v", err)
 				return

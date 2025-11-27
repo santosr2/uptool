@@ -289,7 +289,7 @@ func TestPlan(t *testing.T) {
 			Dependencies: []engine.Dependency{},
 		}
 
-		plan, err := integ.Plan(ctx, manifest)
+		plan, err := integ.Plan(ctx, manifest, nil)
 		if err != nil {
 			t.Fatalf("Plan() error = %v", err)
 		}

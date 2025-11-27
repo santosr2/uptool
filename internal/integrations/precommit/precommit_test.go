@@ -314,7 +314,7 @@ func TestPlan(t *testing.T) {
 			Dependencies: []engine.Dependency{},
 		}
 
-		plan, err := integ.Plan(ctx, manifest)
+		plan, err := integ.Plan(ctx, manifest, nil)
 		if err != nil {
 			t.Fatalf("Plan() error = %v", err)
 		}
@@ -332,7 +332,7 @@ func TestParseAutoupdateOutput(t *testing.T) {
 		output := `[https://github.com/pre-commit/pre-commit-hooks] updating v4.3.0 -> v6.0.0
 [https://github.com/psf/black] updating 23.1.0 -> 24.0.0`
 
-		updates := integ.parseAutoupdateOutput(output)
+		updates := integ.parseAutoupdateOutput(output, nil)
 
 		if len(updates) != 2 {
 			t.Fatalf("parseAutoupdateOutput() count = %d, want 2", len(updates))
@@ -356,7 +356,7 @@ func TestParseAutoupdateOutput(t *testing.T) {
 	})
 
 	t.Run("handles empty output", func(t *testing.T) {
-		updates := integ.parseAutoupdateOutput("")
+		updates := integ.parseAutoupdateOutput("", nil)
 
 		if len(updates) != 0 {
 			t.Errorf("parseAutoupdateOutput() count = %d, want 0", len(updates))
@@ -367,7 +367,7 @@ func TestParseAutoupdateOutput(t *testing.T) {
 		output := `Checking out pre-commit hooks...
 All hooks are up to date.`
 
-		updates := integ.parseAutoupdateOutput(output)
+		updates := integ.parseAutoupdateOutput(output, nil)
 
 		if len(updates) != 0 {
 			t.Errorf("parseAutoupdateOutput() count = %d, want 0", len(updates))
@@ -379,7 +379,7 @@ All hooks are up to date.`
 Some other text
 [https://github.com/valid/repo] updating v1.0.0 -> v2.0.0`
 
-		updates := integ.parseAutoupdateOutput(output)
+		updates := integ.parseAutoupdateOutput(output, nil)
 
 		if len(updates) != 1 {
 			t.Fatalf("parseAutoupdateOutput() count = %d, want 1", len(updates))

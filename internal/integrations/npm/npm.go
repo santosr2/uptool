@@ -36,6 +36,7 @@ import (
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
+	"github.com/santosr2/uptool/internal/resolve"
 )
 
 func init() {
@@ -187,7 +188,11 @@ func (i *Integration) extractDependencies(pkg *PackageJSON) []engine.Dependency 
 }
 
 // Plan determines available updates for npm dependencies.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+// It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
+//
+// The planCtx parameter provides the policy context. If nil, default behavior
+// is used (respect constraints only).
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
@@ -201,24 +206,36 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*eng
 			continue
 		}
 
-		// Get the latest version
-		latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
+		// Get all available versions
+		availableVersions, err := i.ds.GetVersions(ctx, dep.Name)
 		if err != nil {
-			// Skip packages that can't be resolved
+			// Fallback: try to get just the latest version
+			latest, latestErr := i.ds.GetLatestVersion(ctx, dep.Name)
+			if latestErr != nil {
+				// Skip packages that can't be resolved
+				continue
+			}
+			availableVersions = []string{latest}
+		}
+
+		// Use policy-aware version selection
+		targetVersion, impact, err := resolve.SelectVersionWithContext(
+			dep.CurrentVersion,
+			dep.Constraint,
+			availableVersions,
+			planCtx,
+		)
+		if err != nil || targetVersion == "" {
 			continue
 		}
 
-		// Check if update is needed
-		if i.needsUpdate(dep.CurrentVersion, latest) {
-			impact := i.determineImpact(dep.CurrentVersion, latest)
-
-			updates = append(updates, engine.Update{
-				Dependency:    dep,
-				TargetVersion: latest,
-				Impact:        impact,
-				ChangelogURL:  fmt.Sprintf("https://www.npmjs.com/package/%s", dep.Name),
-			})
-		}
+		updates = append(updates, engine.Update{
+			Dependency:    dep,
+			TargetVersion: targetVersion,
+			Impact:        string(impact),
+			ChangelogURL:  fmt.Sprintf("https://www.npmjs.com/package/%s", dep.Name),
+			PolicySource:  planCtx.GetPolicySource(),
+		})
 	}
 
 	return &engine.UpdatePlan{

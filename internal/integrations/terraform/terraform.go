@@ -39,6 +39,7 @@ import (
 	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 	"github.com/santosr2/uptool/internal/integrations"
+	"github.com/santosr2/uptool/internal/resolve"
 )
 
 func init() {
@@ -188,6 +189,7 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 						manifest.Dependencies = append(manifest.Dependencies, engine.Dependency{
 							Name:           source,
 							CurrentVersion: version,
+							Constraint:     version, // Store original constraint (e.g., "~> 5.0")
 							Type:           "module",
 							Registry:       "terraform",
 						})
@@ -214,41 +216,55 @@ func (i *Integration) Detect(ctx context.Context, repoRoot string) ([]*engine.Ma
 	return manifests, err
 }
 
-// processDependencyUpdate fetches and compares versions for a dependency
-func (i *Integration) processDependencyUpdate(ctx context.Context, dep *engine.Dependency) (engine.Update, bool) {
-	latest, err := i.ds.GetLatestVersion(ctx, dep.Name)
+// processDependencyUpdate fetches and compares versions for a dependency.
+// It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
+func (i *Integration) processDependencyUpdate(
+	ctx context.Context,
+	dep *engine.Dependency,
+	planCtx *engine.PlanContext,
+) (engine.Update, bool) {
+	// Get all available versions from the datasource
+	availableVersions, err := i.ds.GetVersions(ctx, dep.Name)
 	if err != nil {
+		// Fallback: try to get just the latest version
+		latest, latestErr := i.ds.GetLatestVersion(ctx, dep.Name)
+		if latestErr != nil {
+			return engine.Update{}, false
+		}
+		availableVersions = []string{latest}
+	}
+
+	// Use the new policy-aware version selection
+	// The constraint is stored in dep.Constraint (e.g., "~> 5.0")
+	targetVersion, impact, err := resolve.SelectVersionWithContext(
+		dep.CurrentVersion,
+		dep.Constraint,
+		availableVersions,
+		planCtx,
+	)
+	if err != nil || targetVersion == "" {
 		return engine.Update{}, false
 	}
 
-	// Strip constraint prefixes for comparison
-	currentClean := strings.TrimPrefix(dep.CurrentVersion, "~> ")
-	currentClean = strings.TrimPrefix(currentClean, ">= ")
-	currentClean = strings.TrimPrefix(currentClean, "= ")
-	currentClean = strings.TrimSpace(currentClean)
-
-	latestClean := strings.TrimPrefix(latest, "v")
-	currentClean = strings.TrimPrefix(currentClean, "v")
-
-	// Compare versions - only return update if they're actually different
-	if latestClean != currentClean && latest != "" && currentClean != "" {
-		return engine.Update{
-			Dependency:    *dep,
-			TargetVersion: latest,
-			Impact:        determineImpact(currentClean, latestClean),
-		}, true
-	}
-
-	return engine.Update{}, false
+	return engine.Update{
+		Dependency:    *dep,
+		TargetVersion: targetVersion,
+		Impact:        string(impact),
+		PolicySource:  planCtx.GetPolicySource(),
+	}, true
 }
 
 // Plan determines available updates for terraform providers and modules.
-func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
+// It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
+//
+// The planCtx parameter provides the policy context. If nil, default behavior
+// is used (respect constraints only).
+func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
 	var updates []engine.Update
 
 	for _, dep := range manifest.Dependencies {
 		if dep.Type == "provider" || dep.Type == blockTypeModule {
-			if update, ok := i.processDependencyUpdate(ctx, &dep); ok {
+			if update, ok := i.processDependencyUpdate(ctx, &dep, planCtx); ok {
 				updates = append(updates, update)
 			}
 		}
