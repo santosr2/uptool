@@ -15,7 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **docker**: Fix scan when triggered manually by [@santosr2](https://github.com/santosr2) ([828b080](https://github.com/santosr2/uptool/commit/828b08002d5b7c45babfc1af3c31f7cac61b94de))
 
+- **docker**: Remove `v` from image tag by [@santosr2](https://github.com/santosr2) ([5b5ccff](https://github.com/santosr2/uptool/commit/5b5ccff7e78099426d4d02eed3ac802d475cf8f7))
+
 - **pre-release**: Add `--ignore-missing-version` flag by [@santosr2](https://github.com/santosr2) ([c7374a5](https://github.com/santosr2/uptool/commit/c7374a55a5aa863293144d47a60c69c51238aab1))
+
+- **pre-release**: Improve changelog section in release body by [@santosr2](https://github.com/santosr2) ([b42ae40](https://github.com/santosr2/uptool/commit/b42ae40d67a1d37cfb305b8b2b6c46df2522a13a))
 
 - **self-update-check**: Add it to self-update packages by [@santosr2](https://github.com/santosr2) ([c85d85e](https://github.com/santosr2/uptool/commit/c85d85ed468856a12a7888ecc07b02ac73d9298a))
 
@@ -58,6 +62,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **plugins/python**: Use `replace` directive for better DevExp by [@santosr2](https://github.com/santosr2) ([cb478fc](https://github.com/santosr2/uptool/commit/cb478fce0be6c2692a2f1009275063fcef3da6c7))
 
 - **pre-commit**: Check commit message spelling by [@santosr2](https://github.com/santosr2) ([dec4d9c](https://github.com/santosr2/uptool/commit/dec4d9c586982edbb94e1002e426bc34754a28a0))
+
+- **release**: Bump version to v0.2.0-alpha20251127 [skip ci] by [@santosr2[bot]](https://github.com/santosr2[bot]) ([4725282](https://github.com/santosr2/uptool/commit/4725282d8f3c57f8276380744acb7d52c9878cf2))
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([7a54070](https://github.com/santosr2/uptool/commit/7a54070922dcd994795751c5704bf950424ec27a))
 - Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([660dea2](https://github.com/santosr2/uptool/commit/660dea204d686e5b024f00e9c852a936bd989605))
 - Replace `<integration>.determineImpact()` in favor of `resolve.SelectVersionWithContext` by [@santosr2](https://github.com/santosr2) ([d38440c](https://github.com/santosr2/uptool/commit/d38440c1ad34591f2d22a1d222c698b26374e9f1))
