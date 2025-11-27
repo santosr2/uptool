@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **pre-commit**: Check commit message spelling by [@santosr2](https://github.com/santosr2) ([dec4d9c](https://github.com/santosr2/uptool/commit/dec4d9c586982edbb94e1002e426bc34754a28a0))
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([7a54070](https://github.com/santosr2/uptool/commit/7a54070922dcd994795751c5704bf950424ec27a))
 - Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([660dea2](https://github.com/santosr2/uptool/commit/660dea204d686e5b024f00e9c852a936bd989605))
+- Replace `<integration>.determineImpact()` in favor of `resolve.SelectVersionWithContext` by [@santosr2](https://github.com/santosr2) ([d38440c](https://github.com/santosr2/uptool/commit/d38440c1ad34591f2d22a1d222c698b26374e9f1))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
