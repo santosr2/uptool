@@ -57,14 +57,19 @@ jobs:
           # Version format: v1.13.0-rc1, v1.13.0-beta3, v1.13.0-alpha20250708
           # No dot between type and number, alpha uses date instead of number
 
+          # Find latest pre-release of this type (for summary reporting)
+          if [ "$PRERELEASE_TYPE" = "alpha" ]; then
+            LATEST_PRERELEASE=$(git tag -l "v${BASE_VERSION}-alpha*" | sort -V | tail -n 1 || echo "")
+          else
+            LATEST_PRERELEASE=$(git tag -l "v${BASE_VERSION}-${PRERELEASE_TYPE}[0-9]*" | sort -V | tail -n 1 || echo "")
+          fi
+
           if [ "$PRERELEASE_TYPE" = "alpha" ]; then
             # For alpha: use date format (YYYYMMDD)
             DATE_SUFFIX=$(date +%Y%m%d)
             NEW_VERSION="${BASE_VERSION}-alpha${DATE_SUFFIX}"
           else
             # For rc/beta: find latest and increment number (no dot separator)
-            LATEST_PRERELEASE=$(git tag -l "v${BASE_VERSION}-${PRERELEASE_TYPE}[0-9]*" | sort -V | tail -n 1 || echo "")
-
             if [ -z "$LATEST_PRERELEASE" ]; then
               # No existing pre-release, start with 1
               PRERELEASE_NUM=1
@@ -126,7 +131,7 @@ jobs:
           NEW_VERSION: ${{ needs.calculate-version.outputs.new_version }}
         run: |
           # Update all version references using bump-my-version (installed via mise)
-          bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag patch
+          bump-my-version bump --new-version "$NEW_VERSION" --no-commit --no-tag --ignore-missing-version patch
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
