@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **docker**: Fix scan when triggered manually by [@santosr2](https://github.com/santosr2) ([828b080](https://github.com/santosr2/uptool/commit/828b08002d5b7c45babfc1af3c31f7cac61b94de))
 
+- **pre-release**: Add `--ignore-missing-version` flag by [@santosr2](https://github.com/santosr2) ([c7374a5](https://github.com/santosr2/uptool/commit/c7374a55a5aa863293144d47a60c69c51238aab1))
+
 - **self-update-check**: Add it to self-update packages by [@santosr2](https://github.com/santosr2) ([c85d85e](https://github.com/santosr2/uptool/commit/c85d85ed468856a12a7888ecc07b02ac73d9298a))
 
 - **self-update-check**: Replace cli to action usage by [@santosr2](https://github.com/santosr2) ([2cb85a8](https://github.com/santosr2/uptool/commit/2cb85a891873e3e15f30a3fa15bd71340d89ca8b))
