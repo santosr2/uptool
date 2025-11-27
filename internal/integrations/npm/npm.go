@@ -193,7 +193,7 @@ func (i *Integration) extractDependencies(pkg *PackageJSON) []engine.Dependency 
 // The planCtx parameter provides the policy context. If nil, default behavior
 // is used (respect constraints only).
 func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
-	var updates []engine.Update
+	updates := make([]engine.Update, 0, len(manifest.Dependencies))
 
 	for _, dep := range manifest.Dependencies {
 		// Skip file: and link: dependencies

@@ -36,8 +36,8 @@ type Engine struct {
 	integrations map[string]Integration
 	policies     map[string]IntegrationPolicy
 	logger       *slog.Logger
-	concurrency  int
 	cliFlags     *CLIFlags
+	concurrency  int
 }
 
 // NewEngine creates a new engine with the given integrations.

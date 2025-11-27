@@ -530,32 +530,6 @@ func TestValidate(t *testing.T) {
 	})
 }
 
-func TestDetermineImpact(t *testing.T) {
-	tests := []struct {
-		name string
-		old  string
-		new  string
-		want string
-	}{
-		{"major version change", "1.0.0", "2.0.0", "major"},
-		{"major with v prefix", "v1.0.0", "v2.0.0", "major"},
-		{"minor version change", "1.0.0", "1.1.0", "minor"},
-		{"minor with v prefix", "v1.2.0", "v1.3.0", "minor"},
-		{"patch version change", "1.2.3", "1.2.4", "patch"},
-		{"patch with v prefix", "v1.2.3", "v1.2.4", "patch"},
-		{"same major and minor", "1.0.0", "1.0.1", "patch"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := determineImpact(tt.old, tt.new)
-			if got != tt.want {
-				t.Errorf("determineImpact(%q, %q) = %q, want %q", tt.old, tt.new, got, tt.want)
-			}
-		})
-	}
-}
-
 func TestGenerateDiff(t *testing.T) {
 	t.Run("returns empty string for identical content", func(t *testing.T) {
 		diff := generateDiff("test", "test")

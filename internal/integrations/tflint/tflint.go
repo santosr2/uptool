@@ -184,7 +184,7 @@ func (i *Integration) Plan(ctx context.Context, manifest *engine.Manifest, planC
 		return nil, fmt.Errorf("parse HCL: %w", err)
 	}
 
-	var updates []engine.Update
+	updates := make([]engine.Update, 0, len(config.Plugins))
 
 	for _, plugin := range config.Plugins {
 		if plugin.Source == "" || plugin.Version == "" {
@@ -359,23 +359,6 @@ func (i *Integration) Validate(ctx context.Context, manifest *engine.Manifest) e
 		return fmt.Errorf("invalid HCL: %w", err)
 	}
 	return nil
-}
-
-// determineImpact tries to determine the impact of an update.
-func determineImpact(old, newVer string) string {
-	// Simple heuristic: if major version changes (v1 -> v2), it's major
-	oldParts := strings.Split(strings.TrimPrefix(old, "v"), ".")
-	newParts := strings.Split(strings.TrimPrefix(newVer, "v"), ".")
-
-	if len(oldParts) > 0 && len(newParts) > 0 && oldParts[0] != newParts[0] {
-		return "major"
-	}
-
-	if len(oldParts) > 1 && len(newParts) > 1 && oldParts[1] != newParts[1] {
-		return "minor"
-	}
-
-	return "patch"
 }
 
 // generateDiff creates a simple diff between old and new content.

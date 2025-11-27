@@ -229,10 +229,10 @@ type UpdatePlan struct {
 type Update struct {
 	Dependency    Dependency   `json:"dependency"`
 	TargetVersion string       `json:"target_version"`
-	Impact        string       `json:"impact"` // patch, minor, major
+	Impact        string       `json:"impact"`
 	ChangelogURL  string       `json:"changelog_url,omitempty"`
+	PolicySource  PolicySource `json:"policy_source,omitempty"`
 	Breaking      bool         `json:"breaking"`
-	PolicySource  PolicySource `json:"policy_source,omitempty"` // where the policy originated from
 }
 
 // ApplyResult contains the outcome of applying updates.
