@@ -214,7 +214,9 @@ jobs:
           elif [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
             # For tagged releases, always scan the exact version that was just built
             # This ensures we scan what we actually published
+            # Strip the 'v' prefix from the tag (v0.2.0 -> 0.2.0)
             VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
             echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
           else
             # Fallback to main for other refs
