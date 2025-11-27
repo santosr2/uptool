@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **self-update-check**: Skip uptool action tool install by [@santosr2](https://github.com/santosr2) ([3f3b25e](https://github.com/santosr2/uptool/commit/3f3b25ec7424152fef70a2a9abf16e58df7322d6))
 
 - **self-update-check**: Fix version flag call by [@santosr2](https://github.com/santosr2) ([7243307](https://github.com/santosr2/uptool/commit/7243307ffed75a1a77a6d6df4c812066281e7a8e))
+
+- **self-update-check**: Improve summary output by [@santosr2](https://github.com/santosr2) ([7f52f94](https://github.com/santosr2/uptool/commit/7f52f94d8a3f48dd4ec095d7c6965d07fe558e91))
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
 - Use bot_user_id in email instead app_id by [@santosr2](https://github.com/santosr2) ([9194325](https://github.com/santosr2/uptool/commit/91943259b9a07462224637762021f7bc000384a7))
@@ -30,10 +32,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - **README**: Centralize the header by [@santosr2](https://github.com/santosr2) ([ba01bdd](https://github.com/santosr2/uptool/commit/ba01bdd0095da47c94e226bf6d6f6d9b3fedba73))
+
+- **README**: Replace `center` to  `div` for correct centralization by [@santosr2](https://github.com/santosr2) ([2b0bd82](https://github.com/santosr2/uptool/commit/2b0bd82ca6ddfe44cb8f20d2e5b69019e28ce992))
 - Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([fe43871](https://github.com/santosr2/uptool/commit/fe438713adf969bb0c7e1fc8317bfc1db03f671d))
 - Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([3b37908](https://github.com/santosr2/uptool/commit/3b3790876c6aa6a42bf5555390774fe7c38a4601))
 - Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a408029](https://github.com/santosr2/uptool/commit/a408029bc2520e1133cc55e4d9cf3583516ef88d))
 - Fix `copy` icon from code blocks by [@santosr2](https://github.com/santosr2) ([dc0a5ae](https://github.com/santosr2/uptool/commit/dc0a5ae2b0664d901d3210cb06cf3900aef03657))
+
+### Features
+- Add constraint resolution precedence order by [@santosr2](https://github.com/santosr2) ([2a7698f](https://github.com/santosr2/uptool/commit/2a7698fe3e70488207dec288c0b07932bda0fb2c))
 
 ### GitHub Actions
 
