@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Miscellaneous Tasks
 
+- **plugins/python**: Use `replace` directive for better DevExp by [@santosr2](https://github.com/santosr2) ([cb478fc](https://github.com/santosr2/uptool/commit/cb478fce0be6c2692a2f1009275063fcef3da6c7))
+
 - **pre-commit**: Check commit message spelling by [@santosr2](https://github.com/santosr2) ([dec4d9c](https://github.com/santosr2/uptool/commit/dec4d9c586982edbb94e1002e426bc34754a28a0))
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([7a54070](https://github.com/santosr2/uptool/commit/7a54070922dcd994795751c5704bf950424ec27a))
 - Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([660dea2](https://github.com/santosr2/uptool/commit/660dea204d686e5b024f00e9c852a936bd989605))
