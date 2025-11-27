@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **self-update-check**: Fix version flag call by [@santosr2](https://github.com/santosr2) ([7243307](https://github.com/santosr2/uptool/commit/7243307ffed75a1a77a6d6df4c812066281e7a8e))
 
 - **self-update-check**: Improve summary output by [@santosr2](https://github.com/santosr2) ([7f52f94](https://github.com/santosr2/uptool/commit/7f52f94d8a3f48dd4ec095d7c6965d07fe558e91))
+
+- **self-update-check**: Fix summary parse now that we support `--show-up-to-date` flag by [@santosr2](https://github.com/santosr2) ([1abd141](https://github.com/santosr2/uptool/commit/1abd141c9efa98a4f54bbd518589486b71a41c96))
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
 - Use bot_user_id in email instead app_id by [@santosr2](https://github.com/santosr2) ([9194325](https://github.com/santosr2/uptool/commit/91943259b9a07462224637762021f7bc000384a7))
