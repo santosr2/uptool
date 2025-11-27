@@ -118,12 +118,12 @@ jobs:
 
           # Check if we have valid JSON output
           if [ -s /tmp/plan-output.json ] && jq -e . /tmp/plan-output.json >/dev/null 2>&1; then
-            # Extract update counts
-            TOTAL_UPDATES=$(jq '[.plans[].updates[]] | length' /tmp/plan-output.json)
-            MANIFEST_COUNT=$(jq '[.plans[]] | length' /tmp/plan-output.json)
-            MAJOR_COUNT=$(jq '[.plans[].updates[] | select(.impact == "major")] | length' /tmp/plan-output.json)
-            MINOR_COUNT=$(jq '[.plans[].updates[] | select(.impact == "minor")] | length' /tmp/plan-output.json)
-            PATCH_COUNT=$(jq '[.plans[].updates[] | select(.impact == "patch")] | length' /tmp/plan-output.json)
+            # Extract update counts (filter out plans with no updates)
+            TOTAL_UPDATES=$(jq '[.plans[] | select((.updates | length) > 0) | .updates[]] | length' /tmp/plan-output.json)
+            MANIFEST_COUNT=$(jq '[.plans[] | select((.updates | length) > 0)] | length' /tmp/plan-output.json)
+            MAJOR_COUNT=$(jq '[.plans[] | select((.updates | length) > 0) | .updates[] | select(.impact == "major")] | length' /tmp/plan-output.json)
+            MINOR_COUNT=$(jq '[.plans[] | select((.updates | length) > 0) | .updates[] | select(.impact == "minor")] | length' /tmp/plan-output.json)
+            PATCH_COUNT=$(jq '[.plans[] | select((.updates | length) > 0) | .updates[] | select(.impact == "patch")] | length' /tmp/plan-output.json)
 
             {
               echo "updates-available=true"
@@ -134,11 +134,12 @@ jobs:
               echo "patch-count=$PATCH_COUNT"
             } >> "$GITHUB_OUTPUT"
 
-            # Generate markdown table of updates
+            # Generate markdown table of updates (only for plans with updates)
             {
               echo 'updates-table<<EOF_UPDATES_TABLE'
               jq -r '
                 .plans[] |
+                select((.updates | length) > 0) |
                 "#### " + (.manifest.path | gsub("^\\./"; "")) + "\n" +
                 "| Package | Current | Target | Type |\n" +
                 "|---------|---------|--------|------|\n" +
