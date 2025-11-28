@@ -85,7 +85,7 @@ When using uptool:
 
 ```yaml
 # Pin to specific version (most secure)
-- uses: santosr2/uptool@v0.2.0-alpha20251124
+- uses: santosr2/uptool@v0.2.0-alpha20251127
 
 # Or pin to major version (recommended for convenience)
 - uses: santosr2/uptool@v0

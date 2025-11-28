@@ -78,6 +78,16 @@ filename = "SECURITY.md"
 search = "currently {current_major}.{current_minor}.x"
 replace = "currently {new_major}.{new_minor}.x"
 
+[[tool.bumpversion.files]]
+filename = "SECURITY.md"
+search = "santosr2/uptool@v{current_major}"
+replace = "santosr2/uptool@v{new_major}"
+
+[[tool.bumpversion.files]]
+filename = "SECURITY.md"
+search = "santosr2/uptool@v{current_version}"
+replace = "santosr2/uptool@v{new_version}"
+
 # Note: docs/action-usage.md now uses dynamic Jinja variables from mkdocs.yml
 # ({{ extra.uptool_version }}, {{ extra.uptool_version_major }}, {{ extra.uptool_version_minor }})
 # So we don't need to update it directly - just update mkdocs.yml variables
