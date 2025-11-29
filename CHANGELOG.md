@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Bug Fixes
+- Policy.pin behavior, it should not block updates by [@santosr2](https://github.com/santosr2) ([2bcd468](https://github.com/santosr2/uptool/commit/2bcd468aa15d780defc8f9ba2ecdbb98d65c8ce7))
+
 ### Continuous Integration
 
 - **action-validation**: Avoid uptool action install to use latest code by [@santosr2](https://github.com/santosr2) ([afcb4a5](https://github.com/santosr2/uptool/commit/afcb4a5fb13afec89f9f5405ecbc51169d23f73a))
@@ -32,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **self-update-check**: Improve summary output by [@santosr2](https://github.com/santosr2) ([7f52f94](https://github.com/santosr2/uptool/commit/7f52f94d8a3f48dd4ec095d7c6965d07fe558e91))
 
 - **self-update-check**: Fix summary parse now that we support `--show-up-to-date` flag by [@santosr2](https://github.com/santosr2) ([1abd141](https://github.com/santosr2/uptool/commit/1abd141c9efa98a4f54bbd518589486b71a41c96))
+
+- **self-update-check**: Improve view all updates table by [@santosr2](https://github.com/santosr2) ([99c2f4d](https://github.com/santosr2/uptool/commit/99c2f4ddc6262aaa419db37787ba64816421b473))
 - Move github-actions[bot] to santosr2[bot] by [@santosr2](https://github.com/santosr2) ([d6bfa6d](https://github.com/santosr2/uptool/commit/d6bfa6dae46b6b0891899f049ce5ec11591da5e7))
 - Use app token for checkout to ensure it will have signed commits by [@santosr2](https://github.com/santosr2) ([70547e6](https://github.com/santosr2/uptool/commit/70547e64a3499269dcf4df3dd996a7f9e74b3f41))
 - Use bot_user_id in email instead app_id by [@santosr2](https://github.com/santosr2) ([9194325](https://github.com/santosr2/uptool/commit/91943259b9a07462224637762021f7bc000384a7))
@@ -48,10 +53,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([3b37908](https://github.com/santosr2/uptool/commit/3b3790876c6aa6a42bf5555390774fe7c38a4601))
 - Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a408029](https://github.com/santosr2/uptool/commit/a408029bc2520e1133cc55e4d9cf3583516ef88d))
 - Fix `copy` icon from code blocks by [@santosr2](https://github.com/santosr2) ([dc0a5ae](https://github.com/santosr2/uptool/commit/dc0a5ae2b0664d901d3210cb06cf3900aef03657))
+- Update Plan references by [@santosr2](https://github.com/santosr2) ([f1d908b](https://github.com/santosr2/uptool/commit/f1d908b331034702a17e97a17919ab28593b4f18))
 
 ### Features
 - Add constraint resolution precedence order by [@santosr2](https://github.com/santosr2) ([2a7698f](https://github.com/santosr2/uptool/commit/2a7698fe3e70488207dec288c0b07932bda0fb2c))
 - Add full support for <integration>.policy feature by [@santosr2](https://github.com/santosr2) ([e8f2ada](https://github.com/santosr2/uptool/commit/e8f2adadd08f07d56674792b6ebda7f03ad0d154))
+- Add full support for org_policy configuration by [@santosr2](https://github.com/santosr2) ([4e2e474](https://github.com/santosr2/uptool/commit/4e2e474174ce2cb8cf5c12479aad7717f54742c2))
+- Support org_policy.auto_merge.guards as plugins by [@santosr2](https://github.com/santosr2) ([01975b4](https://github.com/santosr2/uptool/commit/01975b475d3a3b6cf05664657eedcf7c29b0ceb9))
+- Add support for policy.enabled field by [@santosr2](https://github.com/santosr2) ([e6714db](https://github.com/santosr2/uptool/commit/e6714db7cfccfd964e9c9b4c27200cddce6a6f36))
+- Set default config for integrations that aren't set in config file by [@santosr2](https://github.com/santosr2) ([aec27cb](https://github.com/santosr2/uptool/commit/aec27cb36b19d4631c293b01bd9a834f40335be6))
+- Add match.exclude support by [@santosr2](https://github.com/santosr2) ([23caa5b](https://github.com/santosr2/uptool/commit/23caa5b2e2e3a3d87611701c757316727042ae4d))
+- Add support for `--config` flag by [@santosr2](https://github.com/santosr2) ([9377dd7](https://github.com/santosr2/uptool/commit/9377dd786992e149b6ad5282dde2050f33d4b3fb))
 
 ### GitHub Actions
 
@@ -70,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([7a54070](https://github.com/santosr2/uptool/commit/7a54070922dcd994795751c5704bf950424ec27a))
 - Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([660dea2](https://github.com/santosr2/uptool/commit/660dea204d686e5b024f00e9c852a936bd989605))
 - Replace `<integration>.determineImpact()` in favor of `resolve.SelectVersionWithContext` by [@santosr2](https://github.com/santosr2) ([d38440c](https://github.com/santosr2/uptool/commit/d38440c1ad34591f2d22a1d222c698b26374e9f1))
+- Improve plugins folders organization by [@santosr2](https://github.com/santosr2) ([1c949d5](https://github.com/santosr2/uptool/commit/1c949d5667b10cc190b1bf3458edd557b6d5c6c5))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
