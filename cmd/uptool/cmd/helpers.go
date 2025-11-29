@@ -70,20 +70,25 @@ func setupEngine() *engine.Engine {
 
 	// Register integrations based on config
 	if cfg != nil {
-		// Use config to determine which integrations to enable
-		enabledMap := make(map[string]bool)
+		// Build map of integration configs (both enabled and disabled)
+		configMap := make(map[string]policy.IntegrationConfig)
 		for _, ic := range cfg.Integrations {
-			if ic.Enabled {
-				enabledMap[ic.ID] = true
-			}
+			configMap[ic.ID] = ic
 		}
 
 		for id, integration := range allIntegrations {
-			if enabledMap[id] {
-				eng.Register(integration)
-				logger.Debug("registered integration from config", "id", id)
+			if ic, exists := configMap[id]; exists {
+				// Integration is in config - respect enabled flag
+				if ic.Enabled {
+					eng.Register(integration)
+					logger.Debug("registered integration from config", "id", id)
+				} else {
+					logger.Debug("skipped integration (disabled in config)", "id", id)
+				}
 			} else {
-				logger.Debug("skipped integration (disabled in config)", "id", id)
+				// Integration not in config - register with defaults
+				eng.Register(integration)
+				logger.Debug("registered integration (not in config, using defaults)", "id", id)
 			}
 		}
 

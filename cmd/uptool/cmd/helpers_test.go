@@ -35,6 +35,29 @@ func TestBuildPolicies(t *testing.T) {
 		name          string
 	}{
 		{
+			name: "integration not in config - no policy (uses defaults)",
+			config: &policy.Config{
+				Version: 1,
+				Integrations: []policy.IntegrationConfig{
+					{
+						ID:      "helm",
+						Enabled: true,
+						Policy: engine.IntegrationPolicy{
+							Enabled: true,
+							Update:  "minor",
+						},
+					},
+				},
+			},
+			wantPolicies: map[string]bool{
+				"helm": true,  // In config, has policy
+				"npm":  false, // Not in config, no policy (will use defaults)
+			},
+			wantUpdateFor: map[string]string{
+				"helm": "minor",
+			},
+		},
+		{
 			name: "policy enabled - includes policy",
 			config: &policy.Config{
 				Version: 1,
