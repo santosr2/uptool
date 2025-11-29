@@ -57,8 +57,16 @@ uv = "latest"
 "go:github.com/air-verse/air" = "1.63.1"
 
 # Task definitions (replacing Makefile)
+[tasks.generate]
+description = "Generate code (integrations and guards)"
+run = """
+go run scripts/generate.go all
+echo "✓ Code generation complete"
+"""
+
 [tasks.build]
 description = "Build the uptool binary"
+depends = ["generate"]
 run = """
 echo "Building uptool..."
 mkdir -p dist

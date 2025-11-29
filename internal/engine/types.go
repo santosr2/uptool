@@ -180,13 +180,113 @@ type Dependency struct {
 }
 
 // IntegrationPolicy contains policy settings that apply to a specific integration.
+//
+// Policy settings control update behavior at the integration level (per manifest type).
+// These settings are configured in uptool.yaml under integrations[*].policy and can be
+// overridden by CLI flags.
+//
+// # Policy Precedence
+//
+// The effective policy follows this precedence order (highest to lowest):
+//  1. CLI flags (--update-level, --allow-prerelease, etc.)
+//  2. uptool.yaml integration policy (this struct)
+//  3. Manifest constraints (^, ~, >=, etc. from package.json, Chart.yaml, etc.)
+//  4. Default behavior (allow all updates, respect constraints)
+//
+// # Example Configuration
+//
+//	integrations:
+//	  - id: npm
+//	    policy:
+//	      enabled: true
+//	      update: minor              # Allow patch + minor updates only
+//	      allow_prerelease: false    # Exclude beta/alpha versions
+//	      pin: false                 # Keep version ranges (^1.2.3)
+//	      cadence: weekly            # Check for updates weekly
+//
+// See docs/configuration.md for comprehensive policy documentation.
 type IntegrationPolicy struct {
-	Custom          map[string]interface{} `yaml:",inline" json:"custom,omitempty"`
-	Update          string                 `yaml:"update" json:"update"`
-	Cadence         string                 `yaml:"cadence,omitempty" json:"cadence,omitempty"`
-	Enabled         bool                   `yaml:"enabled" json:"enabled"`
-	AllowPrerelease bool                   `yaml:"allow_prerelease" json:"allow_prerelease"`
-	Pin             bool                   `yaml:"pin" json:"pin"`
+	// Custom holds integration-specific custom fields that don't fit the standard policy model.
+	// These are preserved during YAML parsing via the inline directive but aren't used by
+	// the core policy system. Integrations can access these via type assertions.
+	Custom map[string]interface{} `yaml:",inline" json:"custom,omitempty"`
+
+	// Update specifies the maximum version bump to allow.
+	//
+	// Valid values:
+	//   - "none":  No updates (scan/plan only mode)
+	//   - "patch": Allow patch updates only (1.2.3 → 1.2.4)
+	//   - "minor": Allow patch + minor updates (1.2.3 → 1.3.0)
+	//   - "major": Allow all updates (1.2.3 → 2.0.0)
+	//
+	// Default: "minor" (safe for most use cases)
+	//
+	// Note: Manifest constraints (e.g., ^1.2.3) further restrict allowed updates.
+	// If a manifest specifies ^1.2.0, setting update="major" won't allow 2.x updates
+	// unless the manifest constraint is also updated.
+	Update string `yaml:"update" json:"update"`
+
+	// Cadence specifies how often to check for updates in scheduled/automated runs.
+	//
+	// Valid values:
+	//   - "daily":   Check for updates every day
+	//   - "weekly":  Check for updates once per week
+	//   - "monthly": Check for updates once per month
+	//   - "" (empty): No cadence restriction
+	//
+	// Default: "" (no restriction)
+	//
+	// This field is primarily used by GitHub Actions workflows to control update frequency.
+	// The CLI ignores this field and always checks for updates when run manually.
+	//
+	// Example: Set cadence="monthly" for production dependencies that change infrequently.
+	Cadence string `yaml:"cadence,omitempty" json:"cadence,omitempty"`
+
+	// Enabled controls whether this integration should run.
+	//
+	// When false, the integration is skipped during scan/plan/update operations.
+	//
+	// Default: true
+	//
+	// Note: CLI flags --only and --exclude override this setting. For example,
+	// --only=npm will run npm integration even if enabled=false in uptool.yaml.
+	Enabled bool `yaml:"enabled" json:"enabled"`
+
+	// AllowPrerelease controls whether to include pre-release versions in updates.
+	//
+	// When true, considers versions like:
+	//   - 1.2.3-alpha.1
+	//   - 1.2.3-beta.2
+	//   - 1.2.3-rc.1
+	//   - 1.2.3-20250708
+	//
+	// When false (default), only stable releases are considered.
+	//
+	// Default: false
+	//
+	// Recommendation: Only enable for development dependencies or when you explicitly
+	// want to test pre-release versions. Never enable for production dependencies.
+	AllowPrerelease bool `yaml:"allow_prerelease" json:"allow_prerelease"`
+
+	// Pin controls whether to write exact versions or preserve version constraints.
+	//
+	// Behavior varies by integration type:
+	//
+	// npm (pin=true):  Write exact versions: "4.19.2"
+	// npm (pin=false): Preserve constraints:  "^4.19.2", "~4.19.2"
+	//
+	// helm, terraform, mise: Always write exact versions (pin setting ignored)
+	//
+	// Default: Varies by integration
+	//   - npm: false (preserve constraints)
+	//   - helm: true (always pinned)
+	//   - terraform: true (always pinned)
+	//   - mise: true (always pinned)
+	//
+	// Recommendation: Use pin=false for libraries to allow downstream consumers
+	// to resolve compatible versions. Use pin=true for applications to ensure
+	// reproducible builds.
+	Pin bool `yaml:"pin" json:"pin"`
 }
 
 // Impact describes the severity of an update.

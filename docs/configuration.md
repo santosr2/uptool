@@ -143,6 +143,191 @@ When `true`, considers versions like `1.2.3-alpha20250708`, `1.2.3-beta2`, `1.2.
 
 Controls how often to check for updates in automated scenarios (primarily for GitHub Actions integration).
 
+**policy.enabled** - Enable/disable this integration:
+
+**Type**: `boolean` | **Default**: `true`
+
+When `false`, the integration is skipped during scan/plan/update operations. Can be overridden by CLI flags (`--only`, `--exclude`).
+
+## Policy Precedence
+
+uptool follows a clear precedence order when determining which updates to allow:
+
+### 1. CLI Flags (Highest Priority)
+
+Command-line flags always override configuration file settings:
+
+```bash
+# Override uptool.yaml and allow all updates
+uptool update --update-level=major
+
+# Allow prereleases regardless of config
+uptool update --allow-prerelease
+```
+
+### 2. uptool.yaml Integration Policy
+
+Per-integration policies in `uptool.yaml`:
+
+```yaml
+integrations:
+  - id: npm
+    policy:
+      update: minor  # Limits npm updates to minor/patch only
+```
+
+### 3. Manifest Constraints
+
+Version constraints in manifest files (package.json, Chart.yaml, etc.):
+
+```json
+{
+  "dependencies": {
+    "express": "^4.18.0"  // Constraint: only 4.x versions allowed
+  }
+}
+```
+
+Even if `update: major` is set, uptool respects the `^4.18.0` constraint and won't propose `express@5.0.0`.
+
+### 4. Default Behavior (Lowest Priority)
+
+If no policy or constraints exist, uptool allows all stable updates (equivalent to `update: major`).
+
+### Precedence Example
+
+Given this configuration:
+
+```yaml
+integrations:
+  - id: npm
+    policy:
+      update: minor  # Only minor/patch updates
+```
+
+And this package.json:
+
+```json
+{
+  "dependencies": {
+    "lodash": "^4.17.20"  // Constraint allows 4.x only
+  }
+}
+```
+
+**Result**:
+
+- ✅ `lodash@4.17.21` - Allowed (patch update, within 4.x constraint)
+- ✅ `lodash@4.18.0` - Allowed (minor update, within 4.x constraint)
+- ❌ `lodash@5.0.0` - Blocked (major update exceeds policy + constraint)
+
+Running with `--update-level=major`:
+
+- ✅ `lodash@5.0.0` - Now allowed (CLI flag overrides policy, but constraint needs manual update)
+
+## Policy Best Practices
+
+### Conservative (Production)
+
+For production systems requiring stability:
+
+```yaml
+integrations:
+  # Runtime dependencies: patch updates only
+  - id: mise
+    policy:
+      update: patch
+      pin: true
+
+  # Application dependencies: minor updates
+  - id: npm
+    policy:
+      update: minor
+      pin: true
+      cadence: monthly
+
+  # Infrastructure: patch updates only
+  - id: terraform
+    policy:
+      update: patch
+      cadence: monthly
+
+  - id: helm
+    policy:
+      update: patch
+      cadence: monthly
+```
+
+### Moderate (Staging)
+
+Balanced approach for staging environments:
+
+```yaml
+integrations:
+  - id: npm
+    policy:
+      update: minor  # Allow minor updates
+      pin: false     # Preserve version ranges
+
+  - id: terraform
+    policy:
+      update: minor
+
+  - id: helm
+    policy:
+      update: minor
+```
+
+### Aggressive (Development)
+
+Keep development tools up-to-date:
+
+```yaml
+integrations:
+  - id: precommit
+    policy:
+      update: major  # Allow all updates
+      cadence: weekly
+
+  - id: npm
+    match:
+      files: ["package.json"]  # Root only
+    policy:
+      update: major
+      allow_prerelease: false
+      cadence: weekly
+```
+
+### Monorepo Example
+
+Different policies for different parts of a monorepo:
+
+```yaml
+integrations:
+  # Production apps: conservative
+  - id: npm
+    match:
+      files: ["apps/*/package.json"]
+    policy:
+      update: patch
+      pin: true
+
+  # Shared libraries: moderate
+  - id: npm
+    match:
+      files: ["packages/*/package.json"]
+    policy:
+      update: minor
+      pin: false
+
+  # Development tools: aggressive
+  - id: precommit
+    policy:
+      update: major
+```
+
+**Note**: Multiple configurations for the same integration ID use the **last matching configuration**.
+
 ### org_policy
 
 **Type**: `object` | **Required**: No

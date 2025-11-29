@@ -29,6 +29,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/santosr2/uptool/internal/policy/guards"
+	_ "github.com/santosr2/uptool/internal/policy/guards/builtin" // Register built-in guards
 )
 
 // Enforcer handles organization policy enforcement.
@@ -241,26 +244,25 @@ func (e *Enforcer) checkAutoMergeGuards(ctx context.Context, result *Enforcement
 		}
 	}
 
-	guards := e.config.GetAutoMergeGuards()
+	guardNames := e.config.GetAutoMergeGuards()
 	allSatisfied := true
 
-	for _, guard := range guards {
-		satisfied := false
+	// Create environment for guard checks
+	env := &guards.Environment{
+		GitHubRepo:     e.githubRepo,
+		GitHubToken:    e.githubToken,
+		GitHubPRNumber: prNumber,
+	}
 
-		switch guard {
-		case "ci-green":
-			satisfied = e.checkCIStatus(ctx, prNumber)
-		case "codeowners-approve":
-			satisfied = e.checkCodeownersApproval(ctx, prNumber)
-		case "security-scan":
-			satisfied = e.checkSecurityScan(ctx, prNumber)
-		default:
-			// Unknown guard - mark as unsatisfied
+	for _, guardName := range guardNames {
+		satisfied, err := guards.CheckGuard(ctx, guardName, env)
+		if err != nil {
+			// Guard check failed with error
+			result.AutoMergeErrors = append(result.AutoMergeErrors, fmt.Sprintf("guard %q error: %v", guardName, err))
 			satisfied = false
-			result.AutoMergeErrors = append(result.AutoMergeErrors, fmt.Sprintf("unknown guard: %s", guard))
 		}
 
-		result.GuardsStatus[guard] = satisfied
+		result.GuardsStatus[guardName] = satisfied
 		if !satisfied {
 			allSatisfied = false
 		}
@@ -269,98 +271,4 @@ func (e *Enforcer) checkAutoMergeGuards(ctx context.Context, result *Enforcement
 	result.AutoMergeAllowed = allSatisfied
 
 	return nil
-}
-
-// checkCIStatus checks if all CI checks are passing.
-func (e *Enforcer) checkCIStatus(ctx context.Context, prNumber string) bool {
-	cmd := exec.CommandContext(ctx, "gh", "pr", "checks", prNumber, "--json", "state")
-	output, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-
-	// Parse check status
-	var checks []struct {
-		State string `json:"state"`
-	}
-
-	if err := json.Unmarshal(output, &checks); err != nil {
-		return false
-	}
-
-	for _, check := range checks {
-		if check.State != "SUCCESS" && check.State != "SKIPPED" {
-			return false
-		}
-	}
-
-	return len(checks) > 0
-}
-
-// checkCodeownersApproval checks if CODEOWNERS have approved.
-func (e *Enforcer) checkCodeownersApproval(ctx context.Context, prNumber string) bool {
-	cmd := exec.CommandContext(ctx, "gh", "pr", "view", prNumber, "--json", "reviews")
-	output, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-
-	var prData struct {
-		Reviews []struct {
-			Author struct {
-				Login string `json:"login"`
-			} `json:"author"`
-			State         string `json:"state"`
-			AuthorIsOwner bool   `json:"authorAssociation"` // OWNER, MEMBER, etc.
-		} `json:"reviews"`
-	}
-
-	if err := json.Unmarshal(output, &prData); err != nil {
-		return false
-	}
-
-	// Check if any owner/member has approved
-	for _, review := range prData.Reviews {
-		if review.State == "APPROVED" && review.AuthorIsOwner {
-			return true
-		}
-	}
-
-	return false
-}
-
-// checkSecurityScan checks if security scans have passed.
-func (e *Enforcer) checkSecurityScan(ctx context.Context, prNumber string) bool {
-	// Check for specific security scan check runs
-	cmd := exec.CommandContext(ctx, "gh", "pr", "checks", prNumber, "--json", "name,state")
-	output, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-
-	var checks []struct {
-		Name  string `json:"name"`
-		State string `json:"state"`
-	}
-
-	if err := json.Unmarshal(output, &checks); err != nil {
-		return false
-	}
-
-	// Look for security-related checks
-	securityChecks := []string{"CodeQL", "Trivy", "Security", "SAST"}
-	foundSecurityCheck := false
-
-	for _, check := range checks {
-		for _, secCheck := range securityChecks {
-			if strings.Contains(check.Name, secCheck) {
-				foundSecurityCheck = true
-				if check.State != "SUCCESS" {
-					return false
-				}
-			}
-		}
-	}
-
-	return foundSecurityCheck
 }

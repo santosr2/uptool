@@ -173,6 +173,8 @@ nav:
     - Configuration: configuration.md
     - Environments: environments.md
     - Manifests: manifests.md
+    - Organization Policy: policy.md
+    - Guard Plugins: guards.md
     - GitHub Action Usage: action-usage.md
     - Versioning: versioning.md
 

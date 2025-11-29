@@ -7,6 +7,8 @@ run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
+  skip-dirs:
+    - scripts  # Skip scripts directory (contains multiple main packages)
 
 linters:
   default: none  # Explicitly enable linters below
@@ -111,6 +113,8 @@ linters:
       - path: testdata/
         linters:
           - shadow
+      - path: ^scripts/
+        text: ".*"  # Exclude all issues from scripts directory (multiple main packages)
 
 formatters:
   enable:

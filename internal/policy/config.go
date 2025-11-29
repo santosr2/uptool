@@ -19,8 +19,52 @@
 // SOFTWARE.
 
 // Package policy handles configuration file parsing and policy management.
-// It defines the structure for uptool.yaml configuration files, including integration-specific
-// policies, update strategies, and organization-level governance settings.
+//
+// # Overview
+//
+// This package defines the structure for uptool.yaml configuration files, which control:
+//   - Integration-specific policies (update strategies, version pinning, cadence)
+//   - Organization-level governance (signoffs, signing, auto-merge guards)
+//   - File matching patterns for integration detection
+//
+// # Configuration Structure
+//
+// uptool.yaml has two main sections:
+//
+//  1. integrations[] - Per-integration update policies
+//  2. org_policy - Organization-level governance policies
+//
+// # Policy Precedence
+//
+// Update policies follow this precedence order (highest to lowest):
+//  1. CLI flags (--update-level, --allow-prerelease)
+//  2. uptool.yaml integration policy (integrations[*].policy)
+//  3. Manifest constraints (^, ~, >=, etc.)
+//  4. Default behavior
+//
+// # Example Configuration
+//
+//	version: 1
+//
+//	integrations:
+//	  - id: npm
+//	    enabled: true
+//	    policy:
+//	      update: minor          # Allow patch + minor updates
+//	      allow_prerelease: false
+//	      pin: false             # Preserve version ranges
+//	      cadence: weekly
+//
+//	org_policy:
+//	  require_signoff_from:
+//	    - "@security-team"
+//	  auto_merge:
+//	    enabled: true
+//	    guards:
+//	      - "ci-green"
+//	      - "codeowners-approve"
+//
+// See docs/configuration.md and docs/policy.md for comprehensive documentation.
 package policy
 
 import (
@@ -32,23 +76,86 @@ import (
 	"github.com/santosr2/uptool/internal/secureio"
 )
 
-// Config represents the uptool.yaml configuration file.
+// Config represents the complete uptool.yaml configuration file.
+//
+// The configuration file controls both integration-specific update policies and
+// organization-level governance settings.
+//
+// Example:
+//
+//	version: 1
+//	integrations:
+//	  - id: npm
+//	    enabled: true
+//	    policy:
+//	      update: minor
+//	org_policy:
+//	  auto_merge:
+//	    enabled: true
+//	    guards: ["ci-green"]
 type Config struct {
-	OrgPolicy    *OrgPolicy          `yaml:"org_policy,omitempty"`
+	// OrgPolicy contains organization-level governance policies (signoffs, signing, auto-merge).
+	// This field is optional - if omitted, no org-level policies are enforced.
+	OrgPolicy *OrgPolicy `yaml:"org_policy,omitempty"`
+
+	// Integrations contains per-integration configuration (update policies, file patterns).
+	// Each integration can be individually enabled/disabled and configured with its own policy.
 	Integrations []IntegrationConfig `yaml:"integrations"`
-	Version      int                 `yaml:"version"`
+
+	// Version specifies the configuration format version.
+	// Currently only version 1 is supported. This field is required.
+	Version int `yaml:"version"`
 }
 
-// IntegrationConfig defines configuration for a specific integration.
+// IntegrationConfig defines configuration for a specific integration (npm, helm, terraform, etc.).
+//
+// Each integration can be independently configured with custom update policies,
+// file matching patterns, and enable/disable state.
+//
+// Example:
+//
+//   - id: npm
+//     enabled: true
+//     match:
+//     files: ["package.json", "apps/*/package.json"]
+//     policy:
+//     update: minor
+//     allow_prerelease: false
+//     pin: false
+//     cadence: weekly
 type IntegrationConfig struct {
-	Match   *MatchConfig             `yaml:"match,omitempty"`
-	ID      string                   `yaml:"id"`
-	Policy  engine.IntegrationPolicy `yaml:"policy"`
-	Enabled bool                     `yaml:"enabled"`
+	// Match specifies custom file patterns for this integration.
+	// If omitted, the integration uses its default file patterns.
+	Match *MatchConfig `yaml:"match,omitempty"`
+
+	// ID is the integration identifier (e.g., "npm", "helm", "terraform").
+	// Must match one of the registered integration names. Required.
+	ID string `yaml:"id"`
+
+	// Policy contains update policy settings for this integration.
+	// Controls which updates are allowed (patch/minor/major), version pinning, etc.
+	Policy engine.IntegrationPolicy `yaml:"policy"`
+
+	// Enabled controls whether this integration runs during scan/plan/update.
+	// Default: true. Can be overridden by CLI flags (--only, --exclude).
+	Enabled bool `yaml:"enabled"`
 }
 
-// MatchConfig specifies file patterns for integration detection.
+// MatchConfig specifies file glob patterns for integration detection.
+//
+// Use this to customize which files an integration should process, particularly
+// useful for monorepos or non-standard project structures.
+//
+// Example:
+//
+//	match:
+//	  files:
+//	    - "package.json"           # Root package
+//	    - "apps/*/package.json"    # App packages
+//	    - "packages/*/package.json" # Library packages
 type MatchConfig struct {
+	// Files is a list of glob patterns matching manifest files.
+	// Patterns support standard glob syntax: *, **, ?, [abc], {a,b,c}.
 	Files []string `yaml:"files"`
 }
 

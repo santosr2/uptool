@@ -64,6 +64,8 @@ This ensures **declared dependencies** stay current, not just resolved versions.
 - **Manifest-First Updates**: Updates configuration files directly, preserving formatting and comments
 - **Dual Usage Modes**: Use as a CLI tool locally or as a GitHub Action in CI/CD
 - **Intelligent Version Resolution**: Queries upstream registries (npm, Terraform Registry, Helm repos, GitHub Releases)
+- **Organization Policies**: Enforce governance, security, and compliance requirements with pluggable guard system
+- **Auto-Merge Guards**: Extensible plugin system for custom approval workflows (CI checks, security scans, custom integrations)
 - **Safe by Default**: Dry-run mode, diff generation, validation
 - **Concurrent Execution**: Parallel scanning and planning with worker pools
 - **Flexible Filtering**: Run specific integrations with `--only` or exclude with `--exclude`
@@ -240,6 +242,7 @@ jobs:
 | `uptool plan` | Generate update plan | `--only`, `--exclude`, `--out` |
 | `uptool update` | Apply updates | `--dry-run`, `--diff`, `--only` |
 | `uptool list` | List integrations | `--category`, `--experimental` |
+| `uptool check-policy` | Validate org policies and guards | `--verbose` |
 
 See [CLI Reference](docs/cli/commands.md) for complete documentation.
 
@@ -348,15 +351,37 @@ Optional `uptool.yaml` in your repository root:
 
 ```yaml
 version: 1
+
 integrations:
   - id: npm
     enabled: true
     policy:
       update: minor              # none, patch, minor, major
       allow_prerelease: false
+
+org_policy:
+  # Require signoff from team members
+  require_signoff_from:
+    - "@security-team"
+    - "@platform-leads"
+
+  # Verify artifact signatures
+  signing:
+    cosign_verify:
+      enabled: true
+      public_key: "cosign.pub"
+
+  # Auto-merge when guards pass
+  auto_merge:
+    enabled: true
+    guards:
+      - "ci-green"             # All CI checks must pass
+      - "codeowners-approve"   # CODEOWNERS must approve
+      - "security-scan"        # Security scans must pass
+      - "custom-guard"         # Your custom guard plugin
 ```
 
-See [docs/configuration.md](docs/configuration.md) and [`examples/`](examples/) for complete reference.
+See [docs/configuration.md](docs/configuration.md), [docs/policy.md](docs/policy.md), and [`examples/`](examples/) for complete reference.
 
 ---
 
@@ -416,7 +441,7 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 
 ## Documentation & Support
 
-**Docs**: [Overview](docs/overview.md) • [Quick Start](docs/quickstart.md) • [Configuration](docs/configuration.md) • [Integrations](docs/integrations/) • [Examples](examples/)
+**Docs**: [Overview](docs/overview.md) • [Quick Start](docs/quickstart.md) • [Configuration](docs/configuration.md) • [Organization Policy](docs/policy.md) • [Guard Plugins](docs/guards.md) • [Integrations](docs/integrations/) • [Examples](examples/)
 
 **Community**: [Issues](https://github.com/santosr2/uptool/issues) • [Discussions](https://github.com/santosr2/uptool/discussions) • [Changelog](CHANGELOG.md)
 
