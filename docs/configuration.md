@@ -143,11 +143,22 @@ When `true`, considers versions like `1.2.3-alpha20250708`, `1.2.3-beta2`, `1.2.
 
 Controls how often to check for updates in automated scenarios (primarily for GitHub Actions integration).
 
-**policy.enabled** - Enable/disable this integration:
+**policy.enabled** - Enable/disable policy enforcement for this integration:
 
 **Type**: `boolean` | **Default**: `true`
 
-When `false`, the integration is skipped during scan/plan/update operations. Can be overridden by CLI flags (`--only`, `--exclude`).
+When `false`, the integration still runs but uses **default policy settings** instead of configured values:
+
+- `update: major` (allow all updates)
+- `allow_prerelease: false` (no pre-releases)
+- `pin: <default per integration>`
+- Respects manifest constraints (`^`, `~`, `>=`, etc.)
+
+When `true`, the configured policy settings are applied.
+
+**Note**: This is different from `integrations[*].enabled`, which controls whether the integration is registered at all. Use `policy.enabled: false` to temporarily disable policy restrictions without removing the integration.
+
+**Use case**: Temporarily allow all updates for an integration during major version upgrades without modifying other policy settings.
 
 ## Policy Precedence
 

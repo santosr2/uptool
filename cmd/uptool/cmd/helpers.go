@@ -113,20 +113,29 @@ func setupEngine() *engine.Engine {
 
 // buildPolicies extracts IntegrationPolicy objects from the config.
 // It uses the ToPolicyMap method to get policies for all integrations,
-// then filters to only include enabled integrations with policy settings.
+// then filters to only include enabled integrations with enabled policies.
+//
+// When policy.enabled is false, the policy is NOT included in the map,
+// causing the integration to use default settings (allow all updates, respect constraints).
 func buildPolicies(cfg *policy.Config) map[string]engine.IntegrationPolicy {
 	// Get all policies from config
 	allPolicies := cfg.ToPolicyMap()
 
-	// Filter to only enabled integrations with actual policy settings
+	// Filter to only enabled integrations with enabled policies
 	policies := make(map[string]engine.IntegrationPolicy)
 	for _, ic := range cfg.Integrations {
 		if !ic.Enabled {
 			continue
 		}
 
-		// Only add policy if it has settings
+		// Check if policy is explicitly disabled
 		p := allPolicies[ic.ID]
+		if !p.Enabled {
+			// Policy disabled - skip adding it (integration will use defaults)
+			continue
+		}
+
+		// Only add policy if it has settings
 		if p.Update != "" || p.AllowPrerelease {
 			policies[ic.ID] = p
 		}

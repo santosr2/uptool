@@ -6,17 +6,17 @@ version: 1
 integrations:
   # npm - JavaScript/TypeScript package manager
   - id: npm
-    enabled: true
+    enabled: true        # Controls if integration runs (true = run, false = skip)
     match:
       files:
         - "package.json"
         - "*/package.json"
     policy:
-      enabled: true
-      update: minor         # none | patch | minor | major
+      enabled: true      # Controls if policy is enforced (false = use defaults)
+      update: minor      # none | patch | minor | major
       allow_prerelease: false
-      pin: false           # Preserve version constraints (^, ~, >=)
-      cadence: weekly      # How often to check for updates
+      pin: false         # Preserve version constraints (^, ~, >=)
+      cadence: weekly    # How often to check for updates
 
   # Helm - Kubernetes package manager
   - id: helm
@@ -120,6 +120,18 @@ org_policy:
       - "ci-green"           # All CI checks must pass
       - "codeowners-approve" # CODEOWNERS must approve
       - "security-scan"      # Security scans must pass (CodeQL, Trivy, etc.)
+
+# Example: Temporarily disable policy for major version upgrades
+# Uncomment to allow all updates for npm while keeping other settings
+#
+#  - id: npm
+#    enabled: true
+#    policy:
+#      enabled: false     # Policy disabled - uses defaults (update: major)
+#      # The settings below are ignored when policy.enabled is false
+#      update: patch
+#      allow_prerelease: false
+#      pin: true
 
 # Optional: Notification settings (NOT IMPLEMENTED YET - placeholder for future feature)
 # notifications:

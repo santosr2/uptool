@@ -242,14 +242,24 @@ type IntegrationPolicy struct {
 	// Example: Set cadence="monthly" for production dependencies that change infrequently.
 	Cadence string `yaml:"cadence,omitempty" json:"cadence,omitempty"`
 
-	// Enabled controls whether this integration should run.
+	// Enabled controls whether this policy is applied.
 	//
-	// When false, the integration is skipped during scan/plan/update operations.
+	// When false, the integration still runs but uses default policy settings:
+	//   - update: major (allow all updates)
+	//   - allow_prerelease: false
+	//   - pin: default per integration
+	//   - Respects manifest constraints (^, ~, >=, etc.)
+	//
+	// When true, the configured policy settings are applied.
 	//
 	// Default: true
 	//
-	// Note: CLI flags --only and --exclude override this setting. For example,
-	// --only=npm will run npm integration even if enabled=false in uptool.yaml.
+	// Note: This is different from integrations[*].enabled, which controls whether
+	// the integration is registered at all. Use policy.enabled to disable policies
+	// while keeping the integration active.
+	//
+	// Example use case: Temporarily allow all updates for an integration without
+	// modifying other policy settings.
 	Enabled bool `yaml:"enabled" json:"enabled"`
 
 	// AllowPrerelease controls whether to include pre-release versions in updates.
