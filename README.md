@@ -9,7 +9,7 @@
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-uptool-blue?style=flat&logo=github)](https://github.com/marketplace/actions/uptool-dependency-updater)
 [![Go Report Card](https://goreportcard.com/badge/github.com/santosr2/uptool)](https://goreportcard.com/report/github.com/santosr2/uptool)
 
-<!-- DevSecOps & Transparencey -->
+<!-- DevSecOps & Transparency -->
 [![DevSecOps](https://img.shields.io/badge/DevSecOps-shift%20left-blue?style=flat)](https://github.com/santosr2/uptool/security)
 [![Supply Chain](https://img.shields.io/badge/supply%20chain-transparent-green?style=flat)](https://github.com/santosr2/uptool/releases)
 [![SBOM](https://img.shields.io/badge/SBOM-CycloneDX-orange?style=flat)](https://github.com/santosr2/uptool/releases)
@@ -237,15 +237,15 @@ jobs:
 
 ## Commands
 
-**Global flags**: `-v/--verbose`, `-q/--quiet`, `--help`
+**Global flags**: `-v/--verbose`, `-q/--quiet`, `--config`, `--help`
 
 | Command | Purpose | Key Flags |
 |---------|---------|-----------|
-| `uptool scan` | Discover manifest files | `--only`, `--exclude`, `--format` |
-| `uptool plan` | Generate update plan | `--only`, `--exclude`, `--out` |
-| `uptool update` | Apply updates | `--dry-run`, `--diff`, `--only` |
+| `uptool scan` | Discover manifest files | `--only`, `--exclude`, `--format`, `--config` |
+| `uptool plan` | Generate update plan | `--only`, `--exclude`, `--out`, `--config` |
+| `uptool update` | Apply updates | `--dry-run`, `--diff`, `--only`, `--config` |
 | `uptool list` | List integrations | `--category`, `--experimental` |
-| `uptool check-policy` | Validate org policies and guards | `--verbose` |
+| `uptool check-policy` | Validate org policies and guards | `--verbose`, `--config` |
 
 See [CLI Reference](docs/cli/commands.md) for complete documentation.
 
