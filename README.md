@@ -196,6 +196,9 @@ $ uptool update --only=npm,helm
 
 # 6. Exclude integrations
 $ uptool update --exclude=terraform
+
+# 7. Use custom config file
+$ uptool scan --config /path/to/custom-uptool.yaml
 ```
 
 ### GitHub Action Usage
@@ -347,7 +350,7 @@ See [docs/architecture.md](docs/architecture.md) for complete system design.
 
 ## Configuration
 
-Optional `uptool.yaml` in your repository root:
+Optional `uptool.yaml` in your repository root (or specify a custom path with `--config`):
 
 ```yaml
 version: 1

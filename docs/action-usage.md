@@ -65,6 +65,16 @@ jobs:
     create-pr: 'true'
 ```
 
+### Custom Config File
+
+```yaml
+- uses: santosr2/uptool@v0
+  with:
+    command: update
+    config: configs/production-uptool.yaml
+    create-pr: 'true'
+```
+
 ### Monorepo Pattern
 
 ```yaml
@@ -95,6 +105,7 @@ steps:
 | `command` | Yes | - | Command: `scan`, `plan`, or `update` |
 | `create-pr` | No | `false` | Create pull request |
 | `token` | No | `{% raw %}${{  github.token  }}{% endraw %}` | GitHub token |
+| `config` | No | - | Path to uptool config file (default: `uptool.yaml`) |
 | `only` | No | - | Comma-separated integrations |
 | `exclude` | No | - | Exclude integrations |
 | `dry-run` | No | `false` | Preview without applying |

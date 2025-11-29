@@ -2,6 +2,14 @@
 
 uptool can be configured using a `uptool.yaml` file in your repository root. Configuration is **optional** — if no file exists, uptool runs all integrations with sensible defaults.
 
+You can specify a custom config file path using the `--config` flag:
+
+```bash
+uptool scan --config /path/to/custom-config.yaml
+uptool plan --config ./configs/production.yaml
+uptool update --config ../shared-uptool.yaml
+```
+
 ## Quick Start
 
 Create `uptool.yaml` in your repository root:

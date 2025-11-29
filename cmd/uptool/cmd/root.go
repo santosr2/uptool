@@ -31,6 +31,7 @@ import (
 var (
 	quietFlag   bool
 	verboseFlag bool
+	configFlag  string
 	logLevel    = slog.LevelWarn
 
 	rootCmd = &cobra.Command{
@@ -58,6 +59,7 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVarP(&quietFlag, "quiet", "q", false, "suppress informational output (errors only)")
 	rootCmd.PersistentFlags().BoolVarP(&verboseFlag, "verbose", "v", false, "enable verbose debug output")
+	rootCmd.PersistentFlags().StringVar(&configFlag, "config", "", "path to config file (default: uptool.yaml)")
 }
 
 // Execute runs the root command
@@ -68,4 +70,10 @@ func Execute() error {
 // GetLogLevel returns the current log level based on flags
 func GetLogLevel() slog.Level {
 	return logLevel
+}
+
+// GetConfigPath returns the config file path from the --config flag.
+// Returns empty string if not specified (indicating default behavior).
+func GetConfigPath() string {
+	return configFlag
 }

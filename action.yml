@@ -27,6 +27,11 @@ inputs:
     required: false
     default: ''
 
+  config:
+    description: 'Path to uptool config file (default: uptool.yaml)'
+    required: false
+    default: ''
+
   dry-run:
     description: 'Show changes without applying (for update command)'
     required: false
@@ -155,6 +160,11 @@ runs:
         CMD="${{ inputs.command }}"
         ARGS=""
 
+        # Add config flag
+        if [ -n "${{ inputs.config }}" ]; then
+          ARGS="$ARGS --config=${{ inputs.config }}"
+        fi
+
         # Add format flag
         if [ "$CMD" != "update" ] && [ -n "${{ inputs.format }}" ]; then
           ARGS="$ARGS --format=${{ inputs.format }}"
@@ -223,8 +233,14 @@ runs:
         # Change to workspace directory
         cd "$GITHUB_WORKSPACE"
 
+        # Build config flag if specified
+        CONFIG_FLAG=""
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_FLAG="--config=${{ inputs.config }}"
+        fi
+
         # Run uptool plan with JSON output to get detailed update information
-        $UPTOOL_CMD plan --format=json > /tmp/plan-output.json
+        $UPTOOL_CMD plan $CONFIG_FLAG --format=json > /tmp/plan-output.json
 
         # Generate PR body with detailed information
         cat > /tmp/pr-body.md <<'EOFMARKER'
@@ -330,8 +346,14 @@ runs:
         # Change to workspace directory
         cd "$GITHUB_WORKSPACE"
 
+        # Build config flag if specified
+        CONFIG_FLAG=""
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_FLAG="--config=${{ inputs.config }}"
+        fi
+
         # Run uptool plan with JSON output to get detailed update information
-        $UPTOOL_CMD plan --format=json > /tmp/plan-output.json
+        $UPTOOL_CMD plan $CONFIG_FLAG --format=json > /tmp/plan-output.json
 
         # Generate issue body
         cat > /tmp/issue-body.md <<'EOFMARKER'

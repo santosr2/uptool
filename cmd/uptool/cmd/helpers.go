@@ -47,22 +47,32 @@ func setupEngine() *engine.Engine {
 
 	// Load configuration if available
 	var cfg *policy.Config
-	configPath := filepath.Join(".", "uptool.yaml")
+
+	// Determine config file path (custom path via --config flag or default uptool.yaml)
+	configPath := GetConfigPath()
+	if configPath == "" {
+		// No --config flag specified, use default
+		configPath = filepath.Join(".", "uptool.yaml")
+	}
+
 	if _, err := os.Stat(configPath); err == nil {
 		// Convert to absolute path for secureio
 		absPath, absErr := filepath.Abs(configPath)
 		if absErr != nil {
-			logger.Warn("failed to resolve config path", "error", absErr)
+			logger.Warn("failed to resolve config path", "path", configPath, "error", absErr)
 		} else {
 			var loadErr error
 			cfg, loadErr = policy.LoadConfig(absPath)
 			if loadErr != nil {
-				logger.Warn("failed to load config, using defaults", "error", loadErr)
+				logger.Warn("failed to load config, using defaults", "path", absPath, "error", loadErr)
 				cfg = nil
 			} else {
 				logger.Debug("loaded configuration", "path", absPath)
 			}
 		}
+	} else if GetConfigPath() != "" {
+		// Custom config path specified but file doesn't exist - warn user
+		logger.Warn("config file not found", "path", configPath)
 	}
 
 	// Get all registered integrations from the global registry
