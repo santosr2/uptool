@@ -28,7 +28,8 @@ integrations:                 # List of integration configurations
   - id: <integration_id>      # Integration identifier
     enabled: true|false       # Enable/disable this integration
     match:                    # Optional: File matching rules
-      files: [...]            # List of file patterns
+      files: [...]            # List of file patterns to include
+      exclude: [...]          # List of file patterns to exclude
     policy:                   # Update policy for this integration
       update: none|patch|minor|major
       allow_prerelease: true|false
@@ -76,9 +77,9 @@ Whether this integration should run. CLI flags `--only` and `--exclude` override
 
 **Type**: `object` | **Required**: No
 
-File matching rules for this integration.
+File matching rules for this integration. Supports both include patterns (`files`) and exclude patterns (`exclude`).
 
-**match.files** - Array of glob patterns:
+**match.files** - Array of glob patterns to include:
 
 ```yaml
 - id: npm
@@ -88,6 +89,33 @@ File matching rules for this integration.
       - "apps/*/package.json"    # Monorepo packages
       - "packages/*/package.json"
 ```
+
+**match.exclude** - Array of glob patterns to exclude (applied after `files`):
+
+```yaml
+- id: npm
+  match:
+    files:
+      - "package.json"
+      - "apps/*/package.json"
+      - "libs/*/package.json"
+    exclude:
+      - "libs/*/package.json"              # Exclude library packages
+      - "node_modules/**/package.json"     # Exclude dependencies
+```
+
+**Matching Logic**:
+
+1. Files are first matched against `files` patterns (if specified)
+2. Then filtered out if they match any `exclude` pattern
+3. If no `files` patterns specified, all detected files are included (before applying `exclude`)
+
+**Common Use Cases**:
+
+- Exclude vendor directories: `vendor/**`
+- Exclude build artifacts: `dist/**`, `build/**`
+- Exclude test fixtures: `testdata/**`, `fixtures/**`
+- Exclude specific paths: `legacy/old-app/**`
 
 **Default patterns by integration**:
 

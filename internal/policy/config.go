@@ -153,10 +153,26 @@ type IntegrationConfig struct {
 //	    - "package.json"           # Root package
 //	    - "apps/*/package.json"    # App packages
 //	    - "packages/*/package.json" # Library packages
+//	  exclude:
+//	    - "node_modules/**/package.json"  # Ignore dependencies
+//	    - "dist/**/package.json"          # Ignore build artifacts
 type MatchConfig struct {
 	// Files is a list of glob patterns matching manifest files.
 	// Patterns support standard glob syntax: *, **, ?, [abc], {a,b,c}.
 	Files []string `yaml:"files"`
+
+	// Exclude is a list of glob patterns to exclude from matches.
+	// Files matching any exclude pattern are filtered out even if they match a files pattern.
+	// Patterns support standard glob syntax: *, **, ?, [abc], {a,b,c}.
+	//
+	// Exclude patterns are applied AFTER files patterns, providing fine-grained control.
+	//
+	// Common use cases:
+	//   - Exclude vendor directories: "vendor/**"
+	//   - Exclude build artifacts: "dist/**", "build/**"
+	//   - Exclude test fixtures: "testdata/**", "fixtures/**"
+	//   - Exclude specific paths: "legacy/old-app/**"
+	Exclude []string `yaml:"exclude,omitempty"`
 }
 
 // OrgPolicy contains organization-level policies and governance settings.
@@ -265,12 +281,16 @@ func (c *Config) EnabledIntegrations() []string {
 	return result
 }
 
-// ToMatchConfigMap converts the configuration into a map of file patterns per integration.
-func (c *Config) ToMatchConfigMap() map[string][]string {
-	result := make(map[string][]string)
+// ToMatchConfigMap converts the configuration into a map of match configs per integration.
+// Returns only integrations that have match configuration specified.
+func (c *Config) ToMatchConfigMap() map[string]*engine.MatchConfig {
+	result := make(map[string]*engine.MatchConfig)
 	for _, integ := range c.Integrations {
-		if integ.Match != nil && len(integ.Match.Files) > 0 {
-			result[integ.ID] = integ.Match.Files
+		if integ.Match != nil && (len(integ.Match.Files) > 0 || len(integ.Match.Exclude) > 0) {
+			result[integ.ID] = &engine.MatchConfig{
+				Files:   integ.Match.Files,
+				Exclude: integ.Match.Exclude,
+			}
 		}
 	}
 	return result

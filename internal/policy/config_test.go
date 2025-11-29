@@ -353,19 +353,71 @@ func TestConfig_ToMatchConfigMap(t *testing.T) {
 		t.Errorf("ToMatchConfigMap() returned %d items, want 2", len(matchMap))
 	}
 
-	if patterns, ok := matchMap["npm"]; !ok {
+	if matchConfig, ok := matchMap["npm"]; !ok {
 		t.Error("ToMatchConfigMap() missing 'npm' key")
-	} else if len(patterns) != 2 {
-		t.Errorf("npm patterns count = %d, want 2", len(patterns))
+	} else if len(matchConfig.Files) != 2 {
+		t.Errorf("npm patterns count = %d, want 2", len(matchConfig.Files))
 	}
 
-	if patterns, ok := matchMap["terraform"]; !ok {
+	if matchConfig, ok := matchMap["terraform"]; !ok {
 		t.Error("ToMatchConfigMap() missing 'terraform' key")
-	} else if len(patterns) != 2 {
-		t.Errorf("terraform patterns count = %d, want 2", len(patterns))
+	} else if len(matchConfig.Files) != 2 {
+		t.Errorf("terraform patterns count = %d, want 2", len(matchConfig.Files))
 	}
 
 	if _, ok := matchMap["helm"]; ok {
 		t.Error("ToMatchConfigMap() should not include 'helm' (no match config)")
+	}
+}
+
+func TestConfig_ToMatchConfigMap_WithExclude(t *testing.T) {
+	config := &Config{
+		Version: 1,
+		Integrations: []IntegrationConfig{
+			{
+				ID:      "npm",
+				Enabled: true,
+				Match: &MatchConfig{
+					Files:   []string{"package.json", "apps/*/package.json", "libs/*/package.json"},
+					Exclude: []string{"libs/*/package.json", "node_modules/**/package.json"},
+				},
+			},
+			{
+				ID:      "terraform",
+				Enabled: true,
+				Match: &MatchConfig{
+					Files:   []string{"*.tf", "modules/**/*.tf"},
+					Exclude: []string{".terraform/**/*.tf"},
+				},
+			},
+		},
+	}
+
+	matchMap := config.ToMatchConfigMap()
+
+	if len(matchMap) != 2 {
+		t.Errorf("ToMatchConfigMap() returned %d items, want 2", len(matchMap))
+	}
+
+	npmConfig, ok := matchMap["npm"]
+	if !ok {
+		t.Fatal("ToMatchConfigMap() missing 'npm' key")
+	}
+	if len(npmConfig.Files) != 3 {
+		t.Errorf("npm files count = %d, want 3", len(npmConfig.Files))
+	}
+	if len(npmConfig.Exclude) != 2 {
+		t.Errorf("npm exclude count = %d, want 2", len(npmConfig.Exclude))
+	}
+
+	tfConfig, ok := matchMap["terraform"]
+	if !ok {
+		t.Fatal("ToMatchConfigMap() missing 'terraform' key")
+	}
+	if len(tfConfig.Files) != 2 {
+		t.Errorf("terraform files count = %d, want 2", len(tfConfig.Files))
+	}
+	if len(tfConfig.Exclude) != 1 {
+		t.Errorf("terraform exclude count = %d, want 1", len(tfConfig.Exclude))
 	}
 }

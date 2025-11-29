@@ -11,6 +11,10 @@ integrations:
       files:
         - "package.json"
         - "*/package.json"
+      # Optional: Exclude specific paths (applied after files matching)
+      exclude:
+        - "node_modules/**/package.json"  # Exclude dependencies
+        - "dist/**/package.json"          # Exclude build artifacts
     policy:
       enabled: true      # Controls if policy is enforced (false = use defaults)
       update: minor      # none | patch | minor | major
@@ -39,6 +43,9 @@ integrations:
       files:
         - "*.tf"
         - "**/*.tf"
+      exclude:
+        - ".terraform/**/*.tf"    # Exclude cached provider files
+        - "vendor/**/*.tf"        # Exclude vendored modules
     policy:
       enabled: true
       update: patch        # Conservative for infrastructure

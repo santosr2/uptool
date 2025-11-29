@@ -310,6 +310,19 @@ const (
 	ImpactMajor Impact = "major"
 )
 
+// MatchConfig specifies file patterns for integration detection.
+// It supports both include patterns (files to match) and exclude patterns (files to ignore).
+type MatchConfig struct {
+	// Files is a list of glob patterns matching manifest files.
+	// If empty, all files detected by the integration are included.
+	Files []string
+
+	// Exclude is a list of glob patterns to exclude from matches.
+	// Files matching any exclude pattern are filtered out even if they match a files pattern.
+	// Exclude patterns are applied AFTER files patterns.
+	Exclude []string
+}
+
 // PolicySource indicates where the update policy originated from.
 type PolicySource string
 

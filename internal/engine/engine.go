@@ -36,7 +36,7 @@ import (
 type Engine struct {
 	integrations map[string]Integration
 	policies     map[string]IntegrationPolicy
-	matchConfigs map[string][]string // integration -> file patterns
+	matchConfigs map[string]*MatchConfig // integration -> match configuration (files + exclude)
 	logger       *slog.Logger
 	cliFlags     *CLIFlags
 	concurrency  int
@@ -51,7 +51,7 @@ func NewEngine(logger *slog.Logger) *Engine {
 	return &Engine{
 		integrations: make(map[string]Integration),
 		policies:     make(map[string]IntegrationPolicy),
-		matchConfigs: make(map[string][]string),
+		matchConfigs: make(map[string]*MatchConfig),
 		logger:       logger,
 		concurrency:  4,
 	}
@@ -65,8 +65,9 @@ func (e *Engine) SetPolicies(policies map[string]IntegrationPolicy) {
 }
 
 // SetMatchConfigs configures file pattern matching for integrations.
-// Manifests will be filtered to only include those matching the configured patterns.
-func (e *Engine) SetMatchConfigs(configs map[string][]string) {
+// Manifests will be filtered to only include those matching the configured patterns
+// and exclude those matching exclude patterns.
+func (e *Engine) SetMatchConfigs(configs map[string]*MatchConfig) {
 	e.matchConfigs = configs
 	e.logger.Debug("set match configs", "count", len(configs))
 }
@@ -138,8 +139,8 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 			}
 
 			// Filter manifests by match patterns if configured
-			if patterns, ok := e.matchConfigs[n]; ok && len(patterns) > 0 {
-				filtered := e.filterManifestsByPattern(found, patterns, repoRoot)
+			if matchConfig, ok := e.matchConfigs[n]; ok && matchConfig != nil {
+				filtered := e.filterManifestsByPattern(found, matchConfig, repoRoot)
 				manifests = append(manifests, filtered...)
 				e.logger.Info("scan complete", "integration", n, "found", len(found), "filtered", len(filtered))
 			} else {
@@ -351,48 +352,69 @@ func (e *Engine) ListIntegrations() []string {
 }
 
 // filterManifestsByPattern filters manifests to only include those matching the given file patterns.
-func (e *Engine) filterManifestsByPattern(manifests []*Manifest, patterns []string, repoRoot string) []*Manifest {
+func (e *Engine) filterManifestsByPattern(manifests []*Manifest, matchConfig *MatchConfig, repoRoot string) []*Manifest {
 	filtered := make([]*Manifest, 0, len(manifests))
 
 	for _, m := range manifests {
 		// Build full path for matching
 		fullPath := filepath.Join(repoRoot, m.Path)
 
-		// Check if manifest path matches any pattern
-		matched := false
-		for _, pattern := range patterns {
-			// Support both absolute and relative patterns
-			patternPath := pattern
-			if !filepath.IsAbs(patternPath) {
-				patternPath = filepath.Join(repoRoot, pattern)
-			}
-
-			// Use filepath.Match for glob matching
-			match, err := filepath.Match(patternPath, fullPath)
-			if err != nil {
-				e.logger.Debug("pattern match error", "pattern", pattern, "path", fullPath, "error", err)
-				continue
-			}
-
-			if match {
-				matched = true
-				break
-			}
-
-			// Also try pattern matching on the relative path directly
-			match, err = filepath.Match(pattern, m.Path)
-			if err == nil && match {
-				matched = true
+		// First, check if path matches any include pattern (if specified)
+		includeMatched := len(matchConfig.Files) == 0 // If no files patterns, include all by default
+		for _, pattern := range matchConfig.Files {
+			if e.matchesPattern(pattern, fullPath, m.Path, repoRoot) {
+				includeMatched = true
 				break
 			}
 		}
 
-		if matched {
+		// If not included, skip
+		if !includeMatched {
+			e.logger.Debug("manifest filtered out (no include match)", "path", m.Path, "patterns", matchConfig.Files)
+			continue
+		}
+
+		// Then, check if path matches any exclude pattern
+		excluded := false
+		for _, pattern := range matchConfig.Exclude {
+			if e.matchesPattern(pattern, fullPath, m.Path, repoRoot) {
+				excluded = true
+				e.logger.Debug("manifest excluded", "path", m.Path, "pattern", pattern)
+				break
+			}
+		}
+
+		// Only add if included and not excluded
+		if !excluded {
 			filtered = append(filtered, m)
-		} else {
-			e.logger.Debug("manifest filtered out", "path", m.Path, "patterns", patterns)
 		}
 	}
 
 	return filtered
+}
+
+// matchesPattern checks if a file path matches a given glob pattern.
+// It tries both absolute and relative path matching.
+func (e *Engine) matchesPattern(pattern, fullPath, relativePath, repoRoot string) bool {
+	// Support both absolute and relative patterns
+	patternPath := pattern
+	if !filepath.IsAbs(patternPath) {
+		patternPath = filepath.Join(repoRoot, pattern)
+	}
+
+	// Try matching against full path
+	match, err := filepath.Match(patternPath, fullPath)
+	if err != nil {
+		e.logger.Debug("pattern match error", "pattern", pattern, "path", fullPath, "error", err)
+	} else if match {
+		return true
+	}
+
+	// Also try pattern matching on the relative path directly
+	match, err = filepath.Match(pattern, relativePath)
+	if err == nil && match {
+		return true
+	}
+
+	return false
 }

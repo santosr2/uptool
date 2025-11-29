@@ -897,9 +897,13 @@ func TestEngine_SetMatchConfigs(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))
 	e := NewEngine(logger)
 
-	matchConfigs := map[string][]string{
-		"npm":       {"package.json", "apps/*/package.json"},
-		"terraform": {"*.tf", "modules/**/*.tf"},
+	matchConfigs := map[string]*MatchConfig{
+		"npm": {
+			Files: []string{"package.json", "apps/*/package.json"},
+		},
+		"terraform": {
+			Files: []string{"*.tf", "modules/**/*.tf"},
+		},
 	}
 
 	e.SetMatchConfigs(matchConfigs)
@@ -908,8 +912,8 @@ func TestEngine_SetMatchConfigs(t *testing.T) {
 		t.Errorf("SetMatchConfigs() stored %d configs, want 2", len(e.matchConfigs))
 	}
 
-	if len(e.matchConfigs["npm"]) != 2 {
-		t.Errorf("SetMatchConfigs() npm has %d patterns, want 2", len(e.matchConfigs["npm"]))
+	if len(e.matchConfigs["npm"].Files) != 2 {
+		t.Errorf("SetMatchConfigs() npm has %d patterns, want 2", len(e.matchConfigs["npm"].Files))
 	}
 }
 
@@ -925,35 +929,51 @@ func TestEngine_FilterManifestsByPattern(t *testing.T) {
 	}
 
 	tests := []struct {
-		name     string
-		patterns []string
-		want     int
+		name        string
+		matchConfig *MatchConfig
+		want        int
 	}{
 		{
-			name:     "match all",
-			patterns: []string{"package.json", "apps/*/package.json", "libs/*/package.json"},
-			want:     4,
+			name: "match all",
+			matchConfig: &MatchConfig{
+				Files: []string{"package.json", "apps/*/package.json", "libs/*/package.json"},
+			},
+			want: 4,
 		},
 		{
-			name:     "match root only",
-			patterns: []string{"package.json"},
-			want:     1,
+			name: "match root only",
+			matchConfig: &MatchConfig{
+				Files: []string{"package.json"},
+			},
+			want: 1,
 		},
 		{
-			name:     "match apps only",
-			patterns: []string{"apps/*/package.json"},
-			want:     2,
+			name: "match apps only",
+			matchConfig: &MatchConfig{
+				Files: []string{"apps/*/package.json"},
+			},
+			want: 2,
 		},
 		{
-			name:     "no matches",
-			patterns: []string{"services/*/package.json"},
-			want:     0,
+			name: "no matches",
+			matchConfig: &MatchConfig{
+				Files: []string{"services/*/package.json"},
+			},
+			want: 0,
+		},
+		{
+			name: "match all but exclude libs",
+			matchConfig: &MatchConfig{
+				Files:   []string{"package.json", "apps/*/package.json", "libs/*/package.json"},
+				Exclude: []string{"libs/*/package.json"},
+			},
+			want: 3,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			filtered := e.filterManifestsByPattern(manifests, tt.patterns, "/repo")
+			filtered := e.filterManifestsByPattern(manifests, tt.matchConfig, "/repo")
 			if len(filtered) != tt.want {
 				t.Errorf("filterManifestsByPattern() = %d manifests, want %d", len(filtered), tt.want)
 			}
@@ -978,8 +998,10 @@ func TestEngine_ScanWithMatchFiltering(t *testing.T) {
 	e.Register(mock)
 
 	// Set match config to only include root package.json
-	e.SetMatchConfigs(map[string][]string{
-		"npm": {"package.json"},
+	e.SetMatchConfigs(map[string]*MatchConfig{
+		"npm": {
+			Files: []string{"package.json"},
+		},
 	})
 
 	ctx := context.Background()
