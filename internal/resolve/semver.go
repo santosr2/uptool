@@ -267,11 +267,6 @@ func SelectVersionWithContext(
 		return "", engine.ImpactNone, fmt.Errorf("no available versions")
 	}
 
-	// Check if version is pinned - if so, don't allow any updates
-	if planCtx != nil && planCtx.Policy != nil && planCtx.Policy.Pin {
-		return "", engine.ImpactNone, nil // No update needed (pinned)
-	}
-
 	// Parse current version (strip constraint prefix for comparison)
 	currentClean := stripConstraintPrefix(currentVersion)
 	current, err := normalizeAndParse(currentClean)

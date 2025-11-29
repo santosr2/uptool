@@ -10,6 +10,9 @@ integrations:
     match:
       files:
         - ".pre-commit-config.yaml"
+    # Note: this is an example of per-integration policy override
+    # however, `pre-commit` does not support policy settings since
+    # we use native pre-commit command to perform updates.
     policy:
       enabled: true
       update: minor  # none | patch | minor | major
@@ -24,7 +27,7 @@ integrations:
       enabled: true
       update: minor
       allow_prerelease: false
-      pin: true
+      pin: false
 
   # Terraform modules and providers updater
   - id: terraform
@@ -33,7 +36,7 @@ integrations:
       enabled: true
       update: minor
       allow_prerelease: false
-      pin: true
+      pin: false
 
   # Mise tool version updater
   - id: mise
@@ -42,7 +45,7 @@ integrations:
       enabled: true
       update: patch  # Conservative: only patch updates for runtime tools
       allow_prerelease: false
-      pin: true
+      pin: false
 
   # Helm chart updater
   - id: helm
@@ -51,7 +54,7 @@ integrations:
       enabled: true
       update: minor
       allow_prerelease: false
-      pin: true
+      pin: false
 
 # Optional: Organization-level policy settings
 # org_policy:

@@ -15,7 +15,7 @@ integrations:
       enabled: true
       update: minor         # none | patch | minor | major
       allow_prerelease: false
-      pin: false           # Don't pin to exact versions
+      pin: false           # Preserve version constraints (^, ~, >=)
       cadence: weekly      # How often to check for updates
 
   # Helm - Kubernetes package manager
@@ -29,7 +29,7 @@ integrations:
       enabled: true
       update: minor
       allow_prerelease: false
-      pin: true            # Pin chart versions in production
+      pin: true            # Write exact versions (Helm always uses exact versions)
       cadence: monthly
 
   # Terraform - Infrastructure as Code
@@ -43,7 +43,7 @@ integrations:
       enabled: true
       update: patch        # Conservative for infrastructure
       allow_prerelease: false
-      pin: true
+      pin: true            # Write exact versions (Terraform always uses exact versions)
       cadence: monthly
 
   # TFLint - Terraform linter plugins
@@ -56,7 +56,7 @@ integrations:
       enabled: true
       update: minor
       allow_prerelease: false
-      pin: true
+      pin: true            # Write exact versions (TFLint always uses exact versions)
       cadence: monthly
 
   # pre-commit - Git hook manager
@@ -69,7 +69,7 @@ integrations:
       enabled: true
       update: major        # Aggressive for development tools
       allow_prerelease: false
-      pin: false
+      pin: false           # Pin setting ignored (pre-commit uses native command)
       cadence: weekly
 
   # asdf - Runtime version manager
@@ -82,7 +82,7 @@ integrations:
       enabled: true
       update: patch        # Conservative for runtime versions
       allow_prerelease: false
-      pin: true
+      pin: true            # Write exact versions (asdf always uses exact versions)
       cadence: monthly
 
   # mise - Modern runtime version manager
@@ -96,7 +96,7 @@ integrations:
       enabled: true
       update: patch        # Conservative for runtime versions
       allow_prerelease: false
-      pin: true
+      pin: true            # Write exact versions (mise always uses exact versions)
       cadence: monthly
 
 # Optional: Organization-level policy settings (enforced via `uptool check-policy`)

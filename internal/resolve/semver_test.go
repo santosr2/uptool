@@ -484,15 +484,15 @@ func TestSelectVersionWithContext_Pin(t *testing.T) {
 		pin               bool
 	}{
 		{
-			name:              "pin prevents updates",
+			name:              "pin does not prevent updates (only affects output format)",
 			currentVersion:    "1.0.0",
 			availableVersions: []string{"1.0.0", "1.1.0", "2.0.0"},
 			pin:               true,
-			wantVersion:       "",
-			wantImpact:        engine.ImpactNone,
+			wantVersion:       "2.0.0",
+			wantImpact:        engine.ImpactMajor,
 		},
 		{
-			name:              "no pin allows updates",
+			name:              "no pin also allows updates",
 			currentVersion:    "1.0.0",
 			availableVersions: []string{"1.0.0", "1.1.0", "2.0.0"},
 			pin:               false,
