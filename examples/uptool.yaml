@@ -99,23 +99,27 @@ integrations:
       pin: true
       cadence: monthly
 
-# Optional: Organization-level policy settings
+# Optional: Organization-level policy settings (enforced via `uptool check-policy`)
 org_policy:
   # Require sign-off from specific teams/users for production changes
+  # Enforced via GitHub PR reviews API
   require_signoff_from:
     - "platform-team@company.com"
     - "security-team@company.com"
 
-  # Artifact signing verification (future feature)
+  # Artifact signing verification using cosign
+  # Requires cosign binary in PATH
   signing:
-    cosign_verify: false
+    cosign_verify: true
 
   # Auto-merge settings for GitHub Actions
+  # Checks all guards before allowing auto-merge
   auto_merge:
-    enabled: false       # Require manual review
+    enabled: true
     guards:
-      - "ci-green"       # All CI checks must pass
-      - "codeowners-approve"  # CODEOWNERS must approve
+      - "ci-green"           # All CI checks must pass
+      - "codeowners-approve" # CODEOWNERS must approve
+      - "security-scan"      # Security scans must pass (CodeQL, Trivy, etc.)
 
 # Optional: Notification settings (NOT IMPLEMENTED YET - placeholder for future feature)
 # notifications:

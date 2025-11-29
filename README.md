@@ -9,28 +9,28 @@
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-uptool-blue?style=flat&logo=github)](https://github.com/marketplace/actions/uptool-dependency-updater)
 [![Go Report Card](https://goreportcard.com/badge/github.com/santosr2/uptool)](https://goreportcard.com/report/github.com/santosr2/uptool)
 
-<!-- CI/CD workflows -->
-[![CI Status](https://github.com/santosr2/uptool/workflows/CI/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/ci.yml)
-[![Documentation](https://github.com/santosr2/uptool/workflows/Documentation/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/docs-deploy.yml)
-[![Security](https://github.com/santosr2/uptool/workflows/Security/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/security.yml)
-[![License Compliance](https://github.com/santosr2/uptool/actions/workflows/license-compliance.yml/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/license-compliance.yml)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/santosr2/uptool/badge)](https://scorecard.dev/viewer/?uri=github.com/santosr2/uptool)
-
-<!-- Quality metrics -->
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9999/badge)](https://www.bestpractices.dev/projects/9999)
-[![codecov](https://codecov.io/gh/santosr2/uptool/branch/main/graph/badge.svg)](https://codecov.io/gh/santosr2/uptool)
-
-<!-- Standards & Practices -->
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![Security Policy](https://img.shields.io/badge/security-policy-blue)](SECURITY.md)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
-
 <!-- DevSecOps & Transparencey -->
 [![DevSecOps](https://img.shields.io/badge/DevSecOps-shift%20left-blue?style=flat)](https://github.com/santosr2/uptool/security)
 [![Supply Chain](https://img.shields.io/badge/supply%20chain-transparent-green?style=flat)](https://github.com/santosr2/uptool/releases)
 [![SBOM](https://img.shields.io/badge/SBOM-CycloneDX-orange?style=flat)](https://github.com/santosr2/uptool/releases)
 [![Performance](https://img.shields.io/badge/performance-benchmarks-brightgreen?style=flat)](https://github.com/santosr2/uptool/actions/workflows/benchmark.yml)
 [![Discussions](https://img.shields.io/badge/discussions-Q%26A-blue?style=flat&logo=github)](https://github.com/santosr2/uptool/discussions)
+
+<!-- CI/CD workflows -->
+[![CI Status](https://github.com/santosr2/uptool/workflows/CI/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/ci.yml)
+[![Documentation](https://github.com/santosr2/uptool/workflows/Documentation/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/docs-deploy.yml)
+[![Security](https://github.com/santosr2/uptool/workflows/Security/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/security.yml)
+[![License Compliance](https://github.com/santosr2/uptool/actions/workflows/license-compliance.yml/badge.svg)](https://github.com/santosr2/uptool/actions/workflows/license-compliance.yml)
+
+<!-- Quality metrics -->
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9999/badge)](https://www.bestpractices.dev/projects/9999)
+[![codecov](https://codecov.io/gh/santosr2/uptool/branch/main/graph/badge.svg)](https://codecov.io/gh/santosr2/uptool)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/santosr2/uptool/badge)](https://scorecard.dev/viewer/?uri=github.com/santosr2/uptool)
+
+<!-- Standards & Practices -->
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![Security Policy](https://img.shields.io/badge/security-policy-blue)](SECURITY.md)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 ---
 

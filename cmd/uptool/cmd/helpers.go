@@ -135,6 +135,36 @@ func buildPolicies(cfg *policy.Config) map[string]engine.IntegrationPolicy {
 	return policies
 }
 
+// loadPolicyConfig loads the uptool.yaml configuration file.
+// Returns nil if the file doesn't exist (not an error).
+func loadPolicyConfig() (*policy.Config, error) {
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: GetLogLevel(),
+	}))
+
+	configPath := filepath.Join(".", "uptool.yaml")
+	if _, err := os.Stat(configPath); err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil // File doesn't exist - not an error
+		}
+		return nil, err
+	}
+
+	// Convert to absolute path for secureio
+	absPath, err := filepath.Abs(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := policy.LoadConfig(absPath)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Debug("loaded configuration", "path", absPath)
+	return cfg, nil
+}
+
 // parseFilters parses comma-separated filter strings
 func parseFilters(only, exclude string) ([]string, []string) {
 	var onlyList, excludeList []string
