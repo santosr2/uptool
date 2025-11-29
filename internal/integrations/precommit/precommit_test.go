@@ -30,6 +30,13 @@ import (
 	"github.com/santosr2/uptool/internal/engine"
 )
 
+const testPreCommitConfig = `repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: trailing-whitespace
+`
+
 func TestNew(t *testing.T) {
 	integ := New()
 	if integ == nil {
@@ -298,13 +305,7 @@ func TestPlan(t *testing.T) {
 		tmpDir := t.TempDir()
 		configPath := filepath.Join(tmpDir, ".pre-commit-config.yaml")
 
-		yaml := `repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.3.0
-    hooks:
-      - id: trailing-whitespace
-`
-		if err := os.WriteFile(configPath, []byte(yaml), 0o644); err != nil {
+		if err := os.WriteFile(configPath, []byte(testPreCommitConfig), 0o644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -536,4 +537,168 @@ func TestGenerateDiff(t *testing.T) {
 			t.Error("generateDiff() missing added line")
 		}
 	})
+
+	t.Run("handles removal of lines", func(t *testing.T) {
+		old := "line1\nline2\nline3"
+		updated := "line1\nline2"
+
+		diff := generateDiff(old, updated)
+		if diff == "" {
+			t.Error("generateDiff() returned empty string, want diff")
+		}
+	})
+}
+
+func TestValidate(t *testing.T) {
+	ctx := context.Background()
+	integ := New()
+
+	t.Run("returns nil when pre-commit not available", func(t *testing.T) {
+		// Skip if pre-commit is installed
+		if integ.isPreCommitAvailable() {
+			t.Skip("pre-commit is installed, skipping unavailability test")
+		}
+
+		manifest := &engine.Manifest{
+			Path: "/some/path/.pre-commit-config.yaml",
+		}
+
+		err := integ.Validate(ctx, manifest)
+		if err != nil {
+			t.Errorf("Validate() error = %v, want nil when pre-commit not available", err)
+		}
+	})
+
+	t.Run("returns error for invalid path", func(t *testing.T) {
+		// Skip if pre-commit is not installed
+		if !integ.isPreCommitAvailable() {
+			t.Skip("pre-commit is not installed, skipping path validation test")
+		}
+
+		manifest := &engine.Manifest{
+			Path: "relative/path/../.pre-commit-config.yaml", // Contains ".."
+		}
+
+		err := integ.Validate(ctx, manifest)
+		if err == nil {
+			t.Error("Validate() error = nil, want error for invalid path")
+		}
+	})
+}
+
+func TestApply_InvalidPath(t *testing.T) {
+	ctx := context.Background()
+	integ := New()
+
+	t.Run("returns error for path with path traversal", func(t *testing.T) {
+		// Skip if pre-commit is not installed
+		if !integ.isPreCommitAvailable() {
+			t.Skip("pre-commit is not installed, skipping path validation test")
+		}
+
+		manifest := &engine.Manifest{
+			Path: "relative/../.pre-commit-config.yaml", // Contains ".." - path traversal
+		}
+
+		plan := &engine.UpdatePlan{
+			Manifest: manifest,
+			Updates: []engine.Update{
+				{
+					Dependency: engine.Dependency{
+						Name:           "https://github.com/example/repo",
+						CurrentVersion: "v1.0.0",
+					},
+					TargetVersion: "v2.0.0",
+				},
+			},
+		}
+
+		result, err := integ.Apply(ctx, plan)
+		// Should return result with error, not nil
+		if err != nil {
+			t.Skipf("Apply() returned error = %v, skipping further validation", err)
+		}
+		if result == nil {
+			t.Fatal("Apply() result = nil, want non-nil result with errors")
+		}
+		if len(result.Errors) == 0 {
+			t.Error("Apply() errors is empty, want error for invalid path")
+		}
+	})
+}
+
+func TestPlan_NilPlanContext(t *testing.T) {
+	ctx := context.Background()
+	integ := New()
+
+	t.Run("handles nil planCtx gracefully", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configPath := filepath.Join(tmpDir, ".pre-commit-config.yaml")
+
+		if err := os.WriteFile(configPath, []byte(testPreCommitConfig), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		manifest := &engine.Manifest{
+			Path:         configPath,
+			Type:         "precommit",
+			Dependencies: []engine.Dependency{},
+		}
+
+		// Pass nil planCtx
+		plan, err := integ.Plan(ctx, manifest, nil)
+		if err != nil {
+			t.Fatalf("Plan() error = %v", err)
+		}
+		if plan == nil {
+			t.Fatal("Plan() returned nil")
+		}
+		if plan.Manifest != manifest {
+			t.Error("Plan() manifest mismatch")
+		}
+	})
+}
+
+func TestPlan_RelativePath(t *testing.T) {
+	ctx := context.Background()
+	integ := New()
+
+	// Create temp directory with config
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, ".pre-commit-config.yaml")
+
+	yaml := `repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+`
+	if err := os.WriteFile(configPath, []byte(yaml), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Save current dir
+	oldDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Change to temp dir
+	err = os.Chdir(tmpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chdir(oldDir) }()
+
+	manifest := &engine.Manifest{
+		Path:         ".pre-commit-config.yaml", // Relative path
+		Type:         "precommit",
+		Dependencies: []engine.Dependency{},
+	}
+
+	plan, err := integ.Plan(ctx, manifest, nil)
+	if err != nil {
+		t.Fatalf("Plan() error = %v", err)
+	}
+	if plan == nil {
+		t.Fatal("Plan() returned nil")
+	}
 }

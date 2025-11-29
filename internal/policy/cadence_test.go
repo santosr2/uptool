@@ -227,3 +227,65 @@ func TestGetDefaultStateFile(t *testing.T) {
 		t.Errorf("GetDefaultStateFile() = %q, expected absolute path or .uptool.state.json", path)
 	}
 }
+
+func TestLoadCadenceState_InvalidJSON(t *testing.T) {
+	tmpDir := t.TempDir()
+	stateFile := filepath.Join(tmpDir, "invalid-state.json")
+
+	// Write invalid JSON
+	if err := os.WriteFile(stateFile, []byte("this is not valid json {{{"), 0o644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
+	_, err := LoadCadenceState(stateFile)
+	if err == nil {
+		t.Error("LoadCadenceState() should error for invalid JSON")
+	}
+}
+
+func TestSaveCadenceState_InvalidPath(t *testing.T) {
+	state := &CadenceState{
+		LastChecked: map[string]time.Time{
+			"package.json": time.Now(),
+		},
+	}
+
+	// Try to save to an invalid path (directory that doesn't exist)
+	err := SaveCadenceState("/nonexistent/deeply/nested/directory/state.json", state)
+	if err == nil {
+		t.Error("SaveCadenceState() should error for invalid path")
+	}
+}
+
+func TestGetDefaultStateFile_WithoutHome(t *testing.T) {
+	// Save current HOME
+	originalHome := os.Getenv("HOME")
+
+	// Clear HOME to trigger fallback behavior
+	t.Setenv("HOME", "")
+
+	path := GetDefaultStateFile()
+
+	// Should fall back to local file
+	if path == "" {
+		t.Error("GetDefaultStateFile() returned empty string when HOME not set")
+	}
+
+	// Restore HOME
+	if originalHome != "" {
+		t.Setenv("HOME", originalHome)
+	}
+}
+
+func TestCadenceState_ShouldCheckForUpdates_ZeroTime(t *testing.T) {
+	cs := &CadenceState{
+		LastChecked: map[string]time.Time{
+			"package.json": {}, // Zero time
+		},
+	}
+
+	// Zero time should be considered as never checked
+	if !cs.ShouldCheckForUpdates("package.json", "daily") {
+		t.Error("ShouldCheckForUpdates() should return true for zero time (never checked)")
+	}
+}

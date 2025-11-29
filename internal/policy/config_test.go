@@ -421,3 +421,129 @@ func TestConfig_ToMatchConfigMap_WithExclude(t *testing.T) {
 		t.Errorf("terraform exclude count = %d, want 1", len(tfConfig.Exclude))
 	}
 }
+
+func TestLoadConfig_NonExistentFile(t *testing.T) {
+	_, err := LoadConfig("/nonexistent/path/uptool.yaml")
+	if err == nil {
+		t.Error("LoadConfig() should error for non-existent file")
+	}
+}
+
+func TestLoadConfig_InvalidYAML(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "uptool.yaml")
+
+	// Write invalid YAML
+	invalidContent := `version: 1
+integrations:
+  - id: test
+    enabled: true
+    policy:
+      update: !!!invalid yaml
+`
+	if err := os.WriteFile(configPath, []byte(invalidContent), 0o644); err != nil {
+		t.Fatalf("failed to create test config: %v", err)
+	}
+
+	_, err := LoadConfig(configPath)
+	if err == nil {
+		t.Error("LoadConfig() should error for invalid YAML")
+	}
+}
+
+func TestLoadConfig_InvalidVersion(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "uptool.yaml")
+
+	// Write config with invalid version
+	invalidContent := `version: 999
+integrations:
+  - id: test
+    enabled: true
+`
+	if err := os.WriteFile(configPath, []byte(invalidContent), 0o644); err != nil {
+		t.Fatalf("failed to create test config: %v", err)
+	}
+
+	_, err := LoadConfig(configPath)
+	if err == nil {
+		t.Error("LoadConfig() should error for invalid version")
+	}
+}
+
+func TestValidate_EmptyIntegrationID(t *testing.T) {
+	config := &Config{
+		Version: 1,
+		Integrations: []IntegrationConfig{
+			{
+				ID:      "", // Empty ID
+				Enabled: true,
+			},
+		},
+	}
+
+	err := config.Validate()
+	if err == nil {
+		t.Error("Validate() should error for empty integration ID")
+	}
+}
+
+func TestValidate_DuplicateIntegrationID(t *testing.T) {
+	config := &Config{
+		Version: 1,
+		Integrations: []IntegrationConfig{
+			{ID: "npm", Enabled: true},
+			{ID: "npm", Enabled: true}, // Duplicate
+		},
+	}
+
+	err := config.Validate()
+	if err == nil {
+		t.Error("Validate() should error for duplicate integration ID")
+	}
+}
+
+func TestValidate_InvalidPolicy(t *testing.T) {
+	config := &Config{
+		Version: 1,
+		Integrations: []IntegrationConfig{
+			{
+				ID:      "npm",
+				Enabled: true,
+				Policy: engine.IntegrationPolicy{
+					Update: "invalid-strategy",
+				},
+			},
+		},
+	}
+
+	err := config.Validate()
+	if err == nil {
+		t.Error("Validate() should error for invalid policy update strategy")
+	}
+}
+
+func TestValidateIntegrationPolicy_AllValidUpdateStrategies(t *testing.T) {
+	// Note: empty string is NOT a valid update strategy
+	validStrategies := []string{"none", "patch", "minor", "major"}
+
+	for _, strategy := range validStrategies {
+		policy := &engine.IntegrationPolicy{Update: strategy}
+		if err := ValidateIntegrationPolicy(policy); err != nil {
+			t.Errorf("ValidateIntegrationPolicy() error for valid strategy %q: %v", strategy, err)
+		}
+	}
+}
+
+func TestValidateIntegrationPolicy_AllValidCadences(t *testing.T) {
+	// Empty string is a valid cadence (means no cadence restriction)
+	validCadences := []string{"", "daily", "weekly", "monthly"}
+
+	for _, cadence := range validCadences {
+		// Need a valid update strategy to test cadence
+		policy := &engine.IntegrationPolicy{Update: "minor", Cadence: cadence}
+		if err := ValidateIntegrationPolicy(policy); err != nil {
+			t.Errorf("ValidateIntegrationPolicy() error for valid cadence %q: %v", cadence, err)
+		}
+	}
+}

@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+//nolint:dupl,govet // Test files use similar table-driven patterns; field alignment not critical for tests
 package terraform
 
 import (
@@ -331,10 +332,498 @@ func TestPlan(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	t.Skip("Validate() requires proper HCL file setup and is not critical for version constraint fix verification")
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T, dir string) (string, string) // returns (manifestPath, filename)
+		wantErr bool
+	}{
+		{
+			name: "valid hcl file",
+			setup: func(t *testing.T, dir string) (string, string) {
+				// Use .hcl extension which is properly supported by hclsimple
+				content := []byte(`module "test" {
+  source  = "hashicorp/test/aws"
+  version = "1.0.0"
+}
+`)
+				path := filepath.Join(dir, "main.hcl")
+				if err := os.WriteFile(path, content, 0o644); err != nil {
+					t.Fatal(err)
+				}
+				return dir, "main.hcl"
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty files list",
+			setup: func(t *testing.T, dir string) (string, string) {
+				return dir, ""
+			},
+			wantErr: false,
+		},
+	}
 
-	// Note: The Validate() function uses hclsimple.Decode() which requires proper
-	// HCL file format. This test is skipped as it's not critical for verifying
-	// the version constraint comparison fix (which is tested in TestVersionConstraintNormalization
-	// and TestVersionConstraintFalsePositiveFix).
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir, err := os.MkdirTemp("", "terraform-validate-*")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(tmpDir)
+
+			manifestPath, filename := tt.setup(t, tmpDir)
+
+			files := []string{}
+			if filename != "" {
+				files = []string{filename}
+			}
+
+			integration := New()
+			manifest := &engine.Manifest{
+				Path: manifestPath,
+				Type: "terraform",
+				Metadata: map[string]any{
+					"files": files,
+				},
+			}
+
+			err = integration.Validate(context.Background(), manifest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestApply(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T, dir string) *engine.UpdatePlan
+		wantApplied int
+		wantErr     bool
+	}{
+		{
+			name: "empty plan returns zero applied",
+			setup: func(t *testing.T, dir string) *engine.UpdatePlan {
+				return &engine.UpdatePlan{
+					Manifest: &engine.Manifest{
+						Path: dir,
+						Type: "terraform",
+						Metadata: map[string]any{
+							"files": []string{},
+						},
+					},
+					Updates: []engine.Update{},
+				}
+			},
+			wantApplied: 0,
+			wantErr:     false,
+		},
+		{
+			name: "apply module version update",
+			setup: func(t *testing.T, dir string) *engine.UpdatePlan {
+				content := []byte(`module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "3.0.0"
+}
+`)
+				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content, 0o644); err != nil {
+					t.Fatal(err)
+				}
+
+				return &engine.UpdatePlan{
+					Manifest: &engine.Manifest{
+						Path: dir,
+						Type: "terraform",
+						Metadata: map[string]any{
+							"files": []string{"main.tf"},
+						},
+					},
+					Updates: []engine.Update{
+						{
+							Dependency: engine.Dependency{
+								Name:           "terraform-aws-modules/vpc/aws",
+								CurrentVersion: "3.0.0",
+								Type:           "module",
+							},
+							TargetVersion: "5.0.0",
+						},
+					},
+				}
+			},
+			wantApplied: 1,
+			wantErr:     false,
+		},
+		{
+			name: "apply provider version update",
+			setup: func(t *testing.T, dir string) *engine.UpdatePlan {
+				content := []byte(`terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "4.0.0"
+    }
+  }
+}
+`)
+				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content, 0o644); err != nil {
+					t.Fatal(err)
+				}
+
+				return &engine.UpdatePlan{
+					Manifest: &engine.Manifest{
+						Path: dir,
+						Type: "terraform",
+						Metadata: map[string]any{
+							"files": []string{"main.tf"},
+						},
+					},
+					Updates: []engine.Update{
+						{
+							Dependency: engine.Dependency{
+								Name:           "hashicorp/aws",
+								CurrentVersion: "4.0.0",
+								Type:           "provider",
+							},
+							TargetVersion: "5.0.0",
+						},
+					},
+				}
+			},
+			wantApplied: 1,
+			wantErr:     false,
+		},
+		{
+			name: "file not found continues without error",
+			setup: func(t *testing.T, dir string) *engine.UpdatePlan {
+				return &engine.UpdatePlan{
+					Manifest: &engine.Manifest{
+						Path: dir,
+						Type: "terraform",
+						Metadata: map[string]any{
+							"files": []string{"nonexistent.tf"},
+						},
+					},
+					Updates: []engine.Update{
+						{
+							Dependency: engine.Dependency{
+								Name:           "test/module",
+								CurrentVersion: "1.0.0",
+								Type:           "module",
+							},
+							TargetVersion: "2.0.0",
+						},
+					},
+				}
+			},
+			wantApplied: 0,
+			wantErr:     false,
+		},
+		{
+			name: "invalid HCL continues without error",
+			setup: func(t *testing.T, dir string) *engine.UpdatePlan {
+				content := []byte(`this is not valid HCL {{{`)
+				if err := os.WriteFile(filepath.Join(dir, "main.tf"), content, 0o644); err != nil {
+					t.Fatal(err)
+				}
+
+				return &engine.UpdatePlan{
+					Manifest: &engine.Manifest{
+						Path: dir,
+						Type: "terraform",
+						Metadata: map[string]any{
+							"files": []string{"main.tf"},
+						},
+					},
+					Updates: []engine.Update{
+						{
+							Dependency: engine.Dependency{
+								Name:           "test/module",
+								CurrentVersion: "1.0.0",
+								Type:           "module",
+							},
+							TargetVersion: "2.0.0",
+						},
+					},
+				}
+			},
+			wantApplied: 0,
+			wantErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir, err := os.MkdirTemp("", "terraform-apply-*")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(tmpDir)
+
+			plan := tt.setup(t, tmpDir)
+
+			integration := New()
+			result, err := integration.Apply(context.Background(), plan)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Apply() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if result.Applied != tt.wantApplied {
+				t.Errorf("Apply() applied = %d, want %d", result.Applied, tt.wantApplied)
+			}
+		})
+	}
+}
+
+func TestGenerateDiff(t *testing.T) {
+	tests := []struct {
+		name       string
+		filename   string
+		oldContent string
+		newContent string
+		wantEmpty  bool
+	}{
+		{
+			name:       "no change returns empty diff",
+			filename:   "main.tf",
+			oldContent: `version = "1.0.0"`,
+			newContent: `version = "1.0.0"`,
+			wantEmpty:  true,
+		},
+		{
+			name:       "version change generates diff",
+			filename:   "main.tf",
+			oldContent: `version = "1.0.0"`,
+			newContent: `version = "2.0.0"`,
+			wantEmpty:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diff := generateDiff(tt.filename, tt.oldContent, tt.newContent)
+
+			if tt.wantEmpty && diff != "" {
+				t.Errorf("generateDiff() returned non-empty diff, expected empty")
+			}
+
+			if !tt.wantEmpty && diff == "" {
+				t.Errorf("generateDiff() returned empty diff, expected non-empty")
+			}
+
+			if !tt.wantEmpty {
+				if !strings.Contains(diff, "---") || !strings.Contains(diff, "+++") {
+					t.Errorf("generateDiff() missing diff header")
+				}
+			}
+		})
+	}
+}
+
+func TestDetect_ModuleDependencies(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "terraform-detect-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create a terraform file with a module
+	content := []byte(`module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
+
+  name = "my-vpc"
+  cidr = "10.0.0.0/16"
+}
+`)
+	err = os.WriteFile(filepath.Join(tmpDir, "main.tf"), content, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	integration := New()
+	manifests, err := integration.Detect(context.Background(), tmpDir)
+	if err != nil {
+		t.Fatalf("Detect() error = %v", err)
+	}
+
+	if len(manifests) != 1 {
+		t.Fatalf("Detect() found %d manifests, want 1", len(manifests))
+	}
+
+	if len(manifests[0].Dependencies) != 1 {
+		t.Fatalf("Found %d dependencies, want 1", len(manifests[0].Dependencies))
+	}
+
+	dep := manifests[0].Dependencies[0]
+	if dep.Name != "terraform-aws-modules/vpc/aws" {
+		t.Errorf("Dependency name = %q, want %q", dep.Name, "terraform-aws-modules/vpc/aws")
+	}
+	if dep.CurrentVersion != "5.0.0" {
+		t.Errorf("Dependency version = %q, want %q", dep.CurrentVersion, "5.0.0")
+	}
+	if dep.Type != "module" {
+		t.Errorf("Dependency type = %q, want %q", dep.Type, "module")
+	}
+}
+
+func TestDetect_SkipsLocalModules(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "terraform-local-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create terraform files with local and remote modules
+	content := []byte(`module "local" {
+  source  = "./modules/local"
+  version = "1.0.0"
+}
+
+module "remote" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
+}
+`)
+	err = os.WriteFile(filepath.Join(tmpDir, "main.tf"), content, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	integration := New()
+	manifests, err := integration.Detect(context.Background(), tmpDir)
+	if err != nil {
+		t.Fatalf("Detect() error = %v", err)
+	}
+
+	if len(manifests) != 1 {
+		t.Fatalf("Detect() found %d manifests, want 1", len(manifests))
+	}
+
+	// Should only find the remote module, not the local one
+	if len(manifests[0].Dependencies) != 1 {
+		t.Fatalf("Found %d dependencies, want 1 (local module should be skipped)", len(manifests[0].Dependencies))
+	}
+
+	if manifests[0].Dependencies[0].Name != "terraform-aws-modules/vpc/aws" {
+		t.Errorf("Expected remote module, got %q", manifests[0].Dependencies[0].Name)
+	}
+}
+
+func TestDetect_SkipsGitModules(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "terraform-git-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Create terraform files with git and registry modules
+	content := []byte(`module "git" {
+  source  = "git::https://example.com/repo.git"
+  version = "1.0.0"
+}
+
+module "registry" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
+}
+`)
+	err = os.WriteFile(filepath.Join(tmpDir, "main.tf"), content, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	integration := New()
+	manifests, err := integration.Detect(context.Background(), tmpDir)
+	if err != nil {
+		t.Fatalf("Detect() error = %v", err)
+	}
+
+	if len(manifests) != 1 {
+		t.Fatalf("Detect() found %d manifests, want 1", len(manifests))
+	}
+
+	// Should only find the registry module, not the git one
+	if len(manifests[0].Dependencies) != 1 {
+		t.Fatalf("Found %d dependencies, want 1 (git module should be skipped)", len(manifests[0].Dependencies))
+	}
+}
+
+func TestPlan_WithDependencies(t *testing.T) {
+	integration := New()
+
+	manifest := &engine.Manifest{
+		Path: "/test",
+		Type: "terraform",
+		Dependencies: []engine.Dependency{
+			{
+				Name:           "terraform-aws-modules/vpc/aws",
+				CurrentVersion: "4.0.0",
+				Constraint:     "~> 4.0",
+				Type:           "module",
+				Registry:       "terraform",
+			},
+		},
+		Metadata: map[string]any{
+			"files": []string{"main.tf"},
+		},
+	}
+
+	plan, err := integration.Plan(context.Background(), manifest, nil)
+	if err != nil {
+		t.Fatalf("Plan() error = %v", err)
+	}
+
+	if plan == nil {
+		t.Fatal("Plan() returned nil")
+	}
+
+	// Note: The actual update depends on the datasource returning versions
+	// Here we just verify the plan structure is correct
+	if plan.Manifest != manifest {
+		t.Error("Plan manifest doesn't match input manifest")
+	}
+
+	if plan.Strategy != "hcl_rewrite" {
+		t.Errorf("Plan strategy = %q, want %q", plan.Strategy, "hcl_rewrite")
+	}
+}
+
+func TestPlan_WithPlanContext(t *testing.T) {
+	integration := New()
+
+	manifest := &engine.Manifest{
+		Path: "/test",
+		Type: "terraform",
+		Dependencies: []engine.Dependency{
+			{
+				Name:           "terraform-aws-modules/vpc/aws",
+				CurrentVersion: "4.0.0",
+				Constraint:     "~> 4.0",
+				Type:           "module",
+				Registry:       "terraform",
+			},
+		},
+		Metadata: map[string]any{
+			"files": []string{"main.tf"},
+		},
+	}
+
+	planCtx := &engine.PlanContext{
+		Policy: &engine.IntegrationPolicy{
+			Update:          "minor",
+			AllowPrerelease: false,
+		},
+	}
+
+	plan, err := integration.Plan(context.Background(), manifest, planCtx)
+	if err != nil {
+		t.Fatalf("Plan() error = %v", err)
+	}
+
+	if plan == nil {
+		t.Fatal("Plan() returned nil")
+	}
 }

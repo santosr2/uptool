@@ -29,6 +29,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/santosr2/uptool/internal/datasource"
 	"github.com/santosr2/uptool/internal/engine"
 )
 
@@ -568,6 +569,147 @@ func TestGenerateDiff(t *testing.T) {
 		// Should not include non-version changes
 		if strings.Contains(diff, "description") {
 			t.Error("generateDiff() should not include non-version changes")
+		}
+	})
+}
+
+// mockDatasource implements datasource.Datasource for testing.
+type mockDatasource struct {
+	versions map[string][]string
+	latest   map[string]string
+}
+
+func (m *mockDatasource) Name() string {
+	return "mock"
+}
+
+func (m *mockDatasource) GetVersions(ctx context.Context, pkg string) ([]string, error) {
+	if versions, ok := m.versions[pkg]; ok {
+		return versions, nil
+	}
+	return nil, context.Canceled
+}
+
+func (m *mockDatasource) GetLatestVersion(ctx context.Context, pkg string) (string, error) {
+	if latest, ok := m.latest[pkg]; ok {
+		return latest, nil
+	}
+	return "", context.Canceled
+}
+
+func (m *mockDatasource) GetPackageInfo(ctx context.Context, pkg string) (*datasource.PackageInfo, error) {
+	return nil, nil
+}
+
+func TestPlan_WithMockDatasource(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("finds updates for dependencies", func(t *testing.T) {
+		mock := &mockDatasource{
+			versions: map[string][]string{
+				"https://charts.bitnami.com/bitnami|nginx": {"1.0.0", "1.1.0", "2.0.0"},
+			},
+		}
+
+		integ := &Integration{ds: mock}
+
+		manifest := &engine.Manifest{
+			Path: "Chart.yaml",
+			Type: "helm",
+			Dependencies: []engine.Dependency{
+				{
+					Name:           "nginx",
+					CurrentVersion: "1.0.0",
+					Registry:       "https://charts.bitnami.com/bitnami",
+					Type:           "chart",
+				},
+			},
+		}
+
+		planCtx := &engine.PlanContext{
+			Policy: &engine.IntegrationPolicy{
+				Update: "major",
+			},
+		}
+
+		plan, err := integ.Plan(ctx, manifest, planCtx)
+		if err != nil {
+			t.Fatalf("Plan() error = %v", err)
+		}
+		if len(plan.Updates) != 1 {
+			t.Fatalf("Plan() updates = %d, want 1", len(plan.Updates))
+		}
+		if plan.Updates[0].TargetVersion != "2.0.0" {
+			t.Errorf("Plan() target = %q, want %q", plan.Updates[0].TargetVersion, "2.0.0")
+		}
+	})
+
+	t.Run("uses latest version fallback", func(t *testing.T) {
+		mock := &mockDatasource{
+			// No versions available, so fallback to latest
+			latest: map[string]string{
+				"https://charts.example.com|myapp": "3.0.0",
+			},
+		}
+
+		integ := &Integration{ds: mock}
+
+		manifest := &engine.Manifest{
+			Path: "Chart.yaml",
+			Type: "helm",
+			Dependencies: []engine.Dependency{
+				{
+					Name:           "myapp",
+					CurrentVersion: "1.0.0",
+					Registry:       "https://charts.example.com",
+					Type:           "chart",
+				},
+			},
+		}
+
+		planCtx := &engine.PlanContext{
+			Policy: &engine.IntegrationPolicy{
+				Update: "major",
+			},
+		}
+
+		plan, err := integ.Plan(ctx, manifest, planCtx)
+		if err != nil {
+			t.Fatalf("Plan() error = %v", err)
+		}
+		// Should have found the update via fallback
+		if len(plan.Updates) != 1 {
+			t.Fatalf("Plan() updates = %d, want 1", len(plan.Updates))
+		}
+	})
+
+	t.Run("skips unavailable charts", func(t *testing.T) {
+		mock := &mockDatasource{
+			versions: map[string][]string{}, // No versions available
+			latest:   map[string]string{},   // No latest available
+		}
+
+		integ := &Integration{ds: mock}
+
+		manifest := &engine.Manifest{
+			Path: "Chart.yaml",
+			Type: "helm",
+			Dependencies: []engine.Dependency{
+				{
+					Name:           "unavailable",
+					CurrentVersion: "1.0.0",
+					Registry:       "https://charts.example.com",
+					Type:           "chart",
+				},
+			},
+		}
+
+		plan, err := integ.Plan(ctx, manifest, nil)
+		if err != nil {
+			t.Fatalf("Plan() error = %v", err)
+		}
+		if len(plan.Updates) != 0 {
+			t.Errorf("Plan() updates = %d, want 0 (unavailable chart)", len(plan.Updates))
 		}
 	})
 }
