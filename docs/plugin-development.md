@@ -19,7 +19,7 @@ Implement the `engine.Integration` interface:
 type Integration interface {
     Name() string
     Detect(ctx context.Context, repoRoot string) ([]*Manifest, error)
-    Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error)
+    Plan(ctx context.Context, manifest *Manifest, planCtx *PlanContext) (*UpdatePlan, error)
     Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error)
     Validate(ctx context.Context, manifest *Manifest) error
 }
@@ -70,8 +70,8 @@ func (i *MyIntegration) Detect(ctx context.Context, repoRoot string) ([]*engine.
     return manifests, nil
 }
 
-func (i *MyIntegration) Plan(ctx context.Context, manifest *engine.Manifest) (*engine.UpdatePlan, error) {
-    // Query registry for updates
+func (i *MyIntegration) Plan(ctx context.Context, manifest *engine.Manifest, planCtx *engine.PlanContext) (*engine.UpdatePlan, error) {
+    // Query registry for updates, use planCtx for policy settings
     return plan, nil
 }
 

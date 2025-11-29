@@ -26,9 +26,7 @@ org_policy:
 
   # Verify artifact signatures with Cosign
   signing:
-    cosign_verify:
-      enabled: true
-      public_key: "cosign.pub"  # Path to public key
+    cosign_verify: true
 
   # Auto-merge configuration
   auto_merge:
@@ -63,12 +61,10 @@ Verify artifact signatures to ensure integrity and authenticity:
 ```yaml
 org_policy:
   signing:
-    cosign_verify:
-      enabled: true
-      public_key: "/path/to/cosign.pub"
+    cosign_verify: true
 ```
 
-**How it works**: Uses [Cosign](https://github.com/sigstore/cosign) to verify signatures against the specified public key.
+**How it works**: Uses [Cosign](https://github.com/sigstore/cosign) to verify artifact signatures. Requires cosign binary in PATH.
 
 ### Auto-Merge
 

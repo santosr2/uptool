@@ -47,11 +47,14 @@ Each integration implements:
 type Integration interface {
     Name() string
     Detect(ctx context.Context, repoRoot string) ([]*Manifest, error)
-    Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error)
+    Plan(ctx context.Context, manifest *Manifest, planCtx *PlanContext) (*UpdatePlan, error)
     Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error)
     Validate(ctx context.Context, manifest *Manifest) error
 }
 ```
+
+The `planCtx` parameter provides policy configuration following the precedence order:
+`CLI flags > uptool.yaml policy > manifest constraints`.
 
 **Types**:
 

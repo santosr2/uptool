@@ -81,8 +81,8 @@ func (pc *PlanContext) WithCLIFlags(flags *CLIFlags) *PlanContext {
 }
 
 // EffectiveUpdateLevel returns the update level to use, following precedence:
-// 1. uptool.yaml policy (highest)
-// 2. CLI flags
+// 1. CLI flags (highest)
+// 2. uptool.yaml policy
 // 3. Default ("major" - allow all updates, let constraints filter)
 func (pc *PlanContext) EffectiveUpdateLevel() string {
 	if pc == nil {
@@ -219,7 +219,7 @@ type IntegrationPolicy struct {
 	//   - "minor": Allow patch + minor updates (1.2.3 → 1.3.0)
 	//   - "major": Allow all updates (1.2.3 → 2.0.0)
 	//
-	// Default: "minor" (safe for most use cases)
+	// Default: "major" (allow all updates, let manifest constraints filter)
 	//
 	// Note: Manifest constraints (e.g., ^1.2.3) further restrict allowed updates.
 	// If a manifest specifies ^1.2.0, setting update="major" won't allow 2.x updates

@@ -330,6 +330,16 @@ func DefaultConfig() *Config {
 		Version: 1,
 		Integrations: []IntegrationConfig{
 			{
+				ID:      "npm",
+				Enabled: true,
+				Policy: engine.IntegrationPolicy{
+					Enabled:         true,
+					Update:          "minor",
+					AllowPrerelease: false,
+					Pin:             false, // Preserve version ranges for npm
+				},
+			},
+			{
 				ID:      "precommit",
 				Enabled: true,
 				Policy: engine.IntegrationPolicy{

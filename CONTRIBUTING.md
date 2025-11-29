@@ -322,7 +322,7 @@ Want to add support for a new ecosystem? See the [Plugin Development Guide](docs
 type Integration interface {
     Name() string
     Detect(ctx context.Context, repoRoot string) ([]*Manifest, error)
-    Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error)
+    Plan(ctx context.Context, manifest *Manifest, planCtx *PlanContext) (*UpdatePlan, error)
     Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error)
     Validate(ctx context.Context, manifest *Manifest) error
 }

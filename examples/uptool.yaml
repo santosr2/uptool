@@ -80,6 +80,8 @@ integrations:
       cadence: weekly
 
   # asdf - Runtime version manager
+  # NOTE: EXPERIMENTAL - Detection only, version resolution not implemented.
+  #       Use `asdf plugin update --all` for updates.
   - id: asdf
     enabled: true
     match:
@@ -93,6 +95,8 @@ integrations:
       cadence: monthly
 
   # mise - Modern runtime version manager
+  # NOTE: EXPERIMENTAL - Detection only, version resolution not implemented.
+  #       Use `mise upgrade` for updates.
   - id: mise
     enabled: true
     match:

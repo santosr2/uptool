@@ -290,12 +290,17 @@ uptool supports **mutable tags** for convenient version pinning:
 | `format` | Output format: `table` or `json` | `table` | No |
 | `only` | Comma-separated integrations to include | `''` | No |
 | `exclude` | Comma-separated integrations to exclude | `''` | No |
+| `config` | Path to uptool config file | `''` (uses uptool.yaml) | No |
 | `dry-run` | Show changes without applying (update only) | `false` | No |
 | `diff` | Show diffs of changes (update only) | `true` | No |
 | `create-pr` | Create a pull request with updates | `false` | No |
 | `pr-title` | Title for the pull request | `chore: update dependencies` | No |
 | `pr-branch` | Branch name for the PR | `uptool/dependency-updates` | No |
+| `create-issue` | Create an issue when updates are available | `false` | No |
+| `issue-title` | Title for the issue | `Dependency Updates Available` | No |
+| `issue-labels` | Comma-separated labels for the issue | `dependencies,automated` | No |
 | `token` | GitHub token for API access and PR creation | `${{ github.token }}` | No |
+| `skip-install` | Skip uptool installation (use when already in PATH) | `false` | No |
 
 ### Outputs
 
@@ -336,13 +341,15 @@ uptool uses a clean integration interface:
 
 ```go
 type Integration interface {
+    Name() string
     Detect(ctx context.Context, repoRoot string) ([]*Manifest, error)
-    Plan(ctx context.Context, manifest *Manifest) (*UpdatePlan, error)
+    Plan(ctx context.Context, manifest *Manifest, planCtx *PlanContext) (*UpdatePlan, error)
     Apply(ctx context.Context, plan *UpdatePlan) (*ApplyResult, error)
+    Validate(ctx context.Context, manifest *Manifest) error
 }
 ```
 
-**Workflow**: Detect manifests → Query registries → Update files → Validate
+**Workflow**: Detect manifests → Query registries → Plan updates (with policy context) → Apply changes → Validate
 
 See [docs/architecture.md](docs/architecture.md) for complete system design.
 
@@ -370,9 +377,7 @@ org_policy:
 
   # Verify artifact signatures
   signing:
-    cosign_verify:
-      enabled: true
-      public_key: "cosign.pub"
+    cosign_verify: true
 
   # Auto-merge when guards pass
   auto_merge:

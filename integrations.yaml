@@ -7,11 +7,11 @@ version: "1.0"
 integrations:
   asdf:
     displayName: "asdf"
-    description: ".tool-versions runtime version manager"
+    description: ".tool-versions runtime version manager (detection only, version resolution not implemented)"
     filePatterns:
       - ".tool-versions"
     datasources: []
-    experimental: false
+    experimental: true
     disabled: false
     url: "https://asdf-vm.com"
     category: "runtime-manager"
@@ -31,12 +31,12 @@ integrations:
 
   mise:
     displayName: "mise"
-    description: "mise.toml runtime version manager"
+    description: "mise.toml runtime version manager (detection only, version resolution not implemented)"
     filePatterns:
       - "mise.toml"
       - ".mise.toml"
     datasources: []
-    experimental: false
+    experimental: true
     disabled: false
     url: "https://mise.jdx.dev"
     category: "runtime-manager"

@@ -152,7 +152,7 @@ Update policy for this integration.
 | `minor` | Patch + minor | 1.2.3 → 1.3.0 |
 | `major` | All updates | 1.2.3 → 2.0.0 |
 
-**Default**: `minor`
+**Default**: `major` (when no config file exists, allows all stable updates)
 
 **policy.allow_prerelease** - Include pre-release versions:
 
