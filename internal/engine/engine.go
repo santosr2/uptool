@@ -27,6 +27,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -35,6 +36,7 @@ import (
 type Engine struct {
 	integrations map[string]Integration
 	policies     map[string]IntegrationPolicy
+	matchConfigs map[string][]string // integration -> file patterns
 	logger       *slog.Logger
 	cliFlags     *CLIFlags
 	concurrency  int
@@ -49,6 +51,7 @@ func NewEngine(logger *slog.Logger) *Engine {
 	return &Engine{
 		integrations: make(map[string]Integration),
 		policies:     make(map[string]IntegrationPolicy),
+		matchConfigs: make(map[string][]string),
 		logger:       logger,
 		concurrency:  4,
 	}
@@ -59,6 +62,13 @@ func NewEngine(logger *slog.Logger) *Engine {
 func (e *Engine) SetPolicies(policies map[string]IntegrationPolicy) {
 	e.policies = policies
 	e.logger.Debug("set integration policies", "count", len(policies))
+}
+
+// SetMatchConfigs configures file pattern matching for integrations.
+// Manifests will be filtered to only include those matching the configured patterns.
+func (e *Engine) SetMatchConfigs(configs map[string][]string) {
+	e.matchConfigs = configs
+	e.logger.Debug("set match configs", "count", len(configs))
 }
 
 // SetCLIFlags configures CLI flag overrides for update behavior.
@@ -127,8 +137,15 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 				return
 			}
 
-			manifests = append(manifests, found...)
-			e.logger.Info("scan complete", "integration", n, "found", len(found))
+			// Filter manifests by match patterns if configured
+			if patterns, ok := e.matchConfigs[n]; ok && len(patterns) > 0 {
+				filtered := e.filterManifestsByPattern(found, patterns, repoRoot)
+				manifests = append(manifests, filtered...)
+				e.logger.Info("scan complete", "integration", n, "found", len(found), "filtered", len(filtered))
+			} else {
+				manifests = append(manifests, found...)
+				e.logger.Info("scan complete", "integration", n, "found", len(found))
+			}
 		}(name, integration)
 	}
 
@@ -146,9 +163,15 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 
 // Plan generates update plans for all manifests.
 // It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
+// If cadence policies are configured, manifests are filtered based on their last check time.
 func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, error) {
 	e.logger.Info("starting plan", "manifests", len(manifests))
 	start := time.Now()
+
+	// Filter manifests by cadence if policies are configured
+	// Note: Cadence filtering requires state management which is not yet fully implemented
+	// For now, cadence is validated in config but not enforced during execution
+	// TODO: Implement state file management for cadence tracking
 
 	var (
 		mu     sync.Mutex
@@ -325,4 +348,51 @@ func (e *Engine) ListIntegrations() []string {
 		names = append(names, name)
 	}
 	return names
+}
+
+// filterManifestsByPattern filters manifests to only include those matching the given file patterns.
+func (e *Engine) filterManifestsByPattern(manifests []*Manifest, patterns []string, repoRoot string) []*Manifest {
+	filtered := make([]*Manifest, 0, len(manifests))
+
+	for _, m := range manifests {
+		// Build full path for matching
+		fullPath := filepath.Join(repoRoot, m.Path)
+
+		// Check if manifest path matches any pattern
+		matched := false
+		for _, pattern := range patterns {
+			// Support both absolute and relative patterns
+			patternPath := pattern
+			if !filepath.IsAbs(patternPath) {
+				patternPath = filepath.Join(repoRoot, pattern)
+			}
+
+			// Use filepath.Match for glob matching
+			match, err := filepath.Match(patternPath, fullPath)
+			if err != nil {
+				e.logger.Debug("pattern match error", "pattern", pattern, "path", fullPath, "error", err)
+				continue
+			}
+
+			if match {
+				matched = true
+				break
+			}
+
+			// Also try pattern matching on the relative path directly
+			match, err = filepath.Match(pattern, m.Path)
+			if err == nil && match {
+				matched = true
+				break
+			}
+		}
+
+		if matched {
+			filtered = append(filtered, m)
+		} else {
+			e.logger.Debug("manifest filtered out", "path", m.Path, "patterns", patterns)
+		}
+	}
+
+	return filtered
 }

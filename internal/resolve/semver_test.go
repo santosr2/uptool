@@ -473,3 +473,58 @@ func TestPlanContextPrecedence(t *testing.T) {
 		})
 	}
 }
+
+func TestSelectVersionWithContext_Pin(t *testing.T) {
+	tests := []struct {
+		name              string
+		currentVersion    string
+		wantVersion       string
+		wantImpact        engine.Impact
+		availableVersions []string
+		pin               bool
+	}{
+		{
+			name:              "pin prevents updates",
+			currentVersion:    "1.0.0",
+			availableVersions: []string{"1.0.0", "1.1.0", "2.0.0"},
+			pin:               true,
+			wantVersion:       "",
+			wantImpact:        engine.ImpactNone,
+		},
+		{
+			name:              "no pin allows updates",
+			currentVersion:    "1.0.0",
+			availableVersions: []string{"1.0.0", "1.1.0", "2.0.0"},
+			pin:               false,
+			wantVersion:       "2.0.0",
+			wantImpact:        engine.ImpactMajor,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			planCtx := engine.NewPlanContext().WithPolicy(&engine.IntegrationPolicy{
+				Pin:    tt.pin,
+				Update: "major",
+			})
+
+			gotVersion, gotImpact, err := SelectVersionWithContext(
+				tt.currentVersion,
+				"",
+				tt.availableVersions,
+				planCtx,
+			)
+			if err != nil {
+				t.Fatalf("SelectVersionWithContext() error = %v", err)
+			}
+
+			if gotVersion != tt.wantVersion {
+				t.Errorf("SelectVersionWithContext() version = %q, want %q", gotVersion, tt.wantVersion)
+			}
+
+			if gotImpact != tt.wantImpact {
+				t.Errorf("SelectVersionWithContext() impact = %q, want %q", gotImpact, tt.wantImpact)
+			}
+		})
+	}
+}

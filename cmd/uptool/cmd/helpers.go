@@ -88,11 +88,18 @@ func setupEngine() *engine.Engine {
 		}
 
 		// Set integration policies for policy-aware version selection
-		// This implements the precedence: uptool.yaml > CLI flags > constraints
+		// This implements the precedence: CLI flags > uptool.yaml > constraints
 		policies := buildPolicies(cfg)
 		if len(policies) > 0 {
 			eng.SetPolicies(policies)
 			logger.Debug("set integration policies", "count", len(policies))
+		}
+
+		// Set match configurations for file pattern filtering
+		matchConfigs := cfg.ToMatchConfigMap()
+		if len(matchConfigs) > 0 {
+			eng.SetMatchConfigs(matchConfigs)
+			logger.Debug("set match configs", "count", len(matchConfigs))
 		}
 	} else {
 		// No config file - register all integrations

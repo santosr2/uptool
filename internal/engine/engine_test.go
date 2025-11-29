@@ -892,3 +892,108 @@ func TestUpdateTimestamp(t *testing.T) {
 		t.Errorf("Update() timestamp = %v, want between %v and %v", result.Timestamp, before, after)
 	}
 }
+
+func TestEngine_SetMatchConfigs(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))
+	e := NewEngine(logger)
+
+	matchConfigs := map[string][]string{
+		"npm":       {"package.json", "apps/*/package.json"},
+		"terraform": {"*.tf", "modules/**/*.tf"},
+	}
+
+	e.SetMatchConfigs(matchConfigs)
+
+	if len(e.matchConfigs) != 2 {
+		t.Errorf("SetMatchConfigs() stored %d configs, want 2", len(e.matchConfigs))
+	}
+
+	if len(e.matchConfigs["npm"]) != 2 {
+		t.Errorf("SetMatchConfigs() npm has %d patterns, want 2", len(e.matchConfigs["npm"]))
+	}
+}
+
+func TestEngine_FilterManifestsByPattern(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))
+	e := NewEngine(logger)
+
+	manifests := []*Manifest{
+		{Path: "package.json", Type: "npm"},
+		{Path: "apps/frontend/package.json", Type: "npm"},
+		{Path: "apps/backend/package.json", Type: "npm"},
+		{Path: "libs/shared/package.json", Type: "npm"},
+	}
+
+	tests := []struct {
+		name     string
+		patterns []string
+		want     int
+	}{
+		{
+			name:     "match all",
+			patterns: []string{"package.json", "apps/*/package.json", "libs/*/package.json"},
+			want:     4,
+		},
+		{
+			name:     "match root only",
+			patterns: []string{"package.json"},
+			want:     1,
+		},
+		{
+			name:     "match apps only",
+			patterns: []string{"apps/*/package.json"},
+			want:     2,
+		},
+		{
+			name:     "no matches",
+			patterns: []string{"services/*/package.json"},
+			want:     0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filtered := e.filterManifestsByPattern(manifests, tt.patterns, "/repo")
+			if len(filtered) != tt.want {
+				t.Errorf("filterManifestsByPattern() = %d manifests, want %d", len(filtered), tt.want)
+			}
+		})
+	}
+}
+
+func TestEngine_ScanWithMatchFiltering(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))
+	e := NewEngine(logger)
+
+	// Create mock integration that returns multiple manifests
+	mock := &mockIntegration{
+		name: "npm",
+		detectManifests: []*Manifest{
+			{Path: "package.json", Type: "npm"},
+			{Path: "apps/frontend/package.json", Type: "npm"},
+			{Path: "apps/backend/package.json", Type: "npm"},
+		},
+	}
+
+	e.Register(mock)
+
+	// Set match config to only include root package.json
+	e.SetMatchConfigs(map[string][]string{
+		"npm": {"package.json"},
+	})
+
+	ctx := context.Background()
+	result, err := e.Scan(ctx, "/repo", nil, nil)
+	if err != nil {
+		t.Fatalf("Scan() error = %v", err)
+	}
+
+	// Should only have 1 manifest after filtering
+	if len(result.Manifests) != 1 {
+		t.Errorf("Scan() with match filtering = %d manifests, want 1", len(result.Manifests))
+	}
+
+	if result.Manifests[0].Path != "package.json" {
+		t.Errorf("Scan() filtered manifest path = %s, want package.json", result.Manifests[0].Path)
+	}
+}

@@ -208,3 +208,164 @@ func TestToPolicyMap(t *testing.T) {
 		t.Errorf("asdf policy.Update = %q, want 'patch'", policy.Update)
 	}
 }
+
+func TestConfig_OrgPolicyMethods(t *testing.T) {
+	tests := []struct {
+		config                   *Config
+		name                     string
+		wantAutoMergeGuardsCount int
+		wantRequiresSignoff      bool
+		wantRequiresCosign       bool
+		wantAutoMergeEnabled     bool
+	}{
+		{
+			name: "no org policy",
+			config: &Config{
+				Version: 1,
+			},
+			wantRequiresSignoff:      false,
+			wantRequiresCosign:       false,
+			wantAutoMergeEnabled:     false,
+			wantAutoMergeGuardsCount: 0,
+		},
+		{
+			name: "with require_signoff_from",
+			config: &Config{
+				Version: 1,
+				OrgPolicy: &OrgPolicy{
+					RequireSignoffFrom: []string{"team@example.com"},
+				},
+			},
+			wantRequiresSignoff:      true,
+			wantRequiresCosign:       false,
+			wantAutoMergeEnabled:     false,
+			wantAutoMergeGuardsCount: 0,
+		},
+		{
+			name: "with cosign verification",
+			config: &Config{
+				Version: 1,
+				OrgPolicy: &OrgPolicy{
+					Signing: &SigningConfig{
+						CosignVerify: true,
+					},
+				},
+			},
+			wantRequiresSignoff:      false,
+			wantRequiresCosign:       true,
+			wantAutoMergeEnabled:     false,
+			wantAutoMergeGuardsCount: 0,
+		},
+		{
+			name: "with auto merge enabled",
+			config: &Config{
+				Version: 1,
+				OrgPolicy: &OrgPolicy{
+					AutoMerge: &AutoMergeConfig{
+						Enabled: true,
+						Guards:  []string{"ci-green", "codeowners-approve"},
+					},
+				},
+			},
+			wantRequiresSignoff:      false,
+			wantRequiresCosign:       false,
+			wantAutoMergeEnabled:     true,
+			wantAutoMergeGuardsCount: 2,
+		},
+		{
+			name: "complete org policy",
+			config: &Config{
+				Version: 1,
+				OrgPolicy: &OrgPolicy{
+					RequireSignoffFrom: []string{"platform-team@example.com", "security-team@example.com"},
+					Signing: &SigningConfig{
+						CosignVerify: true,
+					},
+					AutoMerge: &AutoMergeConfig{
+						Enabled: true,
+						Guards:  []string{"ci-green", "codeowners-approve", "security-scan"},
+					},
+				},
+			},
+			wantRequiresSignoff:      true,
+			wantRequiresCosign:       true,
+			wantAutoMergeEnabled:     true,
+			wantAutoMergeGuardsCount: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.config.RequiresSignoff(); got != tt.wantRequiresSignoff {
+				t.Errorf("RequiresSignoff() = %v, want %v", got, tt.wantRequiresSignoff)
+			}
+
+			if got := tt.config.RequiresCosignVerification(); got != tt.wantRequiresCosign {
+				t.Errorf("RequiresCosignVerification() = %v, want %v", got, tt.wantRequiresCosign)
+			}
+
+			if got := tt.config.IsAutoMergeEnabled(); got != tt.wantAutoMergeEnabled {
+				t.Errorf("IsAutoMergeEnabled() = %v, want %v", got, tt.wantAutoMergeEnabled)
+			}
+
+			guards := tt.config.GetAutoMergeGuards()
+			if len(guards) != tt.wantAutoMergeGuardsCount {
+				t.Errorf("GetAutoMergeGuards() count = %d, want %d", len(guards), tt.wantAutoMergeGuardsCount)
+			}
+
+			orgPolicy := tt.config.GetOrgPolicy()
+			if (orgPolicy != nil) != (tt.config.OrgPolicy != nil) {
+				t.Errorf("GetOrgPolicy() returned %v, want %v", orgPolicy != nil, tt.config.OrgPolicy != nil)
+			}
+		})
+	}
+}
+
+func TestConfig_ToMatchConfigMap(t *testing.T) {
+	config := &Config{
+		Version: 1,
+		Integrations: []IntegrationConfig{
+			{
+				ID:      "npm",
+				Enabled: true,
+				Match: &MatchConfig{
+					Files: []string{"package.json", "apps/*/package.json"},
+				},
+			},
+			{
+				ID:      "terraform",
+				Enabled: true,
+				Match: &MatchConfig{
+					Files: []string{"*.tf", "modules/**/*.tf"},
+				},
+			},
+			{
+				ID:      "helm",
+				Enabled: true,
+				// No match config
+			},
+		},
+	}
+
+	matchMap := config.ToMatchConfigMap()
+
+	if len(matchMap) != 2 {
+		t.Errorf("ToMatchConfigMap() returned %d items, want 2", len(matchMap))
+	}
+
+	if patterns, ok := matchMap["npm"]; !ok {
+		t.Error("ToMatchConfigMap() missing 'npm' key")
+	} else if len(patterns) != 2 {
+		t.Errorf("npm patterns count = %d, want 2", len(patterns))
+	}
+
+	if patterns, ok := matchMap["terraform"]; !ok {
+		t.Error("ToMatchConfigMap() missing 'terraform' key")
+	} else if len(patterns) != 2 {
+		t.Errorf("terraform patterns count = %d, want 2", len(patterns))
+	}
+
+	if _, ok := matchMap["helm"]; ok {
+		t.Error("ToMatchConfigMap() should not include 'helm' (no match config)")
+	}
+}

@@ -158,6 +158,45 @@ func (c *Config) EnabledIntegrations() []string {
 	return result
 }
 
+// ToMatchConfigMap converts the configuration into a map of file patterns per integration.
+func (c *Config) ToMatchConfigMap() map[string][]string {
+	result := make(map[string][]string)
+	for _, integ := range c.Integrations {
+		if integ.Match != nil && len(integ.Match.Files) > 0 {
+			result[integ.ID] = integ.Match.Files
+		}
+	}
+	return result
+}
+
+// GetOrgPolicy returns the organization-level policy settings if configured.
+func (c *Config) GetOrgPolicy() *OrgPolicy {
+	return c.OrgPolicy
+}
+
+// RequiresSignoff returns whether the organization policy requires signoff for changes.
+func (c *Config) RequiresSignoff() bool {
+	return c.OrgPolicy != nil && len(c.OrgPolicy.RequireSignoffFrom) > 0
+}
+
+// RequiresCosignVerification returns whether cosign verification is required.
+func (c *Config) RequiresCosignVerification() bool {
+	return c.OrgPolicy != nil && c.OrgPolicy.Signing != nil && c.OrgPolicy.Signing.CosignVerify
+}
+
+// IsAutoMergeEnabled returns whether auto-merge is enabled.
+func (c *Config) IsAutoMergeEnabled() bool {
+	return c.OrgPolicy != nil && c.OrgPolicy.AutoMerge != nil && c.OrgPolicy.AutoMerge.Enabled
+}
+
+// GetAutoMergeGuards returns the list of required guards for auto-merge.
+func (c *Config) GetAutoMergeGuards() []string {
+	if c.OrgPolicy == nil || c.OrgPolicy.AutoMerge == nil {
+		return nil
+	}
+	return c.OrgPolicy.AutoMerge.Guards
+}
+
 // DefaultConfig returns a default configuration with sensible defaults.
 func DefaultConfig() *Config {
 	return &Config{
