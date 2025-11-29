@@ -42,6 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README**: Centralize the header by [@santosr2](https://github.com/santosr2) ([ba01bdd](https://github.com/santosr2/uptool/commit/ba01bdd0095da47c94e226bf6d6f6d9b3fedba73))
 
 - **README**: Replace `center` to  `div` for correct centralization by [@santosr2](https://github.com/santosr2) ([2b0bd82](https://github.com/santosr2/uptool/commit/2b0bd82ca6ddfe44cb8f20d2e5b69019e28ce992))
+
+- **security**: Include missing section to bump-my-version configuration by [@santosr2](https://github.com/santosr2) ([ce772bf](https://github.com/santosr2/uptool/commit/ce772bff555897df999aecd1a14eadb3be08f579))
 - Specify --signoff in docs by [@santosr2](https://github.com/santosr2) ([fe43871](https://github.com/santosr2/uptool/commit/fe438713adf969bb0c7e1fc8317bfc1db03f671d))
 - Ensure the uptool version follows the doc version by [@santosr2](https://github.com/santosr2) ([3b37908](https://github.com/santosr2/uptool/commit/3b3790876c6aa6a42bf5555390774fe7c38a4601))
 - Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a408029](https://github.com/santosr2/uptool/commit/a408029bc2520e1133cc55e4d9cf3583516ef88d))
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 - Add constraint resolution precedence order by [@santosr2](https://github.com/santosr2) ([2a7698f](https://github.com/santosr2/uptool/commit/2a7698fe3e70488207dec288c0b07932bda0fb2c))
+- Add full support for <integration>.policy feature by [@santosr2](https://github.com/santosr2) ([e8f2ada](https://github.com/santosr2/uptool/commit/e8f2adadd08f07d56674792b6ebda7f03ad0d154))
 
 ### GitHub Actions
 
