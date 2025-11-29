@@ -134,24 +134,24 @@ jobs:
               echo "patch-count=$PATCH_COUNT"
             } >> "$GITHUB_OUTPUT"
 
-            # Generate markdown table of updates (only for plans with updates)
+            # Generate aggregated markdown table of updates (only for plans with updates)
             {
               echo 'updates-table<<EOF_UPDATES_TABLE'
+              echo "| Manifest | Package | Current | Target | Type |"
+              echo "|----------|---------|---------|--------|------|"
               jq -r '
                 .plans[] |
                 select((.updates | length) > 0) |
-                "#### " + (.manifest.path | gsub("^\\./"; "")) + "\n" +
-                "| Package | Current | Target | Type |\n" +
-                "|---------|---------|--------|------|\n" +
-                (
-                  .updates[] |
-                  "| " + .dependency.name + " | `" + .dependency.current_version + "` | `" + .target_version + "` | " +
-                  (if .impact == "major" then "Major"
-                   elif .impact == "minor" then "Minor"
-                   elif .impact == "patch" then "Patch"
-                   else .impact end) +
-                  " |\n"
-                )
+                .manifest.path as $manifest |
+                .updates[] |
+                "| " + ($manifest | gsub("^\\./"; "")) + " | " +
+                .dependency.name + " | `" + .dependency.current_version + "` | `" +
+                .target_version + "` | " +
+                (if .impact == "major" then ":red_circle: Major"
+                 elif .impact == "minor" then ":yellow_circle: Minor"
+                 elif .impact == "patch" then ":green_circle: Patch"
+                 else .impact end) +
+                " |"
               ' /tmp/plan-output.json
               echo 'EOF_UPDATES_TABLE'
             } >> "$GITHUB_OUTPUT"
