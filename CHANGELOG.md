@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace `<integration>.determineImpact()` in favor of `resolve.SelectVersionWithContext` by [@santosr2](https://github.com/santosr2) ([d38440c](https://github.com/santosr2/uptool/commit/d38440c1ad34591f2d22a1d222c698b26374e9f1))
 - Improve plugins folders organization by [@santosr2](https://github.com/santosr2) ([1c949d5](https://github.com/santosr2/uptool/commit/1c949d5667b10cc190b1bf3458edd557b6d5c6c5))
 - Fix golangci finds and add more tests by [@santosr2](https://github.com/santosr2) ([2cfdf0c](https://github.com/santosr2/uptool/commit/2cfdf0cefac0c8d6c0bc7c22d1b0ad1a82e15696))
+- Add tests and change configuration to have >80% coverage by [@santosr2](https://github.com/santosr2) ([87643fb](https://github.com/santosr2/uptool/commit/87643fbc922a4296c7f655f9aa83c6b6dc70feaf))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
