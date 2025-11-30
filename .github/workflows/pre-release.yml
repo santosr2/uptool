@@ -166,6 +166,46 @@ jobs:
           git commit --signoff -m "chore(release): bump version to $NEW_TAG [skip ci]"
           git push origin HEAD:main
 
+      - name: Create Mutable Convenience Tags
+        env:
+          VERSION: ${{ needs.calculate-version.outputs.new_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Pull the latest commit (the version bump we just pushed)
+          git pull origin main
+
+          # Extract version components for mutable tags
+          # VERSION format: v0.2.0-rc1 or v0.2.0-beta3 or v0.2.0-alpha20250708
+          # Extract: MAJOR=0, MINOR=2, PRERELEASE_TYPE=rc
+          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
+          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
+          PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
+
+          # Create/update mutable tags for convenience using GitHub API (creates verified tags)
+          # These tags follow the latest pre-release
+          MAJOR_RC_TAG="v${MAJOR}-${PRERELEASE_TYPE}"
+          MINOR_RC_TAG="v${MAJOR}.${MINOR}-${PRERELEASE_TYPE}"
+
+          echo "Creating mutable tags via GitHub API: $MAJOR_RC_TAG, $MINOR_RC_TAG"
+
+          # Get the commit SHA
+          COMMIT_SHA=$(git rev-parse HEAD)
+
+          # Delete existing tags if they exist (via API)
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${MAJOR_RC_TAG}" 2>/dev/null || true
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${MINOR_RC_TAG}" 2>/dev/null || true
+
+          # Create new tags via GitHub API (these will be verified)
+          gh api -X POST "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/${MAJOR_RC_TAG}" \
+            -f sha="$COMMIT_SHA"
+
+          gh api -X POST "repos/${{ github.repository }}/git/refs" \
+            -f ref="refs/tags/${MINOR_RC_TAG}" \
+            -f sha="$COMMIT_SHA"
+
+          echo "✅ Created verified tags: $VERSION (immutable), $MINOR_RC_TAG (mutable), $MAJOR_RC_TAG (mutable)"
+
       - name: Generate release notes
         env:
           VERSION: ${{ needs.calculate-version.outputs.new_tag }}
@@ -324,46 +364,6 @@ jobs:
           make_latest: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Mutable Convenience Tags
-        env:
-          VERSION: ${{ needs.calculate-version.outputs.new_tag }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Pull the latest commit (the version bump we just pushed)
-          git pull origin main
-
-          # Extract version components for mutable tags
-          # VERSION format: v0.2.0-rc1 or v0.2.0-beta3 or v0.2.0-alpha20250708
-          # Extract: MAJOR=0, MINOR=2, PRERELEASE_TYPE=rc
-          MAJOR=$(echo "$VERSION" | sed -E 's/^v([0-9]+)\..*$/\1/')
-          MINOR=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.([0-9]+)\..*$/\1/')
-          PRERELEASE_TYPE=$(echo "$VERSION" | sed -E 's/^v[0-9]+\.[0-9]+\.[0-9]+-([a-z]+)[0-9].*$/\1/')
-
-          # Create/update mutable tags for convenience using GitHub API (creates verified tags)
-          # These tags follow the latest pre-release
-          MAJOR_RC_TAG="v${MAJOR}-${PRERELEASE_TYPE}"
-          MINOR_RC_TAG="v${MAJOR}.${MINOR}-${PRERELEASE_TYPE}"
-
-          echo "Creating mutable tags via GitHub API: $MAJOR_RC_TAG, $MINOR_RC_TAG"
-
-          # Get the commit SHA
-          COMMIT_SHA=$(git rev-parse HEAD)
-
-          # Delete existing tags if they exist (via API)
-          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${MAJOR_RC_TAG}" 2>/dev/null || true
-          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/${MINOR_RC_TAG}" 2>/dev/null || true
-
-          # Create new tags via GitHub API (these will be verified)
-          gh api -X POST "repos/${{ github.repository }}/git/refs" \
-            -f ref="refs/tags/${MAJOR_RC_TAG}" \
-            -f sha="$COMMIT_SHA"
-
-          gh api -X POST "repos/${{ github.repository }}/git/refs" \
-            -f ref="refs/tags/${MINOR_RC_TAG}" \
-            -f sha="$COMMIT_SHA"
-
-          echo "✅ Created verified tags: $VERSION (immutable), $MINOR_RC_TAG (mutable), $MAJOR_RC_TAG (mutable)"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.6.0
