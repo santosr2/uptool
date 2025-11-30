@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **pre-release**: Use HEAD instead new tag for changelog notes by [@santosr2](https://github.com/santosr2) ([f4c460d](https://github.com/santosr2/uptool/commit/f4c460d703630d98206e11365a1bbd5f367babee))
 
+- **pre-release**: Fix github token when triggering docker workflow by [@santosr2](https://github.com/santosr2) ([9680d66](https://github.com/santosr2/uptool/commit/9680d66e3f682ab2c8999ec466a38e444ea5d525))
+
 - **self-update-check**: Add it to self-update packages by [@santosr2](https://github.com/santosr2) ([c85d85e](https://github.com/santosr2/uptool/commit/c85d85ed468856a12a7888ecc07b02ac73d9298a))
 
 - **self-update-check**: Replace cli to action usage by [@santosr2](https://github.com/santosr2) ([2cb85a8](https://github.com/santosr2/uptool/commit/2cb85a891873e3e15f30a3fa15bd71340d89ca8b))
@@ -87,6 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **pre-commit**: Check commit message spelling by [@santosr2](https://github.com/santosr2) ([dec4d9c](https://github.com/santosr2/uptool/commit/dec4d9c586982edbb94e1002e426bc34754a28a0))
 
 - **release**: Bump version to v0.2.0-alpha20251127 [skip ci] by [@santosr2[bot]](https://github.com/santosr2[bot]) ([4725282](https://github.com/santosr2/uptool/commit/4725282d8f3c57f8276380744acb7d52c9878cf2))
+
+- **release**: Bump version to v0.2.0-alpha20251130 [skip ci] by [@santosr2[bot]](https://github.com/santosr2[bot]) ([8a1ec93](https://github.com/santosr2/uptool/commit/8a1ec9304002c7f8d1fb13d9e96e3d70ba4e6d8b))
 - Remove mike install from mise by [@santosr2](https://github.com/santosr2) ([7a54070](https://github.com/santosr2/uptool/commit/7a54070922dcd994795751c5704bf950424ec27a))
 - Include example/plugin/python to linters/formatters/scans by [@santosr2](https://github.com/santosr2) ([660dea2](https://github.com/santosr2/uptool/commit/660dea204d686e5b024f00e9c852a936bd989605))
 - Replace `<integration>.determineImpact()` in favor of `resolve.SelectVersionWithContext` by [@santosr2](https://github.com/santosr2) ([d38440c](https://github.com/santosr2/uptool/commit/d38440c1ad34591f2d22a1d222c698b26374e9f1))
