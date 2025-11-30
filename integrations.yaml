@@ -5,6 +5,19 @@
 version: "1.0"
 
 integrations:
+  actions:
+    displayName: "GitHub Actions"
+    description: "GitHub Actions workflow files (.github/workflows/*.yml)"
+    filePatterns:
+      - ".github/workflows/*.yml"
+      - ".github/workflows/*.yaml"
+    datasources:
+      - github-releases
+    experimental: false
+    disabled: false
+    url: "https://github.com/features/actions"
+    category: "ci-cd"
+
   asdf:
     displayName: "asdf"
     description: ".tool-versions runtime version manager (detection only, version resolution not implemented)"
@@ -15,6 +28,23 @@ integrations:
     disabled: false
     url: "https://asdf-vm.com"
     category: "runtime-manager"
+
+  docker:
+    displayName: "Docker"
+    description: "Dockerfile and docker-compose.yml image references"
+    filePatterns:
+      - "Dockerfile"
+      - "Dockerfile.*"
+      - "docker-compose.yml"
+      - "docker-compose.yaml"
+      - "compose.yml"
+      - "compose.yaml"
+    datasources:
+      - docker-hub
+    experimental: false
+    disabled: false
+    url: "https://www.docker.com"
+    category: "containers"
 
   helm:
     displayName: "Helm"
@@ -117,6 +147,12 @@ datasources:
     type: "http-json"
     description: "GitHub repository releases API"
 
+  docker-hub:
+    name: "Docker Hub"
+    url: "https://hub.docker.com"
+    type: "http-json"
+    description: "Docker Hub container image registry"
+
 # Categories for grouping integrations
 categories:
   runtime-manager:
@@ -142,3 +178,11 @@ categories:
   linting:
     name: "Linters and Static Analysis"
     description: "Code quality and linting tools"
+
+  ci-cd:
+    name: "CI/CD"
+    description: "Continuous Integration and Deployment tools (GitHub Actions, etc.)"
+
+  containers:
+    name: "Containers"
+    description: "Container tools and registries (Docker, Podman, etc.)"

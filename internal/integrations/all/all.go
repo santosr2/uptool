@@ -28,7 +28,9 @@ package all
 
 import (
 	// Import all integration packages to trigger init() functions
+	_ "github.com/santosr2/uptool/internal/integrations/actions"
 	_ "github.com/santosr2/uptool/internal/integrations/asdf"
+	_ "github.com/santosr2/uptool/internal/integrations/docker"
 	_ "github.com/santosr2/uptool/internal/integrations/helm"
 	_ "github.com/santosr2/uptool/internal/integrations/mise"
 	_ "github.com/santosr2/uptool/internal/integrations/npm"
