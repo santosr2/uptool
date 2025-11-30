@@ -100,7 +100,7 @@ replace = "RequiredUptoolVersion = \"{new_version}\""
 
 # examples/plugins/python/go.mod - Plugin dependency version
 [[tool.bumpversion.files]]
-filename = "examples/plugins/python/go.mod"
+filename = "examples/plugins/integrations/python/go.mod"
 search = "require github.com/santosr2/uptool v{current_version}"
 replace = "require github.com/santosr2/uptool v{new_version}"
 
