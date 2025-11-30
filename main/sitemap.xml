@@ -2,130 +2,130 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://santosr2.github.io/uptool/main/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/CHANGELOG/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/CODE_OF_CONDUCT/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/CONTRIBUTING/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/GOVERNANCE/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/INTEGRATION_TEMPLATE/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/LICENSE/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/SECURITY/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/action-usage/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/architecture/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/configuration/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/environments/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/guards/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/installation/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/manifests/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/overview/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/patch-release-workflow/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/plugin-development/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/policy/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/quickstart/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/troubleshooting/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/versioning/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/api/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/cli/commands/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/asdf/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/helm/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/mise/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/npm/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/precommit/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/terraform/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
     <url>
          <loc>https://santosr2.github.io/uptool/main/integrations/tflint/</loc>
-         <lastmod>2025-11-29</lastmod>
+         <lastmod>2025-11-30</lastmod>
     </url>
 </urlset>
