@@ -76,6 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Miscellaneous Tasks
 
+- **bumpversion**: Fix python integration plugin path by [@santosr2](https://github.com/santosr2) ([3576a4b](https://github.com/santosr2/uptool/commit/3576a4be758bc23c4c7f56da99fd38c9a232d650))
+
 - **plugins/python**: Use `replace` directive for better DevExp by [@santosr2](https://github.com/santosr2) ([cb478fc](https://github.com/santosr2/uptool/commit/cb478fce0be6c2692a2f1009275063fcef3da6c7))
 
 - **pre-commit**: Check commit message spelling by [@santosr2](https://github.com/santosr2) ([dec4d9c](https://github.com/santosr2/uptool/commit/dec4d9c586982edbb94e1002e426bc34754a28a0))
