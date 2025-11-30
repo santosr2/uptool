@@ -60,7 +60,7 @@ This ensures **declared dependencies** stay current, not just resolved versions.
 
 ## Features
 
-- **Multi-Ecosystem Support**: npm, Helm, Terraform, tflint, pre-commit, asdf, mise — all in one tool
+- **Multi-Ecosystem Support**: npm, Helm, Terraform, tflint, pre-commit, GitHub Actions, Docker, asdf, mise — all in one tool
 - **Manifest-First Updates**: Updates configuration files directly, preserving formatting and comments
 - **Dual Usage Modes**: Use as a CLI tool locally or as a GitHub Action in CI/CD
 - **Intelligent Version Resolution**: Queries upstream registries (npm, Terraform Registry, Helm repos, GitHub Releases)
@@ -80,9 +80,11 @@ This ensures **declared dependencies** stay current, not just resolved versions.
 |-------------|--------|----------------|-----------------|----------|
 | **npm** | ✅ Stable | `package.json` | Custom JSON rewriting | npm Registry API |
 | **Helm** | ✅ Stable | `Chart.yaml` | YAML rewriting | Helm chart repositories |
-| **pre-commit** | ✅ Stable | `.pre-commit-config.yaml` | Native `pre-commit autoupdate` | GitHub Releases |
 | **Terraform** | ✅ Stable | `*.tf` | HCL parsing/rewriting | Terraform Registry API |
 | **tflint** | ✅ Stable | `.tflint.hcl` | HCL parsing/rewriting | GitHub Releases |
+| **pre-commit** | ✅ Stable | `.pre-commit-config.yaml` | Native `pre-commit autoupdate` | GitHub Releases |
+| **GitHub Actions** | ✅ Stable | `.github/workflows/*.yml` | YAML text rewriting | GitHub Releases |
+| **Docker** | ✅ Stable | `Dockerfile`, `docker-compose.yml` | Text rewriting | Docker Hub API |
 | **asdf** | ⚠️ Experimental | `.tool-versions` | Detection only (updates not implemented) | GitHub Releases (per tool) |
 | **mise** | ⚠️ Experimental | `mise.toml`, `.mise.toml` | Detection only (updates not implemented) | GitHub Releases (per tool) |
 
@@ -90,8 +92,6 @@ This ensures **declared dependencies** stay current, not just resolved versions.
 
 - [ ] Python (`pyproject.toml`, `requirements.txt`, `Pipfile`)
 - [ ] Go modules (`go.mod`)
-- [ ] Docker (`Dockerfile`, `compose.yml`, `docker-compose.yml`)
-- [ ] GitHub Actions (workflow `.yml` files)
 - [ ] Generic version matcher (custom YAML/TOML/JSON/HCL patterns)
 
 ---
@@ -331,6 +331,8 @@ See [docs/integrations/](docs/integrations/) for detailed guides.
 - **Terraform**: Updates module versions in `*.tf` files
 - **tflint**: Updates plugin versions in `.tflint.hcl`
 - **pre-commit**: Uses native `pre-commit autoupdate`
+- **GitHub Actions**: Updates action versions in workflow files
+- **Docker**: Updates image tags in Dockerfiles and docker-compose
 - **asdf/mise**: Updates runtime tool versions (experimental)
 
 ---

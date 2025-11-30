@@ -12,8 +12,9 @@ Modern projects use dozens of tools across multiple ecosystems. uptool helps you
 
 - **Language dependencies**: npm packages
 - **Infrastructure tools**: Terraform modules, Helm charts
-- **Development tools**: pre-commit hooks, tflint plugins
-- **Runtime version managers**: asdf (`.tool-versions`), mise (`mise.toml`)
+- **CI/CD**: GitHub Actions workflows, pre-commit hooks
+- **Containers**: Docker images in Dockerfiles and docker-compose
+- **Development tools**: tflint plugins, asdf (`.tool-versions`), mise (`mise.toml`)
 
 Each ecosystem has its own update mechanism. Keeping them all current is tedious and error-prone.
 
@@ -44,7 +45,7 @@ This ensures your **declared dependencies** stay current, not just resolved vers
 
     ---
 
-    npm, Helm, Terraform, tflint, pre-commit, asdf, mise — all in one tool
+    npm, Helm, Terraform, tflint, pre-commit, GitHub Actions, Docker, asdf, mise — all in one tool
 
 - :material-file-document: **Manifest-First Updates**
 
@@ -104,9 +105,11 @@ uptool update --only npm,terraform
 |-------------|--------|----------------|----------|
 | **npm** | ✅ Stable | `package.json` | npm Registry API |
 | **Helm** | ✅ Stable | `Chart.yaml` | Helm chart repositories |
-| **pre-commit** | ✅ Stable | `.pre-commit-config.yaml` | GitHub Releases |
 | **Terraform** | ✅ Stable | `*.tf` | Terraform Registry API |
 | **tflint** | ✅ Stable | `.tflint.hcl` | GitHub Releases |
+| **pre-commit** | ✅ Stable | `.pre-commit-config.yaml` | GitHub Releases |
+| **GitHub Actions** | ✅ Stable | `.github/workflows/*.yml` | GitHub Releases |
+| **Docker** | ✅ Stable | `Dockerfile`, `docker-compose.yml` | Docker Hub API |
 | **asdf** | ⚠️ Experimental | `.tool-versions` | GitHub Releases (per tool) |
 | **mise** | ⚠️ Experimental | `mise.toml`, `.mise.toml` | GitHub Releases (per tool) |
 
@@ -160,9 +163,8 @@ Ready to get started? Choose your path:
 !!! info Development Status
     uptool is under active development. The current focus is on:
 
-- ✅ Stabilizing core integrations (npm, Helm, Terraform, pre-commit, tflint)
+- ✅ Core integrations stable (npm, Helm, Terraform, pre-commit, tflint, GitHub Actions, Docker)
 - 🚧 Completing asdf/mise integrations (detection works, updates not yet implemented)
-- 🚧 Expanding test coverage (target: >70%)
 - 🚧 Adding Python ecosystem support
 - 📝 Improving documentation and examples
 

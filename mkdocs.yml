@@ -185,6 +185,8 @@ nav:
     - Terraform: integrations/terraform.md
     - TFLint: integrations/tflint.md
     - pre-commit: integrations/precommit.md
+    - GitHub Actions: integrations/actions.md
+    - Docker: integrations/docker.md
     - asdf: integrations/asdf.md
     - mise: integrations/mise.md
 

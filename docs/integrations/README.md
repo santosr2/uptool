@@ -11,6 +11,8 @@ Detailed guides for each uptool integration.
 | **[terraform](terraform.md)** | `*.tf` | ✅ Stable | Terraform Registry API |
 | **[tflint](tflint.md)** | `.tflint.hcl` | ✅ Stable | GitHub Releases |
 | **[precommit](precommit.md)** | `.pre-commit-config.yaml` | ✅ Stable | GitHub Releases |
+| **[actions](actions.md)** | `.github/workflows/*.yml` | ✅ Stable | GitHub Releases |
+| **[docker](docker.md)** | `Dockerfile`, `docker-compose.yml` | ✅ Stable | Docker Hub API |
 | **[asdf](asdf.md)** | `.tool-versions` | ⚠️ Experimental | GitHub Releases |
 | **[mise](mise.md)** | `mise.toml` | ⚠️ Experimental | GitHub Releases |
 
@@ -26,9 +28,17 @@ Detailed guides for each uptool integration.
 - **[terraform](terraform.md)** - Terraform modules
 - **[tflint](tflint.md)** - Terraform linter plugins
 
+### CI/CD
+
+- **[actions](actions.md)** - GitHub Actions workflow files
+- **[precommit](precommit.md)** - Pre-commit hooks (uses native `pre-commit autoupdate`)
+
+### Containers
+
+- **[docker](docker.md)** - Dockerfiles and docker-compose files
+
 ### Development Tools
 
-- **[precommit](precommit.md)** - Pre-commit hooks (uses native `pre-commit autoupdate`)
 - **[asdf](asdf.md)** - asdf version manager
 - **[mise](mise.md)** - mise version manager (modern asdf alternative)
 

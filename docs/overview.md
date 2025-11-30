@@ -14,7 +14,7 @@ Updates **manifest files** directly (package.json, Chart.yaml, *.tf) instead of 
 
 ## Supported Integrations
 
-npm, Helm, Terraform, tflint, pre-commit, asdf (experimental), mise (experimental)
+npm, Helm, Terraform, tflint, pre-commit, GitHub Actions, Docker, asdf (experimental), mise (experimental)
 
 See [Integrations](integrations/README.md) for complete list.
 
