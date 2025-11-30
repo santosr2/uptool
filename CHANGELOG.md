@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **pre-release**: Improve changelog section in release body by [@santosr2](https://github.com/santosr2) ([b42ae40](https://github.com/santosr2/uptool/commit/b42ae40d67a1d37cfb305b8b2b6c46df2522a13a))
 
+- **pre-release**: Create tags before changelog notes by [@santosr2](https://github.com/santosr2) ([d0c77ac](https://github.com/santosr2/uptool/commit/d0c77aceee6af896a19276dbd29dc19d022380d1))
+
 - **self-update-check**: Add it to self-update packages by [@santosr2](https://github.com/santosr2) ([c85d85e](https://github.com/santosr2/uptool/commit/c85d85ed468856a12a7888ecc07b02ac73d9298a))
 
 - **self-update-check**: Replace cli to action usage by [@santosr2](https://github.com/santosr2) ([2cb85a8](https://github.com/santosr2/uptool/commit/2cb85a891873e3e15f30a3fa15bd71340d89ca8b))
