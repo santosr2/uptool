@@ -64,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set default config for integrations that aren't set in config file by [@santosr2](https://github.com/santosr2) ([aec27cb](https://github.com/santosr2/uptool/commit/aec27cb36b19d4631c293b01bd9a834f40335be6))
 - Add match.exclude support by [@santosr2](https://github.com/santosr2) ([23caa5b](https://github.com/santosr2/uptool/commit/23caa5b2e2e3a3d87611701c757316727042ae4d))
 - Add support for `--config` flag by [@santosr2](https://github.com/santosr2) ([9377dd7](https://github.com/santosr2/uptool/commit/9377dd786992e149b6ad5282dde2050f33d4b3fb))
+- Add Docker and GitHub Action support by [@santosr2](https://github.com/santosr2) ([f007b89](https://github.com/santosr2/uptool/commit/f007b89d84e6e32d1c9188d3824b17e4a8049900))
 
 ### GitHub Actions
 
