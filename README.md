@@ -267,7 +267,7 @@ uptool supports **mutable tags** for convenient version pinning:
 - uses: santosr2/uptool@v0.2
 
 # Pin to exact version (no automatic updates)
-- uses: santosr2/uptool@v0.2.0-alpha20251127
+- uses: santosr2/uptool@v0.2.0-alpha20251130
 ```
 
 **How it works**:
@@ -280,7 +280,7 @@ uptool supports **mutable tags** for convenient version pinning:
 
 - `@v0-alpha` - Latest alpha release in v0
 - `@v0.2-alpha` - Latest alpha release in v0.2
-- `@v0.2.0-alpha20251127` - Exact pre-release (immutable)
+- `@v0.2.0-alpha20251130` - Exact pre-release (immutable)
 
 ### Inputs
 

@@ -156,7 +156,7 @@ extra:
   #   - {{ extra.uptool_version }} → v0.2.0-alpha20251124 (full tag)
   #   - {{ extra.uptool_version_major }} → v0 (major version)
   #   - {{ extra.uptool_version_minor }} → v0.2 (major.minor version)
-  uptool_version: v0.2.0-alpha20251127
+  uptool_version: v0.2.0-alpha20251130
   uptool_version_major: v0
   uptool_version_minor: v0.2
 
