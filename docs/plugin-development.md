@@ -172,7 +172,7 @@ uptool scan --only=myintegration
 3. **Logging**: Use structured logging, avoid print statements
 4. **Context**: Respect context cancellation
 5. **Resource cleanup**: Close files, network connections
-6. **Testing**: >70% coverage target
+6. **Testing**: >80% coverage target
 7. **Documentation**: Add README with usage examples
 
 ## Example Plugin

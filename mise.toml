@@ -55,6 +55,7 @@ uv = "latest"
 
 # Development tools
 "go:github.com/air-verse/air" = "1.63.1"
+gofumpt = "latest"
 
 # Task definitions (replacing Makefile)
 [tasks.generate]
@@ -97,6 +98,25 @@ run = """
 echo "Generating coverage report..."
 go tool cover -html=coverage.out -o coverage.html
 echo "✓ Coverage report: coverage.html"
+"""
+
+[tasks.coverage-check]
+description = "Check test coverage meets 80% threshold"
+depends = ["test"]
+run = """
+echo "Checking coverage threshold (80%)..."
+COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+echo "Overall coverage: ${COVERAGE}%"
+THRESHOLD=80
+if [ $(echo "$COVERAGE < $THRESHOLD" | bc -l) -eq 1 ]; then
+  echo "❌ Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+  echo ""
+  echo "Packages below 80% coverage:"
+  go tool cover -func=coverage.out | grep -v "100.0%" | awk '$3 != "" && $3+0 < 80 {print "  " $1 ": " $3}'
+  exit 1
+else
+  echo "✅ Coverage meets threshold (${COVERAGE}% >= ${THRESHOLD}%)"
+fi
 """
 
 [tasks.lint]

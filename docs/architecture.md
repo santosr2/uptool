@@ -182,7 +182,7 @@ Errors categorized by severity:
 - **Unit tests**: Per-integration testing with testdata fixtures
 - **Integration tests**: End-to-end with real registries
 - **Golden file tests**: Manifest rewriting verification
-- **Target coverage**: >70% overall, >80% for core engine
+- **Target coverage**: >80% overall, >80% for core engine
 
 ## File Structure
 

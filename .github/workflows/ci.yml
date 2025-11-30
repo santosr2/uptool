@@ -97,6 +97,47 @@ jobs:
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
 
+      - name: Check coverage threshold
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.25'
+        run: |
+          {
+            echo "## 📊 Code Coverage Report"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Calculate overall coverage percentage
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+
+          {
+            echo "Overall coverage: ${COVERAGE}%"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Check against 80% threshold
+          THRESHOLD=80
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            {
+              echo "❌ **Coverage below threshold**"
+              echo ""
+              echo "Current: ${COVERAGE}%"
+              echo "Required: ${THRESHOLD}%"
+              echo ""
+              echo "Please add tests to increase coverage."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          else
+            echo "✅ Coverage meets threshold (${COVERAGE}% >= ${THRESHOLD}%)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # Show packages below threshold
+          {
+            echo ""
+            echo "### Packages below 80% coverage"
+            echo '```'
+            go tool cover -func=coverage.out | grep -v "100.0%" | awk '$3 != "" && $3+0 < 80 {print $1, $3}' || echo "All packages meet threshold"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload coverage
         uses: codecov/codecov-action@5c47607acb93fed5485fdbf7232e8a31425f672a # v5.0.2
         if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.25'

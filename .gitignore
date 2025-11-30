@@ -64,4 +64,8 @@ Thumbs.db
 .terraform.lock.hcl
 node_modules/
 
+# Mise
+.mise/
+
+# Custom
 bkp/

@@ -311,7 +311,7 @@ Want to add support for a new ecosystem? See the [Plugin Development Guide](docs
 3. **Add configuration**: Update `integrations.yaml` with metadata
 
 4. **Write tests**: Create `<name>_test.go` with fixtures in `testdata/`
-   - Target: >70% test coverage
+   - Target: >80% test coverage
 
 5. **Document it**: Create `docs/integrations/<name>.md`
    - Use [Integration Template](docs/INTEGRATION_TEMPLATE.md) (target: 80-120 lines)
@@ -479,8 +479,8 @@ func (c *YourRegistryClient) GetLatestVersion(ctx context.Context, packageName s
 Aim for:
 
 - Core engine: 80%+ coverage
-- Integrations: 70%+ coverage
-- Registry clients: 60%+ coverage
+- Integrations: 80%+ coverage
+- Registry clients: 80%+ coverage
 
 ## Version Management
 
