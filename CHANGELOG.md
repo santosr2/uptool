@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `mkdocs-material-extensions` requirement by [@santosr2](https://github.com/santosr2) ([a408029](https://github.com/santosr2/uptool/commit/a408029bc2520e1133cc55e4d9cf3583516ef88d))
 - Fix `copy` icon from code blocks by [@santosr2](https://github.com/santosr2) ([dc0a5ae](https://github.com/santosr2/uptool/commit/dc0a5ae2b0664d901d3210cb06cf3900aef03657))
 - Update Plan references by [@santosr2](https://github.com/santosr2) ([f1d908b](https://github.com/santosr2/uptool/commit/f1d908b331034702a17e97a17919ab28593b4f18))
+- Update to reflect the new integrations (Docker & GitHub Actions) by [@santosr2](https://github.com/santosr2) ([1393016](https://github.com/santosr2/uptool/commit/1393016f1df19265dba5eb99bed3d0568eb73826))
 
 ### Features
 - Add constraint resolution precedence order by [@santosr2](https://github.com/santosr2) ([2a7698f](https://github.com/santosr2/uptool/commit/2a7698fe3e70488207dec288c0b07932bda0fb2c))
