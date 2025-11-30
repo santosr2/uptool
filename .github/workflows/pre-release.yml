@@ -376,7 +376,7 @@ jobs:
 
       - name: Trigger Docker build
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           # Trigger Docker workflow to build and push container images
           gh workflow run docker.yml \
