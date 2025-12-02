@@ -31,6 +31,7 @@ import (
 	_ "github.com/santosr2/uptool/internal/integrations/actions"
 	_ "github.com/santosr2/uptool/internal/integrations/asdf"
 	_ "github.com/santosr2/uptool/internal/integrations/docker"
+	_ "github.com/santosr2/uptool/internal/integrations/gomod"
 	_ "github.com/santosr2/uptool/internal/integrations/helm"
 	_ "github.com/santosr2/uptool/internal/integrations/mise"
 	_ "github.com/santosr2/uptool/internal/integrations/npm"

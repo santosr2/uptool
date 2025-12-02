@@ -7,8 +7,6 @@ run:
   timeout: 5m
   tests: true
   modules-download-mode: readonly
-  skip-dirs:
-    - scripts  # Skip scripts directory (contains multiple main packages)
 
 linters:
   default: none  # Explicitly enable linters below

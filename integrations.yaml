@@ -29,6 +29,19 @@ integrations:
     url: "https://asdf-vm.com"
     category: "runtime-manager"
 
+  gomod:
+    displayName: "Go Modules"
+    description: "Go module dependencies (go.mod)"
+    filePatterns:
+      - "go.mod"
+      - "*/go.mod"
+    datasources:
+      - go-proxy
+    experimental: false
+    disabled: false
+    url: "https://go.dev"
+    category: "package-manager"
+
   docker:
     displayName: "Docker"
     description: "Dockerfile and docker-compose.yml image references"
@@ -152,6 +165,12 @@ datasources:
     url: "https://hub.docker.com"
     type: "http-json"
     description: "Docker Hub container image registry"
+
+  go-proxy:
+    name: "Go Module Proxy"
+    url: "https://proxy.golang.org"
+    type: "http-json"
+    description: "Official Go module proxy for version lookups"
 
 # Categories for grouping integrations
 categories:
