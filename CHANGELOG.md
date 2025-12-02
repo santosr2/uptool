@@ -67,6 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update to reflect the new integrations (Docker & GitHub Actions). by [@santosr2](https://github.com/santosr2) ([1393016](https://github.com/santosr2/uptool/commit/1393016f1df19265dba5eb99bed3d0568eb73826))
 
 ### Features
+
+- **integration**: Add support for golang. by [@santosr2](https://github.com/santosr2) ([bc00648](https://github.com/santosr2/uptool/commit/bc00648b3360f1b02064666a48626000af661dce))
 - Add constraint resolution precedence order. by [@santosr2](https://github.com/santosr2) ([2a7698f](https://github.com/santosr2/uptool/commit/2a7698fe3e70488207dec288c0b07932bda0fb2c))
 - Add full support for <integration>.policy feature. by [@santosr2](https://github.com/santosr2) ([e8f2ada](https://github.com/santosr2/uptool/commit/e8f2adadd08f07d56674792b6ebda7f03ad0d154))
 - Add full support for org_policy configuration. by [@santosr2](https://github.com/santosr2) ([4e2e474](https://github.com/santosr2/uptool/commit/4e2e474174ce2cb8cf5c12479aad7717f54742c2))
