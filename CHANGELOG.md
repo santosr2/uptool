@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **pre-release**: Fix github token when triggering docker workflow. by [@santosr2](https://github.com/santosr2) ([9680d66](https://github.com/santosr2/uptool/commit/9680d66e3f682ab2c8999ec466a38e444ea5d525))
 
+- **security**: Skip secrets check on test files. by [@santosr2](https://github.com/santosr2) ([2f70297](https://github.com/santosr2/uptool/commit/2f702975499c8024c5cc3e0a1671ed33ebabedf0))
+
 - **self-update-check**: Add it to self-update packages. by [@santosr2](https://github.com/santosr2) ([c85d85e](https://github.com/santosr2/uptool/commit/c85d85ed468856a12a7888ecc07b02ac73d9298a))
 
 - **self-update-check**: Replace cli to action usage. by [@santosr2](https://github.com/santosr2) ([2cb85a8](https://github.com/santosr2/uptool/commit/2cb85a891873e3e15f30a3fa15bd71340d89ca8b))
