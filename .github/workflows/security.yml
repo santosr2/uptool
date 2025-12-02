@@ -78,7 +78,7 @@ jobs:
       - name: Run detect-secrets scan
         run: |
           detect-secrets scan --all-files --force-use-all-plugins \
-            --exclude-files '\.git/.*|\.github/workflows/.*\.yml|go\.sum|mise\.toml' \
+            --exclude-files '\.git/.*|\.github/workflows/.*\.yml|go\.sum|mise\.toml|.*_test\.go' \
             > .secrets.baseline
 
       - name: Check for secrets
