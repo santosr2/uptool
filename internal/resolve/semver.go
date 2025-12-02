@@ -385,7 +385,7 @@ func isPolicyAllowed(updateLevel string, impact engine.Impact) bool {
 // It filters versions by update strategy and prerelease policy, then returns the latest.
 //
 // Deprecated: Use SelectVersionWithContext for proper policy precedence support.
-func SelectVersion(currentVersion string, availableVersions []string, policy engine.IntegrationPolicy) (string, engine.Impact, error) {
+func SelectVersion(currentVersion string, availableVersions []string, policy *engine.IntegrationPolicy) (string, engine.Impact, error) {
 	if len(availableVersions) == 0 {
 		return "", engine.ImpactNone, fmt.Errorf("no available versions")
 	}

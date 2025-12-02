@@ -219,7 +219,8 @@ func (c *Config) Validate() error {
 	}
 
 	seenIDs := make(map[string]bool)
-	for i, integ := range c.Integrations {
+	for i := range c.Integrations {
+		integ := &c.Integrations[i]
 		if integ.ID == "" {
 			return fmt.Errorf("integration[%d]: id is required", i)
 		}
@@ -409,8 +410,8 @@ func validateCommitMessage(c *engine.CommitMessageConfig) error {
 // ToPolicyMap converts the configuration into a map of integration policies.
 func (c *Config) ToPolicyMap() map[string]engine.IntegrationPolicy {
 	result := make(map[string]engine.IntegrationPolicy)
-	for _, integ := range c.Integrations {
-		result[integ.ID] = integ.Policy
+	for i := range c.Integrations {
+		result[c.Integrations[i].ID] = c.Integrations[i].Policy
 	}
 	return result
 }
@@ -418,9 +419,9 @@ func (c *Config) ToPolicyMap() map[string]engine.IntegrationPolicy {
 // EnabledIntegrations returns the IDs of all enabled integrations.
 func (c *Config) EnabledIntegrations() []string {
 	result := make([]string, 0, len(c.Integrations))
-	for _, integ := range c.Integrations {
-		if integ.Enabled {
-			result = append(result, integ.ID)
+	for i := range c.Integrations {
+		if c.Integrations[i].Enabled {
+			result = append(result, c.Integrations[i].ID)
 		}
 	}
 	return result
@@ -430,7 +431,8 @@ func (c *Config) EnabledIntegrations() []string {
 // Returns only integrations that have match configuration specified.
 func (c *Config) ToMatchConfigMap() map[string]*engine.MatchConfig {
 	result := make(map[string]*engine.MatchConfig)
-	for _, integ := range c.Integrations {
+	for i := range c.Integrations {
+		integ := &c.Integrations[i]
 		if integ.Match != nil && (len(integ.Match.Files) > 0 || len(integ.Match.Exclude) > 0) {
 			result[integ.ID] = &engine.MatchConfig{
 				Files:   integ.Match.Files,

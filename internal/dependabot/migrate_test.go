@@ -26,15 +26,23 @@ import (
 	"testing"
 )
 
+const (
+	testNpm     = "npm"
+	testGomod   = "gomod"
+	testWeekly  = "weekly"
+	testDaily   = "daily"
+	testActions = "actions"
+)
+
 func TestMigrateToUptool(t *testing.T) {
 	config := &Config{
 		Version: 2,
 		Updates: []UpdateConfig{
 			{
-				PackageEcosystem: "npm",
+				PackageEcosystem: testNpm,
 				Directory:        "/",
 				Schedule: Schedule{
-					Interval: "weekly",
+					Interval: testWeekly,
 					Day:      "monday",
 				},
 				VersioningStrategy: "auto",
@@ -43,7 +51,7 @@ func TestMigrateToUptool(t *testing.T) {
 				PackageEcosystem: "github-actions",
 				Directory:        "/",
 				Schedule: Schedule{
-					Interval: "daily",
+					Interval: testDaily,
 				},
 			},
 		},
@@ -61,23 +69,23 @@ func TestMigrateToUptool(t *testing.T) {
 
 	// Check npm integration
 	npmInteg := uptoolConfig.Integrations[0]
-	if npmInteg.ID != "npm" {
-		t.Errorf("npm integration ID = %q, want %q", npmInteg.ID, "npm")
+	if npmInteg.ID != testNpm {
+		t.Errorf("npm integration ID = %q, want %q", npmInteg.ID, testNpm)
 	}
 	if !npmInteg.Enabled {
 		t.Error("npm integration should be enabled")
 	}
-	if npmInteg.Policy.Cadence != "weekly" {
-		t.Errorf("npm policy cadence = %q, want %q", npmInteg.Policy.Cadence, "weekly")
+	if npmInteg.Policy.Cadence != testWeekly {
+		t.Errorf("npm policy cadence = %q, want %q", npmInteg.Policy.Cadence, testWeekly)
 	}
 
 	// Check actions integration
 	actionsInteg := uptoolConfig.Integrations[1]
-	if actionsInteg.ID != "actions" {
-		t.Errorf("actions integration ID = %q, want %q", actionsInteg.ID, "actions")
+	if actionsInteg.ID != testActions {
+		t.Errorf("actions integration ID = %q, want %q", actionsInteg.ID, testActions)
 	}
-	if actionsInteg.Policy.Cadence != "daily" {
-		t.Errorf("actions policy cadence = %q, want %q", actionsInteg.Policy.Cadence, "daily")
+	if actionsInteg.Policy.Cadence != testDaily {
+		t.Errorf("actions policy cadence = %q, want %q", actionsInteg.Policy.Cadence, testDaily)
 	}
 }
 
@@ -249,8 +257,8 @@ func TestMigrateWithReport(t *testing.T) {
 		t.Errorf("len(EcosystemsMigrated) = %d, want 1", len(report.EcosystemsMigrated))
 	}
 
-	if report.EcosystemsMigrated[0] != "npm" {
-		t.Errorf("EcosystemsMigrated[0] = %q, want %q", report.EcosystemsMigrated[0], "npm")
+	if report.EcosystemsMigrated[0] != testNpm {
+		t.Errorf("EcosystemsMigrated[0] = %q, want %q", report.EcosystemsMigrated[0], testNpm)
 	}
 
 	// Check unsupported features are reported
@@ -436,20 +444,20 @@ updates:
 
 	// Check gomod integration
 	gomodInteg := uptoolConfig.Integrations[0]
-	if gomodInteg.ID != "gomod" {
-		t.Errorf("gomod integration ID = %q, want %q", gomodInteg.ID, "gomod")
+	if gomodInteg.ID != testGomod {
+		t.Errorf("gomod integration ID = %q, want %q", gomodInteg.ID, testGomod)
 	}
 	if !gomodInteg.Enabled {
 		t.Error("gomod integration should be enabled")
 	}
-	if gomodInteg.Policy.Cadence != "weekly" {
-		t.Errorf("gomod cadence = %q, want %q", gomodInteg.Policy.Cadence, "weekly")
+	if gomodInteg.Policy.Cadence != testWeekly {
+		t.Errorf("gomod cadence = %q, want %q", gomodInteg.Policy.Cadence, testWeekly)
 	}
 
 	// Check actions integration
 	actionsInteg := uptoolConfig.Integrations[1]
-	if actionsInteg.ID != "actions" {
-		t.Errorf("actions integration ID = %q, want %q", actionsInteg.ID, "actions")
+	if actionsInteg.ID != testActions {
+		t.Errorf("actions integration ID = %q, want %q", actionsInteg.ID, testActions)
 	}
 
 	// Check report

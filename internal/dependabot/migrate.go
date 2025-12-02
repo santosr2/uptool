@@ -27,9 +27,10 @@ import (
 
 // Update policy constants for consistent string usage.
 const (
-	policyMinor = "minor"
-	policyMajor = "major"
-	policyNone  = "none"
+	policyMinor   = "minor"
+	policyMajor   = "major"
+	policyNone    = "none"
+	cadenceWeekly = "weekly"
 )
 
 // MigrateToUptool converts a Dependabot configuration to an uptool configuration.
@@ -40,8 +41,8 @@ func (c *Config) MigrateToUptool() *policy.Config {
 		Integrations: make([]policy.IntegrationConfig, 0, len(c.Updates)),
 	}
 
-	for _, update := range c.Updates {
-		integrationConfig := convertUpdateConfig(&update)
+	for i := range c.Updates {
+		integrationConfig := convertUpdateConfig(&c.Updates[i])
 		uptoolConfig.Integrations = append(uptoolConfig.Integrations, integrationConfig)
 	}
 
@@ -209,12 +210,12 @@ func convertScheduleToCadence(schedule *Schedule) string {
 	switch schedule.Interval {
 	case "daily":
 		return "daily"
-	case "weekly":
-		return "weekly"
+	case cadenceWeekly:
+		return cadenceWeekly
 	case "monthly", "quarterly", "semiannually", "yearly":
 		return "monthly"
 	default:
-		return "weekly"
+		return cadenceWeekly
 	}
 }
 
@@ -251,14 +252,15 @@ func (c *Config) MigrateWithReport(sourceFile string) (*policy.Config, *Migratio
 	}
 
 	// Track features that need manual attention
-	for _, update := range c.Updates {
+	for i := range c.Updates {
+		update := &c.Updates[i]
 		// Convert the integration
-		integrationConfig := convertUpdateConfig(&update)
+		integrationConfig := convertUpdateConfig(update)
 		uptoolConfig.Integrations = append(uptoolConfig.Integrations, integrationConfig)
 		report.EcosystemsMigrated = append(report.EcosystemsMigrated, update.PackageEcosystem)
 
 		// Check for unsupported/partially supported features
-		checkUnsupportedFeatures(&update, report)
+		checkUnsupportedFeatures(update, report)
 	}
 
 	// Check for global unsupported features

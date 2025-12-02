@@ -28,12 +28,12 @@ import (
 
 func TestSelectVersion(t *testing.T) {
 	tests := []struct {
-		policy            engine.IntegrationPolicy
 		name              string
 		currentVersion    string
 		wantVersion       string
 		wantImpact        engine.Impact
 		availableVersions []string
+		policy            engine.IntegrationPolicy
 		wantErr           bool
 	}{
 		{
@@ -112,7 +112,7 @@ func TestSelectVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotVersion, gotImpact, err := SelectVersion(tt.currentVersion, tt.availableVersions, tt.policy)
+			gotVersion, gotImpact, err := SelectVersion(tt.currentVersion, tt.availableVersions, &tt.policy)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SelectVersion() error = %v, wantErr %v", err, tt.wantErr)

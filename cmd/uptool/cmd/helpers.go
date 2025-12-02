@@ -82,8 +82,8 @@ func setupEngine() *engine.Engine {
 	if cfg != nil {
 		// Build map of integration configs (both enabled and disabled)
 		configMap := make(map[string]policy.IntegrationConfig)
-		for _, ic := range cfg.Integrations {
-			configMap[ic.ID] = ic
+		for i := range cfg.Integrations {
+			configMap[cfg.Integrations[i].ID] = cfg.Integrations[i]
 		}
 
 		for id, integration := range allIntegrations {
@@ -138,7 +138,8 @@ func buildPolicies(cfg *policy.Config) map[string]engine.IntegrationPolicy {
 
 	// Filter to only enabled integrations with enabled policies
 	policies := make(map[string]engine.IntegrationPolicy)
-	for _, ic := range cfg.Integrations {
+	for i := range cfg.Integrations {
+		ic := &cfg.Integrations[i]
 		if !ic.Enabled {
 			continue
 		}

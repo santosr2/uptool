@@ -65,6 +65,7 @@ import (
 // Ecosystem constants for consistent string usage.
 const (
 	ecosystemGitHubActions = "github-actions"
+	intervalWeekly         = "weekly"
 )
 
 // Config represents a complete dependabot.yml configuration file.
@@ -269,7 +270,8 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("at least one update configuration is required")
 	}
 
-	for i, update := range c.Updates {
+	for i := range c.Updates {
+		update := &c.Updates[i]
 		if update.PackageEcosystem == "" {
 			return fmt.Errorf("updates[%d]: package-ecosystem is required", i)
 		}
@@ -300,14 +302,14 @@ func (c *Config) Validate() error {
 
 func validateSchedule(s *Schedule) error {
 	validIntervals := map[string]bool{
-		"daily": true, "weekly": true, "monthly": true,
+		"daily": true, intervalWeekly: true, "monthly": true,
 		"quarterly": true, "semiannually": true, "yearly": true, "cron": true,
 	}
 	if !validIntervals[s.Interval] {
 		return fmt.Errorf("invalid schedule interval: %s", s.Interval)
 	}
 
-	if s.Interval == "weekly" && s.Day != "" {
+	if s.Interval == intervalWeekly && s.Day != "" {
 		validDays := map[string]bool{
 			"monday": true, "tuesday": true, "wednesday": true, "thursday": true,
 			"friday": true, "saturday": true, "sunday": true,

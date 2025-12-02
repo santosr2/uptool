@@ -723,69 +723,60 @@ func TestLoadConfig_InvalidYAML(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_AllScheduleIntervals(t *testing.T) {
-	intervals := []string{"daily", "weekly", "monthly", "quarterly", "semiannually", "yearly"}
-
-	for _, interval := range intervals {
-		t.Run(interval, func(t *testing.T) {
+// testScheduleField is a helper to test schedule field parsing.
+func testScheduleField(
+	t *testing.T,
+	values []string,
+	configTemplate string,
+	fieldName string,
+	getField func(*Config) string,
+) {
+	t.Helper()
+	for _, value := range values {
+		t.Run(value, func(t *testing.T) {
 			tmpDir := t.TempDir()
 			configPath := filepath.Join(tmpDir, "dependabot.yml")
-
-			configContent := `version: 2
-updates:
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "` + interval + `"
+			configContent := configTemplate + value + `"
 `
-
 			if err := os.WriteFile(configPath, []byte(configContent), 0o644); err != nil {
 				t.Fatalf("failed to create test config: %v", err)
 			}
-
 			config, err := LoadConfig(configPath)
 			if err != nil {
-				t.Errorf("LoadConfig() error for valid interval %q: %v", interval, err)
+				t.Errorf("LoadConfig() error for valid %s %q: %v", fieldName, value, err)
 			}
-
-			if config.Updates[0].Schedule.Interval != interval {
-				t.Errorf("Schedule.Interval = %q, want %q", config.Updates[0].Schedule.Interval, interval)
+			if got := getField(config); got != value {
+				t.Errorf("Schedule.%s = %q, want %q", fieldName, got, value)
 			}
 		})
 	}
 }
 
+func TestLoadConfig_AllScheduleIntervals(t *testing.T) {
+	intervals := []string{"daily", "weekly", "monthly", "quarterly", "semiannually", "yearly"}
+	template := `version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "`
+	testScheduleField(t, intervals, template, "Interval", func(c *Config) string {
+		return c.Updates[0].Schedule.Interval
+	})
+}
+
 func TestLoadConfig_AllWeekDays(t *testing.T) {
 	days := []string{"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
-
-	for _, day := range days {
-		t.Run(day, func(t *testing.T) {
-			tmpDir := t.TempDir()
-			configPath := filepath.Join(tmpDir, "dependabot.yml")
-
-			configContent := `version: 2
+	template := `version: 2
 updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "` + day + `"
-`
-
-			if err := os.WriteFile(configPath, []byte(configContent), 0o644); err != nil {
-				t.Fatalf("failed to create test config: %v", err)
-			}
-
-			config, err := LoadConfig(configPath)
-			if err != nil {
-				t.Errorf("LoadConfig() error for valid day %q: %v", day, err)
-			}
-
-			if config.Updates[0].Schedule.Day != day {
-				t.Errorf("Schedule.Day = %q, want %q", config.Updates[0].Schedule.Day, day)
-			}
-		})
-	}
+      day: "`
+	testScheduleField(t, days, template, "Day", func(c *Config) string {
+		return c.Updates[0].Schedule.Day
+	})
 }
 
 func TestLoadConfig_CompleteExample(t *testing.T) {

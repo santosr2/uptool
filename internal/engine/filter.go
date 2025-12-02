@@ -62,7 +62,8 @@ func (f *UpdateFilter) FilterUpdates(updates []Update, releaseTimestamps map[str
 	filtered := make([]Update, 0, len(updates))
 	reasons := make(map[string]string)
 
-	for _, update := range updates {
+	for i := range updates {
+		update := &updates[i]
 		depName := update.Dependency.Name
 
 		// Check allow rules (if specified, only matching deps are allowed)
@@ -85,7 +86,7 @@ func (f *UpdateFilter) FilterUpdates(updates []Update, releaseTimestamps map[str
 			}
 		}
 
-		filtered = append(filtered, update)
+		filtered = append(filtered, *update)
 	}
 
 	return filtered, reasons
@@ -93,7 +94,7 @@ func (f *UpdateFilter) FilterUpdates(updates []Update, releaseTimestamps map[str
 
 // isAllowed checks if an update matches any allow rule.
 // Returns true if no allow rules are specified or if the update matches at least one rule.
-func (f *UpdateFilter) isAllowed(update Update) bool {
+func (f *UpdateFilter) isAllowed(update *Update) bool {
 	if len(f.policy.Allow) == 0 {
 		return true
 	}
@@ -109,7 +110,7 @@ func (f *UpdateFilter) isAllowed(update Update) bool {
 
 // isIgnored checks if an update matches any ignore rule.
 // Returns the reason if ignored, empty string otherwise.
-func (f *UpdateFilter) isIgnored(update Update) string {
+func (f *UpdateFilter) isIgnored(update *Update) string {
 	for _, rule := range f.policy.Ignore {
 		if reason := f.matchesIgnoreRule(update, rule); reason != "" {
 			return reason
@@ -119,7 +120,7 @@ func (f *UpdateFilter) isIgnored(update Update) string {
 }
 
 // matchesDependencyRule checks if an update matches a dependency rule.
-func (f *UpdateFilter) matchesDependencyRule(update Update, rule DependencyRule) bool {
+func (f *UpdateFilter) matchesDependencyRule(update *Update, rule DependencyRule) bool {
 	// Check dependency name pattern
 	if rule.DependencyName != "" {
 		if !matchGlob(rule.DependencyName, update.Dependency.Name) {
@@ -146,7 +147,7 @@ func (f *UpdateFilter) matchesDependencyRule(update Update, rule DependencyRule)
 
 // matchesIgnoreRule checks if an update matches an ignore rule.
 // Returns the reason if ignored, empty string otherwise.
-func (f *UpdateFilter) matchesIgnoreRule(update Update, rule IgnoreRule) string {
+func (f *UpdateFilter) matchesIgnoreRule(update *Update, rule IgnoreRule) string {
 	// Check dependency name pattern
 	if rule.DependencyName != "" {
 		if !matchGlob(rule.DependencyName, update.Dependency.Name) {
@@ -191,7 +192,7 @@ func (f *UpdateFilter) matchesIgnoreRule(update Update, rule IgnoreRule) string 
 
 // checkCooldown checks if an update should be delayed due to cooldown settings.
 // Returns the reason if in cooldown, empty string otherwise.
-func (f *UpdateFilter) checkCooldown(update Update, releaseTimestamps map[string]time.Time) string {
+func (f *UpdateFilter) checkCooldown(update *Update, releaseTimestamps map[string]time.Time) string {
 	if f.policy.Cooldown == nil {
 		return ""
 	}
@@ -453,14 +454,15 @@ func (f *UpdateFilter) GroupUpdates(updates []Update) (map[string][]Update, []Up
 	grouped := make(map[string][]Update)
 	ungrouped := make([]Update, 0)
 
-	for _, update := range updates {
+	for i := range updates {
+		update := &updates[i]
 		groupName := f.findGroup(update)
 		if groupName != "" {
 			// Mark the update with its group
 			update.Group = groupName
-			grouped[groupName] = append(grouped[groupName], update)
+			grouped[groupName] = append(grouped[groupName], *update)
 		} else {
-			ungrouped = append(ungrouped, update)
+			ungrouped = append(ungrouped, *update)
 		}
 	}
 
@@ -469,7 +471,7 @@ func (f *UpdateFilter) GroupUpdates(updates []Update) (map[string][]Update, []Up
 
 // findGroup finds the group name for an update.
 // Returns empty string if the update doesn't match any group.
-func (f *UpdateFilter) findGroup(update Update) string {
+func (f *UpdateFilter) findGroup(update *Update) string {
 	for groupName, group := range f.policy.Groups {
 		if f.matchesGroup(update, group) {
 			return groupName
@@ -479,7 +481,7 @@ func (f *UpdateFilter) findGroup(update Update) string {
 }
 
 // matchesGroup checks if an update matches a dependency group.
-func (f *UpdateFilter) matchesGroup(update Update, group *DependencyGroup) bool {
+func (f *UpdateFilter) matchesGroup(update *Update, group *DependencyGroup) bool {
 	if group == nil {
 		return false
 	}
@@ -534,7 +536,7 @@ func (f *UpdateFilter) matchesGroup(update Update, group *DependencyGroup) bool 
 
 // ApplyVersioningStrategy adjusts the target version based on the versioning strategy.
 // Returns the adjusted version and whether the update should be applied.
-func (f *UpdateFilter) ApplyVersioningStrategy(update Update, currentConstraint string) (string, bool) {
+func (f *UpdateFilter) ApplyVersioningStrategy(update *Update, currentConstraint string) (string, bool) {
 	if f.policy == nil || f.policy.VersioningStrategy == "" {
 		return update.TargetVersion, true
 	}
@@ -642,13 +644,14 @@ func widenConstraint(currentConstraint, newVersion string) string {
 	baseVersion := currentConstraint
 	prefix := ""
 
-	if strings.HasPrefix(currentConstraint, "^") {
+	switch {
+	case strings.HasPrefix(currentConstraint, "^"):
 		prefix = "^"
 		baseVersion = strings.TrimPrefix(currentConstraint, "^")
-	} else if strings.HasPrefix(currentConstraint, "~") {
+	case strings.HasPrefix(currentConstraint, "~"):
 		prefix = "~"
 		baseVersion = strings.TrimPrefix(currentConstraint, "~")
-	} else if strings.HasPrefix(currentConstraint, ">=") {
+	case strings.HasPrefix(currentConstraint, ">="):
 		// For >= constraints, return as-is (already wide)
 		return currentConstraint
 	}
@@ -694,8 +697,8 @@ func (f *UpdateFilter) FormatCommitMessage(updates []Update, manifestPath string
 
 	// Determine if this is a dev dependency update
 	isDev := false
-	for _, u := range updates {
-		depType := normalizeDependencyType(u.Dependency.Type)
+	for i := range updates {
+		depType := normalizeDependencyType(updates[i].Dependency.Type)
 		if depType == "development" {
 			isDev = true
 			break
@@ -743,10 +746,10 @@ func (f *UpdateFilter) FormatCommitMessage(updates []Update, manifestPath string
 		// Check if all updates are in the same group
 		groupName := ""
 		sameGroup := true
-		for _, u := range updates {
+		for i := range updates {
 			if groupName == "" {
-				groupName = u.Group
-			} else if u.Group != groupName {
+				groupName = updates[i].Group
+			} else if updates[i].Group != groupName {
 				sameGroup = false
 				break
 			}

@@ -578,9 +578,9 @@ func TestUpdateFilter_ApplyVersioningStrategy(t *testing.T) {
 	tests := []struct {
 		name        string
 		strategy    string
-		update      Update
 		constraint  string
 		wantVersion string
+		update      Update
 		wantApply   bool
 	}{
 		{
@@ -639,7 +639,7 @@ func TestUpdateFilter_ApplyVersioningStrategy(t *testing.T) {
 				VersioningStrategy: tt.strategy,
 			}
 			filter := NewUpdateFilter(policy)
-			gotVersion, gotApply := filter.ApplyVersioningStrategy(tt.update, tt.constraint)
+			gotVersion, gotApply := filter.ApplyVersioningStrategy(&tt.update, tt.constraint)
 
 			if gotVersion != tt.wantVersion {
 				t.Errorf("ApplyVersioningStrategy() version = %q, want %q", gotVersion, tt.wantVersion)

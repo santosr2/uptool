@@ -206,179 +206,23 @@ type Dependency struct {
 //
 // See docs/configuration.md for comprehensive policy documentation.
 type IntegrationPolicy struct {
-	// Custom holds integration-specific custom fields that don't fit the standard policy model.
-	// These are preserved during YAML parsing via the inline directive but aren't used by
-	// the core policy system. Integrations can access these via type assertions.
-	Custom map[string]interface{} `yaml:",inline" json:"custom,omitempty"`
-
-	// Schedule defines when updates should be checked.
-	// Supports interval-based and cron-based scheduling (Dependabot-compatible).
-	//
-	// Example:
-	//   schedule:
-	//     interval: weekly
-	//     day: monday
-	//     time: "09:00"
-	//     timezone: "America/New_York"
-	Schedule *Schedule `yaml:"schedule,omitempty" json:"schedule,omitempty"`
-
-	// Groups defines dependency grouping rules for combined PRs.
-	// Multiple dependencies matching a group are updated together in a single PR.
-	//
-	// Example:
-	//   groups:
-	//     production-deps:
-	//       patterns: ["express*", "lodash"]
-	//       update_types: ["minor", "patch"]
-	Groups map[string]*DependencyGroup `yaml:"groups,omitempty" json:"groups,omitempty"`
-
-	// Allow specifies dependencies to include (allowlist).
-	// If specified, only matching dependencies are updated.
-	//
-	// Example:
-	//   allow:
-	//     - dependency_name: "express"
-	//     - dependency_type: "production"
-	Allow []DependencyRule `yaml:"allow,omitempty" json:"allow,omitempty"`
-
-	// Ignore specifies dependencies or versions to exclude from updates.
-	// Matching dependencies are skipped even if in the allow list.
-	//
-	// Example:
-	//   ignore:
-	//     - dependency_name: "lodash"
-	//       versions: ["4.x"]
-	//     - dependency_name: "*"
-	//       update_types: ["major"]
-	Ignore []IgnoreRule `yaml:"ignore,omitempty" json:"ignore,omitempty"`
-
-	// Cooldown defines delayed update settings.
-	// New versions are held for a configurable period before being proposed.
-	// This helps avoid immediately adopting potentially buggy releases.
-	//
-	// Example:
-	//   cooldown:
-	//     default_days: 3
-	//     semver_major_days: 7
-	Cooldown *CooldownConfig `yaml:"cooldown,omitempty" json:"cooldown,omitempty"`
-
-	// CommitMessage customizes the commit message format.
-	//
-	// Example:
-	//   commit_message:
-	//     prefix: "deps"
-	//     prefix_development: "deps(dev)"
-	//     include_scope: true
-	CommitMessage *CommitMessageConfig `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
-
-	// Labels to apply to PRs created for this integration.
-	Labels []string `yaml:"labels,omitempty" json:"labels,omitempty"`
-
-	// Assignees for PRs created for this integration (GitHub usernames).
-	Assignees []string `yaml:"assignees,omitempty" json:"assignees,omitempty"`
-
-	// Reviewers for PRs created for this integration (GitHub usernames or team slugs).
-	Reviewers []string `yaml:"reviewers,omitempty" json:"reviewers,omitempty"`
-
-	// OpenPullRequestsLimit is the maximum concurrent version update PRs.
-	// Default: 5, max: 10
-	OpenPullRequestsLimit int `yaml:"open_pull_requests_limit,omitempty" json:"open_pull_requests_limit,omitempty"`
-
-	// VersioningStrategy controls how manifest versions are updated.
-	// Valid values:
-	//   - "auto": Default behavior (differentiate app vs. library)
-	//   - "increase": Always bump minimum version requirement
-	//   - "increase-if-necessary": Only increase if current range doesn't accommodate new version
-	//   - "lockfile-only": Update only lock files, ignore manifest changes
-	//   - "widen": Expand allowed version range to include old and new versions
-	VersioningStrategy string `yaml:"versioning_strategy,omitempty" json:"versioning_strategy,omitempty"`
-
-	// Update specifies the maximum version bump to allow.
-	//
-	// Valid values:
-	//   - "none":  No updates (scan/plan only mode)
-	//   - "patch": Allow patch updates only (1.2.3 → 1.2.4)
-	//   - "minor": Allow patch + minor updates (1.2.3 → 1.3.0)
-	//   - "major": Allow all updates (1.2.3 → 2.0.0)
-	//
-	// Default: "major" (allow all updates, let manifest constraints filter)
-	//
-	// Note: Manifest constraints (e.g., ^1.2.3) further restrict allowed updates.
-	// If a manifest specifies ^1.2.0, setting update="major" won't allow 2.x updates
-	// unless the manifest constraint is also updated.
-	Update string `yaml:"update" json:"update"`
-
-	// Cadence specifies how often to check for updates in scheduled/automated runs.
-	//
-	// Valid values:
-	//   - "daily":   Check for updates every day
-	//   - "weekly":  Check for updates once per week
-	//   - "monthly": Check for updates once per month
-	//   - "" (empty): No cadence restriction
-	//
-	// Default: "" (no restriction)
-	//
-	// This field is primarily used by GitHub Actions workflows to control update frequency.
-	// The CLI ignores this field and always checks for updates when run manually.
-	//
-	// Example: Set cadence="monthly" for production dependencies that change infrequently.
-	Cadence string `yaml:"cadence,omitempty" json:"cadence,omitempty"`
-
-	// Enabled controls whether this policy is applied.
-	//
-	// When false, the integration still runs but uses default policy settings:
-	//   - update: major (allow all updates)
-	//   - allow_prerelease: false
-	//   - pin: default per integration
-	//   - Respects manifest constraints (^, ~, >=, etc.)
-	//
-	// When true, the configured policy settings are applied.
-	//
-	// Default: true
-	//
-	// Note: This is different from integrations[*].enabled, which controls whether
-	// the integration is registered at all. Use policy.enabled to disable policies
-	// while keeping the integration active.
-	//
-	// Example use case: Temporarily allow all updates for an integration without
-	// modifying other policy settings.
-	Enabled bool `yaml:"enabled" json:"enabled"`
-
-	// AllowPrerelease controls whether to include pre-release versions in updates.
-	//
-	// When true, considers versions like:
-	//   - 1.2.3-alpha.1
-	//   - 1.2.3-beta.2
-	//   - 1.2.3-rc.1
-	//   - 1.2.3-20250708
-	//
-	// When false (default), only stable releases are considered.
-	//
-	// Default: false
-	//
-	// Recommendation: Only enable for development dependencies or when you explicitly
-	// want to test pre-release versions. Never enable for production dependencies.
-	AllowPrerelease bool `yaml:"allow_prerelease" json:"allow_prerelease"`
-
-	// Pin controls whether to write exact versions or preserve version constraints.
-	//
-	// Behavior varies by integration type:
-	//
-	// npm (pin=true):  Write exact versions: "4.19.2"
-	// npm (pin=false): Preserve constraints:  "^4.19.2", "~4.19.2"
-	//
-	// helm, terraform, mise: Always write exact versions (pin setting ignored)
-	//
-	// Default: Varies by integration
-	//   - npm: false (preserve constraints)
-	//   - helm: true (always pinned)
-	//   - terraform: true (always pinned)
-	//   - mise: true (always pinned)
-	//
-	// Recommendation: Use pin=false for libraries to allow downstream consumers
-	// to resolve compatible versions. Use pin=true for applications to ensure
-	// reproducible builds.
-	Pin bool `yaml:"pin" json:"pin"`
+	Schedule              *Schedule                   `yaml:"schedule,omitempty" json:"schedule,omitempty"`
+	Groups                map[string]*DependencyGroup `yaml:"groups,omitempty" json:"groups,omitempty"`
+	Custom                map[string]interface{}      `yaml:",inline" json:"custom,omitempty"`
+	Cooldown              *CooldownConfig             `yaml:"cooldown,omitempty" json:"cooldown,omitempty"`
+	CommitMessage         *CommitMessageConfig        `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
+	VersioningStrategy    string                      `yaml:"versioning_strategy,omitempty" json:"versioning_strategy,omitempty"`
+	Cadence               string                      `yaml:"cadence,omitempty" json:"cadence,omitempty"`
+	Update                string                      `yaml:"update" json:"update"`
+	Ignore                []IgnoreRule                `yaml:"ignore,omitempty" json:"ignore,omitempty"`
+	Reviewers             []string                    `yaml:"reviewers,omitempty" json:"reviewers,omitempty"`
+	Assignees             []string                    `yaml:"assignees,omitempty" json:"assignees,omitempty"`
+	Labels                []string                    `yaml:"labels,omitempty" json:"labels,omitempty"`
+	Allow                 []DependencyRule            `yaml:"allow,omitempty" json:"allow,omitempty"`
+	OpenPullRequestsLimit int                         `yaml:"open_pull_requests_limit,omitempty" json:"open_pull_requests_limit,omitempty"`
+	Enabled               bool                        `yaml:"enabled" json:"enabled"`
+	AllowPrerelease       bool                        `yaml:"allow_prerelease" json:"allow_prerelease"`
+	Pin                   bool                        `yaml:"pin" json:"pin"`
 }
 
 // Impact describes the severity of an update.
@@ -432,20 +276,14 @@ type UpdatePlan struct {
 
 // Update represents a planned update for a dependency.
 type Update struct {
+	Info          *UpdateInfo  `json:"info,omitempty"`
 	Dependency    Dependency   `json:"dependency"`
 	TargetVersion string       `json:"target_version"`
 	Impact        string       `json:"impact"`
 	ChangelogURL  string       `json:"changelog_url,omitempty"`
 	PolicySource  PolicySource `json:"policy_source,omitempty"`
+	Group         string       `json:"group,omitempty"`
 	Breaking      bool         `json:"breaking"`
-
-	// Info contains detailed update information for PR descriptions.
-	// Populated when --fetch-info flag is used or in GitHub Actions mode.
-	Info *UpdateInfo `json:"info,omitempty"`
-
-	// Group is the name of the dependency group this update belongs to.
-	// Empty if the dependency is not part of any group.
-	Group string `json:"group,omitempty"`
 }
 
 // ApplyResult contains the outcome of applying updates.
