@@ -258,6 +258,151 @@ func ValidateIntegrationPolicy(p *engine.IntegrationPolicy) error {
 		return fmt.Errorf("invalid cadence %q (must be: daily, weekly, monthly)", p.Cadence)
 	}
 
+	// Validate schedule if present
+	if p.Schedule != nil {
+		if err := validateSchedule(p.Schedule); err != nil {
+			return fmt.Errorf("invalid schedule: %w", err)
+		}
+	}
+
+	// Validate versioning strategy if present
+	if p.VersioningStrategy != "" {
+		if err := validateVersioningStrategy(p.VersioningStrategy); err != nil {
+			return err
+		}
+	}
+
+	// Validate open pull requests limit
+	if p.OpenPullRequestsLimit < 0 || p.OpenPullRequestsLimit > 10 {
+		if p.OpenPullRequestsLimit != 0 {
+			return fmt.Errorf("open_pull_requests_limit must be between 0 and 10")
+		}
+	}
+
+	// Validate groups
+	for name, group := range p.Groups {
+		if err := validateDependencyGroup(name, group); err != nil {
+			return err
+		}
+	}
+
+	// Validate cooldown
+	if p.Cooldown != nil {
+		if err := validateCooldown(p.Cooldown); err != nil {
+			return fmt.Errorf("invalid cooldown: %w", err)
+		}
+	}
+
+	// Validate commit message
+	if p.CommitMessage != nil {
+		if err := validateCommitMessage(p.CommitMessage); err != nil {
+			return fmt.Errorf("invalid commit_message: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// validateSchedule validates a Schedule configuration.
+func validateSchedule(s *engine.Schedule) error {
+	validIntervals := map[string]bool{
+		"daily": true, "weekly": true, "monthly": true,
+		"quarterly": true, "semiannually": true, "yearly": true, "cron": true,
+	}
+	if s.Interval != "" && !validIntervals[s.Interval] {
+		return fmt.Errorf("invalid interval %q (must be: daily, weekly, monthly, quarterly, semiannually, yearly, cron)", s.Interval)
+	}
+
+	if s.Interval == "weekly" && s.Day != "" {
+		validDays := map[string]bool{
+			"monday": true, "tuesday": true, "wednesday": true, "thursday": true,
+			"friday": true, "saturday": true, "sunday": true,
+		}
+		if !validDays[s.Day] {
+			return fmt.Errorf("invalid day %q (must be: monday-sunday)", s.Day)
+		}
+	}
+
+	if s.Interval == "cron" && s.Cron == "" {
+		return fmt.Errorf("cron expression is required when interval is 'cron'")
+	}
+
+	return nil
+}
+
+// validateVersioningStrategy validates a versioning strategy.
+func validateVersioningStrategy(strategy string) error {
+	valid := map[string]bool{
+		"auto": true, "increase": true, "increase-if-necessary": true,
+		"lockfile-only": true, "widen": true,
+	}
+	if !valid[strategy] {
+		return fmt.Errorf("invalid versioning_strategy %q (must be: auto, increase, increase-if-necessary, lockfile-only, widen)", strategy)
+	}
+	return nil
+}
+
+// validateDependencyGroup validates a DependencyGroup configuration.
+func validateDependencyGroup(name string, g *engine.DependencyGroup) error {
+	if g == nil {
+		return nil
+	}
+
+	if g.AppliesTo != "" {
+		validAppliesTo := map[string]bool{
+			"version-updates": true, "security-updates": true,
+		}
+		if !validAppliesTo[g.AppliesTo] {
+			return fmt.Errorf("group %q: invalid applies_to %q (must be: version-updates, security-updates)", name, g.AppliesTo)
+		}
+	}
+
+	if g.DependencyType != "" {
+		validTypes := map[string]bool{
+			"production": true, "development": true,
+		}
+		if !validTypes[g.DependencyType] {
+			return fmt.Errorf("group %q: invalid dependency_type %q (must be: production, development)", name, g.DependencyType)
+		}
+	}
+
+	for _, ut := range g.UpdateTypes {
+		validUpdateTypes := map[string]bool{
+			"major": true, "minor": true, "patch": true,
+		}
+		if !validUpdateTypes[ut] {
+			return fmt.Errorf("group %q: invalid update_type %q (must be: major, minor, patch)", name, ut)
+		}
+	}
+
+	return nil
+}
+
+// validateCooldown validates a CooldownConfig.
+func validateCooldown(c *engine.CooldownConfig) error {
+	if c.DefaultDays < 0 {
+		return fmt.Errorf("default_days cannot be negative")
+	}
+	if c.SemverMajorDays < 0 {
+		return fmt.Errorf("semver_major_days cannot be negative")
+	}
+	if c.SemverMinorDays < 0 {
+		return fmt.Errorf("semver_minor_days cannot be negative")
+	}
+	if c.SemverPatchDays < 0 {
+		return fmt.Errorf("semver_patch_days cannot be negative")
+	}
+	return nil
+}
+
+// validateCommitMessage validates a CommitMessageConfig.
+func validateCommitMessage(c *engine.CommitMessageConfig) error {
+	if len(c.Prefix) > 50 {
+		return fmt.Errorf("prefix cannot exceed 50 characters")
+	}
+	if len(c.PrefixDevelopment) > 50 {
+		return fmt.Errorf("prefix_development cannot exceed 50 characters")
+	}
 	return nil
 }
 

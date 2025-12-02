@@ -547,3 +547,351 @@ func TestValidateIntegrationPolicy_AllValidCadences(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateIntegrationPolicy_Schedule(t *testing.T) {
+	tests := []struct {
+		schedule *engine.Schedule
+		name     string
+		wantErr  bool
+	}{
+		{
+			name:     "nil schedule",
+			schedule: nil,
+			wantErr:  false,
+		},
+		{
+			name: "valid daily schedule",
+			schedule: &engine.Schedule{
+				Interval: "daily",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid weekly schedule with day",
+			schedule: &engine.Schedule{
+				Interval: "weekly",
+				Day:      "monday",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid monthly schedule",
+			schedule: &engine.Schedule{
+				Interval: "monthly",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cron schedule",
+			schedule: &engine.Schedule{
+				Interval: "cron",
+				Cron:     "0 9 * * 1",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid interval",
+			schedule: &engine.Schedule{
+				Interval: "invalid",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid day",
+			schedule: &engine.Schedule{
+				Interval: "weekly",
+				Day:      "invalid-day",
+			},
+			wantErr: true,
+		},
+		{
+			name: "cron without expression",
+			schedule: &engine.Schedule{
+				Interval: "cron",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy := &engine.IntegrationPolicy{
+				Update:   "minor",
+				Schedule: tt.schedule,
+			}
+			err := ValidateIntegrationPolicy(policy)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateIntegrationPolicy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateIntegrationPolicy_VersioningStrategy(t *testing.T) {
+	validStrategies := []string{"auto", "increase", "increase-if-necessary", "lockfile-only", "widen"}
+
+	for _, strategy := range validStrategies {
+		t.Run(strategy, func(t *testing.T) {
+			policy := &engine.IntegrationPolicy{
+				Update:             "minor",
+				VersioningStrategy: strategy,
+			}
+			if err := ValidateIntegrationPolicy(policy); err != nil {
+				t.Errorf("ValidateIntegrationPolicy() error for valid strategy %q: %v", strategy, err)
+			}
+		})
+	}
+
+	// Test invalid strategy
+	t.Run("invalid", func(t *testing.T) {
+		policy := &engine.IntegrationPolicy{
+			Update:             "minor",
+			VersioningStrategy: "invalid",
+		}
+		if err := ValidateIntegrationPolicy(policy); err == nil {
+			t.Error("ValidateIntegrationPolicy() should error for invalid versioning_strategy")
+		}
+	})
+}
+
+func TestValidateIntegrationPolicy_OpenPullRequestsLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		limit   int
+		wantErr bool
+	}{
+		{"zero", 0, false},
+		{"valid_5", 5, false},
+		{"valid_10", 10, false},
+		{"invalid_11", 11, true},
+		{"invalid_negative", -1, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy := &engine.IntegrationPolicy{
+				Update:                "minor",
+				OpenPullRequestsLimit: tt.limit,
+			}
+			err := ValidateIntegrationPolicy(policy)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateIntegrationPolicy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateIntegrationPolicy_Groups(t *testing.T) {
+	tests := []struct {
+		groups  map[string]*engine.DependencyGroup
+		name    string
+		wantErr bool
+	}{
+		{
+			name:    "nil groups",
+			groups:  nil,
+			wantErr: false,
+		},
+		{
+			name: "valid group",
+			groups: map[string]*engine.DependencyGroup{
+				"production": {
+					Patterns:       []string{"express*"},
+					DependencyType: "production",
+					UpdateTypes:    []string{"minor", "patch"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid applies_to",
+			groups: map[string]*engine.DependencyGroup{
+				"test": {
+					AppliesTo: "invalid",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid dependency_type",
+			groups: map[string]*engine.DependencyGroup{
+				"test": {
+					DependencyType: "invalid",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid update_type",
+			groups: map[string]*engine.DependencyGroup{
+				"test": {
+					UpdateTypes: []string{"invalid"},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy := &engine.IntegrationPolicy{
+				Update: "minor",
+				Groups: tt.groups,
+			}
+			err := ValidateIntegrationPolicy(policy)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateIntegrationPolicy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateIntegrationPolicy_Cooldown(t *testing.T) {
+	tests := []struct {
+		cooldown *engine.CooldownConfig
+		name     string
+		wantErr  bool
+	}{
+		{
+			name:     "nil cooldown",
+			cooldown: nil,
+			wantErr:  false,
+		},
+		{
+			name: "valid cooldown",
+			cooldown: &engine.CooldownConfig{
+				DefaultDays:     3,
+				SemverMajorDays: 7,
+				SemverMinorDays: 3,
+				SemverPatchDays: 1,
+			},
+			wantErr: false,
+		},
+		{
+			name: "negative default_days",
+			cooldown: &engine.CooldownConfig{
+				DefaultDays: -1,
+			},
+			wantErr: true,
+		},
+		{
+			name: "negative semver_major_days",
+			cooldown: &engine.CooldownConfig{
+				SemverMajorDays: -1,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy := &engine.IntegrationPolicy{
+				Update:   "minor",
+				Cooldown: tt.cooldown,
+			}
+			err := ValidateIntegrationPolicy(policy)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateIntegrationPolicy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateIntegrationPolicy_CommitMessage(t *testing.T) {
+	tests := []struct {
+		commitMessage *engine.CommitMessageConfig
+		name          string
+		wantErr       bool
+	}{
+		{
+			name:          "nil commit_message",
+			commitMessage: nil,
+			wantErr:       false,
+		},
+		{
+			name: "valid commit_message",
+			commitMessage: &engine.CommitMessageConfig{
+				Prefix:            "deps",
+				PrefixDevelopment: "deps(dev)",
+				IncludeScope:      true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "prefix too long",
+			commitMessage: &engine.CommitMessageConfig{
+				Prefix: "this is a very long prefix that exceeds the fifty character limit set by dependabot",
+			},
+			wantErr: true,
+		},
+		{
+			name: "prefix_development too long",
+			commitMessage: &engine.CommitMessageConfig{
+				PrefixDevelopment: "this is a very long prefix that exceeds the fifty character limit set by dependabot",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			policy := &engine.IntegrationPolicy{
+				Update:        "minor",
+				CommitMessage: tt.commitMessage,
+			}
+			err := ValidateIntegrationPolicy(policy)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateIntegrationPolicy() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateIntegrationPolicy_FullPolicy(t *testing.T) {
+	// Test a comprehensive policy with all features
+	policy := &engine.IntegrationPolicy{
+		Update:  "minor",
+		Cadence: "weekly",
+		Schedule: &engine.Schedule{
+			Interval: "weekly",
+			Day:      "monday",
+			Time:     "09:00",
+			Timezone: "America/New_York",
+		},
+		Groups: map[string]*engine.DependencyGroup{
+			"production": {
+				Patterns:       []string{"express*", "@types/*"},
+				DependencyType: "production",
+				UpdateTypes:    []string{"minor", "patch"},
+			},
+		},
+		Allow: []engine.DependencyRule{
+			{DependencyName: "express"},
+			{DependencyType: "production"},
+		},
+		Ignore: []engine.IgnoreRule{
+			{DependencyName: "lodash", Versions: []string{"4.x"}},
+			{DependencyName: "*", UpdateTypes: []string{"major"}},
+		},
+		Cooldown: &engine.CooldownConfig{
+			DefaultDays:     3,
+			SemverMajorDays: 7,
+			SemverMinorDays: 3,
+			SemverPatchDays: 1,
+		},
+		CommitMessage: &engine.CommitMessageConfig{
+			Prefix:            "deps",
+			PrefixDevelopment: "deps(dev)",
+			IncludeScope:      true,
+		},
+		Labels:                []string{"dependencies", "npm"},
+		Assignees:             []string{"user1"},
+		Reviewers:             []string{"user2"},
+		OpenPullRequestsLimit: 5,
+		VersioningStrategy:    "auto",
+	}
+
+	if err := ValidateIntegrationPolicy(policy); err != nil {
+		t.Errorf("ValidateIntegrationPolicy() error = %v for valid full policy", err)
+	}
+}

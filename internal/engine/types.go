@@ -211,6 +211,88 @@ type IntegrationPolicy struct {
 	// the core policy system. Integrations can access these via type assertions.
 	Custom map[string]interface{} `yaml:",inline" json:"custom,omitempty"`
 
+	// Schedule defines when updates should be checked.
+	// Supports interval-based and cron-based scheduling (Dependabot-compatible).
+	//
+	// Example:
+	//   schedule:
+	//     interval: weekly
+	//     day: monday
+	//     time: "09:00"
+	//     timezone: "America/New_York"
+	Schedule *Schedule `yaml:"schedule,omitempty" json:"schedule,omitempty"`
+
+	// Groups defines dependency grouping rules for combined PRs.
+	// Multiple dependencies matching a group are updated together in a single PR.
+	//
+	// Example:
+	//   groups:
+	//     production-deps:
+	//       patterns: ["express*", "lodash"]
+	//       update_types: ["minor", "patch"]
+	Groups map[string]*DependencyGroup `yaml:"groups,omitempty" json:"groups,omitempty"`
+
+	// Allow specifies dependencies to include (allowlist).
+	// If specified, only matching dependencies are updated.
+	//
+	// Example:
+	//   allow:
+	//     - dependency_name: "express"
+	//     - dependency_type: "production"
+	Allow []DependencyRule `yaml:"allow,omitempty" json:"allow,omitempty"`
+
+	// Ignore specifies dependencies or versions to exclude from updates.
+	// Matching dependencies are skipped even if in the allow list.
+	//
+	// Example:
+	//   ignore:
+	//     - dependency_name: "lodash"
+	//       versions: ["4.x"]
+	//     - dependency_name: "*"
+	//       update_types: ["major"]
+	Ignore []IgnoreRule `yaml:"ignore,omitempty" json:"ignore,omitempty"`
+
+	// Cooldown defines delayed update settings.
+	// New versions are held for a configurable period before being proposed.
+	// This helps avoid immediately adopting potentially buggy releases.
+	//
+	// Example:
+	//   cooldown:
+	//     default_days: 3
+	//     semver_major_days: 7
+	Cooldown *CooldownConfig `yaml:"cooldown,omitempty" json:"cooldown,omitempty"`
+
+	// CommitMessage customizes the commit message format.
+	//
+	// Example:
+	//   commit_message:
+	//     prefix: "deps"
+	//     prefix_development: "deps(dev)"
+	//     include_scope: true
+	CommitMessage *CommitMessageConfig `yaml:"commit_message,omitempty" json:"commit_message,omitempty"`
+
+	// Labels to apply to PRs created for this integration.
+	Labels []string `yaml:"labels,omitempty" json:"labels,omitempty"`
+
+	// Assignees for PRs created for this integration (GitHub usernames).
+	Assignees []string `yaml:"assignees,omitempty" json:"assignees,omitempty"`
+
+	// Reviewers for PRs created for this integration (GitHub usernames or team slugs).
+	Reviewers []string `yaml:"reviewers,omitempty" json:"reviewers,omitempty"`
+
+	// OpenPullRequestsLimit is the maximum concurrent version update PRs.
+	// Default: 5, max: 10
+	OpenPullRequestsLimit int `yaml:"open_pull_requests_limit,omitempty" json:"open_pull_requests_limit,omitempty"`
+
+	// VersioningStrategy controls how manifest versions are updated.
+	// Valid values:
+	//   - "auto": Default behavior (differentiate app vs. library)
+	//   - "increase": Always bump minimum version requirement
+	//   - "increase-if-necessary": Only increase if current range doesn't accommodate new version
+	//   - "lockfile-only": Update only lock files, ignore manifest changes
+	//   - "widen": Expand allowed version range to include old and new versions
+	VersioningStrategy string `yaml:"versioning_strategy,omitempty" json:"versioning_strategy,omitempty"`
+
 	// Update specifies the maximum version bump to allow.
 	//
 	// Valid values:
@@ -356,6 +438,14 @@ type Update struct {
 	ChangelogURL  string       `json:"changelog_url,omitempty"`
 	PolicySource  PolicySource `json:"policy_source,omitempty"`
 	Breaking      bool         `json:"breaking"`
+
+	// Info contains detailed update information for PR descriptions.
+	// Populated when --fetch-info flag is used or in GitHub Actions mode.
+	Info *UpdateInfo `json:"info,omitempty"`
+
+	// Group is the name of the dependency group this update belongs to.
+	// Empty if the dependency is not part of any group.
+	Group string `json:"group,omitempty"`
 }
 
 // ApplyResult contains the outcome of applying updates.
@@ -409,4 +499,124 @@ type UpdateResult struct {
 	Results   []*ApplyResult `json:"results"`
 	Timestamp time.Time      `json:"timestamp"`
 	Errors    []string       `json:"errors,omitempty"`
+}
+
+// Schedule defines when updates should be checked.
+// This is compatible with Dependabot's schedule configuration.
+type Schedule struct {
+	// Interval is the update frequency.
+	// Valid values: daily, weekly, monthly, quarterly, semiannually, yearly, cron
+	Interval string `yaml:"interval" json:"interval"`
+
+	// Day specifies the day for weekly updates.
+	// Valid values: monday, tuesday, wednesday, thursday, friday, saturday, sunday
+	Day string `yaml:"day,omitempty" json:"day,omitempty"`
+
+	// Time specifies the time for updates in HH:MM format (24-hour).
+	// Default timezone is UTC unless Timezone is specified.
+	Time string `yaml:"time,omitempty" json:"time,omitempty"`
+
+	// Timezone is the IANA timezone identifier for the schedule.
+	// Example: "America/New_York", "Europe/London"
+	Timezone string `yaml:"timezone,omitempty" json:"timezone,omitempty"`
+
+	// Cron is a cron expression for custom schedules.
+	// Only used when Interval is "cron".
+	// Example: "0 9 * * 1" (every Monday at 9am)
+	Cron string `yaml:"cron,omitempty" json:"cron,omitempty"`
+}
+
+// DependencyGroup defines a dependency grouping rule for combined PRs.
+type DependencyGroup struct {
+	// AppliesTo specifies when this group applies.
+	// Valid values: version-updates, security-updates
+	// Default: applies to both
+	AppliesTo string `yaml:"applies_to,omitempty" json:"applies_to,omitempty"`
+
+	// DependencyType filters dependencies by type.
+	// Valid values: production, development
+	DependencyType string `yaml:"dependency_type,omitempty" json:"dependency_type,omitempty"`
+
+	// Patterns includes dependencies matching these glob patterns.
+	// Supports * wildcard. Example: ["express*", "@types/*"]
+	Patterns []string `yaml:"patterns,omitempty" json:"patterns,omitempty"`
+
+	// ExcludePatterns excludes dependencies matching these glob patterns.
+	ExcludePatterns []string `yaml:"exclude_patterns,omitempty" json:"exclude_patterns,omitempty"`
+
+	// UpdateTypes limits to specific update types.
+	// Valid values: major, minor, patch
+	UpdateTypes []string `yaml:"update_types,omitempty" json:"update_types,omitempty"`
+}
+
+// DependencyRule specifies a dependency filter rule for allow lists.
+type DependencyRule struct {
+	// DependencyName matches dependencies by name.
+	// Supports * wildcard for prefix/suffix matching.
+	DependencyName string `yaml:"dependency_name,omitempty" json:"dependency_name,omitempty"`
+
+	// DependencyType filters by dependency type.
+	// Valid values: direct, indirect, all, production, development
+	DependencyType string `yaml:"dependency_type,omitempty" json:"dependency_type,omitempty"`
+}
+
+// IgnoreRule specifies a dependency or version to exclude from updates.
+type IgnoreRule struct {
+	// DependencyName matches dependencies by name.
+	// Supports * wildcard for prefix/suffix matching.
+	DependencyName string `yaml:"dependency_name,omitempty" json:"dependency_name,omitempty"`
+
+	// Versions specifies version ranges to ignore.
+	// Uses package manager version syntax (e.g., "4.x", ">= 2.0.0")
+	Versions []string `yaml:"versions,omitempty" json:"versions,omitempty"`
+
+	// UpdateTypes specifies update types to ignore.
+	// Valid values: major, minor, patch
+	// (Also supports Dependabot format: version-update:semver-major, etc.)
+	UpdateTypes []string `yaml:"update_types,omitempty" json:"update_types,omitempty"`
+}
+
+// CooldownConfig defines delayed update settings.
+// New versions are held for a configurable period before being proposed.
+type CooldownConfig struct {
+	Include         []string `yaml:"include,omitempty" json:"include,omitempty"`
+	Exclude         []string `yaml:"exclude,omitempty" json:"exclude,omitempty"`
+	DefaultDays     int      `yaml:"default_days,omitempty" json:"default_days,omitempty"`
+	SemverMajorDays int      `yaml:"semver_major_days,omitempty" json:"semver_major_days,omitempty"`
+	SemverMinorDays int      `yaml:"semver_minor_days,omitempty" json:"semver_minor_days,omitempty"`
+	SemverPatchDays int      `yaml:"semver_patch_days,omitempty" json:"semver_patch_days,omitempty"`
+}
+
+// CommitMessageConfig customizes the commit message format.
+type CommitMessageConfig struct {
+	// Prefix is prepended to commit messages (max 50 chars).
+	// Example: "deps", "chore(deps)"
+	Prefix string `yaml:"prefix,omitempty" json:"prefix,omitempty"`
+
+	// PrefixDevelopment is used for dev dependency updates.
+	// Example: "deps(dev)", "chore(deps-dev)"
+	PrefixDevelopment string `yaml:"prefix_development,omitempty" json:"prefix_development,omitempty"`
+
+	// IncludeScope adds dependency scope to commit messages.
+	// When true, adds "deps" or "deps-dev" scope.
+	IncludeScope bool `yaml:"include_scope,omitempty" json:"include_scope,omitempty"`
+}
+
+// UpdateInfo contains detailed information about an update for PR descriptions.
+// This mirrors information that Dependabot includes in PR bodies.
+type UpdateInfo struct {
+	ReleaseNotes       string       `json:"release_notes,omitempty"`
+	Changelog          string       `json:"changelog,omitempty"`
+	SourceURL          string       `json:"source_url,omitempty"`
+	ReleaseURL         string       `json:"release_url,omitempty"`
+	Commits            []CommitInfo `json:"commits,omitempty"`
+	CompatibilityScore int          `json:"compatibility_score"`
+}
+
+// CommitInfo represents a single commit between versions.
+type CommitInfo struct {
+	SHA     string `json:"sha"`
+	Message string `json:"message"`
+	Author  string `json:"author,omitempty"`
+	URL     string `json:"url,omitempty"`
 }

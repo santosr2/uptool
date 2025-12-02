@@ -162,17 +162,32 @@ func (e *Engine) Scan(ctx context.Context, repoRoot string, only, exclude []stri
 	}, nil
 }
 
+// PlanOptions contains options for the Plan operation.
+type PlanOptions struct {
+	Now               time.Time
+	ReleaseTimestamps map[string]time.Time
+	CheckSchedule     bool
+}
+
 // Plan generates update plans for all manifests.
 // It applies policy precedence: CLI flags > uptool.yaml > manifest constraints.
-// If cadence policies are configured, manifests are filtered based on their last check time.
+// It also applies allow/ignore rules, cooldown, and grouping based on policy configuration.
 func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, error) {
+	return e.PlanWithOptions(ctx, manifests, nil)
+}
+
+// PlanWithOptions generates update plans with additional options.
+// This allows enabling cooldown checking with release timestamps and schedule enforcement.
+func (e *Engine) PlanWithOptions(ctx context.Context, manifests []*Manifest, opts *PlanOptions) (*PlanResult, error) {
 	e.logger.Info("starting plan", "manifests", len(manifests))
 	start := time.Now()
 
-	// Filter manifests by cadence if policies are configured
-	// Note: Cadence filtering requires state management which is not yet fully implemented
-	// For now, cadence is validated in config but not enforced during execution
-	// TODO: Implement state file management for cadence tracking
+	if opts == nil {
+		opts = &PlanOptions{}
+	}
+	if opts.Now.IsZero() {
+		opts.Now = time.Now()
+	}
 
 	var (
 		mu     sync.Mutex
@@ -201,6 +216,21 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 			// Get the plan context with policy and CLI flags for this integration
 			planCtx := e.getPlanContext(m.Type)
 
+			// Check schedule if enabled
+			if opts.CheckSchedule && planCtx.Policy != nil && planCtx.Policy.Schedule != nil {
+				scheduleChecker, err := NewScheduleChecker(planCtx.Policy.Schedule)
+				if err != nil {
+					e.logger.Warn("invalid schedule configuration", "integration", m.Type, "error", err)
+				} else if !scheduleChecker.ShouldRun(opts.Now) {
+					e.logger.Debug("skipping due to schedule",
+						"manifest", m.Path,
+						"integration", m.Type,
+						"schedule", scheduleChecker.GetScheduleDescription(),
+					)
+					return
+				}
+			}
+
 			e.logger.Debug("planning manifest",
 				"manifest", m.Path,
 				"integration", m.Type,
@@ -209,14 +239,21 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 			)
 
 			plan, err := integration.Plan(ctx, m, planCtx)
-			mu.Lock()
-			defer mu.Unlock()
-
 			if err != nil {
+				mu.Lock()
 				errors = append(errors, fmt.Sprintf("%s (%s): %v", m.Path, m.Type, err))
+				mu.Unlock()
 				e.logger.Error("plan failed", "manifest", m.Path, "error", err)
 				return
 			}
+
+			// Apply allow/ignore rules, cooldown, and grouping
+			if planCtx.Policy != nil && len(plan.Updates) > 0 {
+				plan = e.applyPolicyFilters(plan, planCtx.Policy, opts.ReleaseTimestamps)
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
 
 			// Always include plans, even if they have no updates
 			// This allows the output layer to decide whether to show them
@@ -238,6 +275,58 @@ func (e *Engine) Plan(ctx context.Context, manifests []*Manifest) (*PlanResult, 
 		Timestamp: time.Now(),
 		Errors:    errors,
 	}, nil
+}
+
+// applyPolicyFilters applies allow/ignore rules, cooldown, and grouping to a plan.
+func (e *Engine) applyPolicyFilters(plan *UpdatePlan, policy *IntegrationPolicy, releaseTimestamps map[string]time.Time) *UpdatePlan {
+	filter := NewUpdateFilter(policy)
+
+	// Apply allow/ignore rules and cooldown
+	filteredUpdates, reasons := filter.FilterUpdates(plan.Updates, releaseTimestamps)
+
+	// Log filtered updates
+	for dep, reason := range reasons {
+		e.logger.Debug("update filtered", "dependency", dep, "reason", reason, "manifest", plan.Manifest.Path)
+	}
+
+	// Apply grouping
+	grouped, ungrouped := filter.GroupUpdates(filteredUpdates)
+
+	// Combine grouped and ungrouped updates
+	var finalUpdates []Update
+	for groupName, updates := range grouped {
+		for i := range updates {
+			updates[i].Group = groupName
+		}
+		finalUpdates = append(finalUpdates, updates...)
+		e.logger.Debug("grouped updates", "group", groupName, "count", len(updates), "manifest", plan.Manifest.Path)
+	}
+	finalUpdates = append(finalUpdates, ungrouped...)
+
+	return &UpdatePlan{
+		Manifest: plan.Manifest,
+		Strategy: plan.Strategy,
+		Updates:  finalUpdates,
+	}
+}
+
+// GetUpdateFilter returns an UpdateFilter for the given integration.
+// This is useful for CLI commands that need to access filter configuration.
+func (e *Engine) GetUpdateFilter(integrationName string) *UpdateFilter {
+	if policy, ok := e.policies[integrationName]; ok {
+		return NewUpdateFilter(&policy)
+	}
+	return NewUpdateFilter(nil)
+}
+
+// GetScheduleChecker returns a ScheduleChecker for the given integration.
+// Returns nil if no schedule is configured.
+func (e *Engine) GetScheduleChecker(integrationName string) (*ScheduleChecker, error) {
+	policy, ok := e.policies[integrationName]
+	if !ok || policy.Schedule == nil {
+		return nil, nil
+	}
+	return NewScheduleChecker(policy.Schedule)
 }
 
 // Update applies update plans.

@@ -325,18 +325,76 @@ runs:
           echo 'EOF_PR_BODY_DELIMITER'
         } >> $GITHUB_OUTPUT
 
+    - name: Extract PR metadata from config
+      if: inputs.create-pr == 'true' && steps.uptool.outputs.updates-available == 'true'
+      id: pr-metadata
+      shell: bash
+      run: |
+        # Change to workspace directory
+        cd "$GITHUB_WORKSPACE"
+
+        # Determine config file path
+        CONFIG_FILE="${{ inputs.config }}"
+        if [ -z "$CONFIG_FILE" ]; then
+          CONFIG_FILE="uptool.yaml"
+        fi
+
+        # Initialize default values
+        LABELS="dependencies,automated"
+        ASSIGNEES=""
+        REVIEWERS=""
+        COMMIT_PREFIX=""
+
+        # Extract metadata from config if it exists
+        if [ -f "$CONFIG_FILE" ]; then
+          # Extract labels from all integrations (combined)
+          CONFIG_LABELS=$(yq -r '[.integrations[].policy.labels // []] | flatten | unique | join(",")' "$CONFIG_FILE" 2>/dev/null || echo "")
+          if [ -n "$CONFIG_LABELS" ] && [ "$CONFIG_LABELS" != "null" ]; then
+            LABELS="$CONFIG_LABELS"
+          fi
+
+          # Extract assignees from all integrations (combined)
+          CONFIG_ASSIGNEES=$(yq -r '[.integrations[].policy.assignees // []] | flatten | unique | join(",")' "$CONFIG_FILE" 2>/dev/null || echo "")
+          if [ -n "$CONFIG_ASSIGNEES" ] && [ "$CONFIG_ASSIGNEES" != "null" ]; then
+            ASSIGNEES="$CONFIG_ASSIGNEES"
+          fi
+
+          # Extract reviewers from all integrations (combined)
+          CONFIG_REVIEWERS=$(yq -r '[.integrations[].policy.reviewers // []] | flatten | unique | join(",")' "$CONFIG_FILE" 2>/dev/null || echo "")
+          if [ -n "$CONFIG_REVIEWERS" ] && [ "$CONFIG_REVIEWERS" != "null" ]; then
+            REVIEWERS="$CONFIG_REVIEWERS"
+          fi
+
+          # Extract commit message prefix (use first non-null)
+          CONFIG_PREFIX=$(yq -r '[.integrations[].policy.commit_message.prefix // ""] | map(select(. != "")) | first // ""' "$CONFIG_FILE" 2>/dev/null || echo "")
+          if [ -n "$CONFIG_PREFIX" ] && [ "$CONFIG_PREFIX" != "null" ]; then
+            COMMIT_PREFIX="$CONFIG_PREFIX"
+          fi
+        fi
+
+        echo "labels=$LABELS" >> "$GITHUB_OUTPUT"
+        echo "assignees=$ASSIGNEES" >> "$GITHUB_OUTPUT"
+        echo "reviewers=$REVIEWERS" >> "$GITHUB_OUTPUT"
+        echo "commit-prefix=$COMMIT_PREFIX" >> "$GITHUB_OUTPUT"
+
+        echo "PR Metadata extracted:"
+        echo "  Labels: $LABELS"
+        echo "  Assignees: $ASSIGNEES"
+        echo "  Reviewers: $REVIEWERS"
+        echo "  Commit Prefix: $COMMIT_PREFIX"
+
     - name: Create Pull Request
       if: inputs.create-pr == 'true' && steps.uptool.outputs.updates-available == 'true'
       uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v7.0.5
       with:
         token: ${{ inputs.token }}
-        commit-message: ${{ inputs.pr-title }}
+        commit-message: "${{ steps.pr-metadata.outputs.commit-prefix && format('{0}: {1}', steps.pr-metadata.outputs.commit-prefix, inputs.pr-title) || inputs.pr-title }}"
         title: ${{ inputs.pr-title }}
         branch: ${{ inputs.pr-branch }}
         body: ${{ steps.pr-body.outputs.pr-body }}
-        labels: |
-          dependencies
-          automated
+        labels: ${{ steps.pr-metadata.outputs.labels }}
+        assignees: ${{ steps.pr-metadata.outputs.assignees }}
+        reviewers: ${{ steps.pr-metadata.outputs.reviewers }}
 
     - name: Generate issue body
       if: inputs.create-issue == 'true' && steps.uptool.outputs.updates-available == 'true'
@@ -442,12 +500,16 @@ runs:
     - name: Create or Update Issue
       if: inputs.create-issue == 'true' && steps.uptool.outputs.updates-available == 'true'
       uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+      env:
+        ISSUE_TITLE: ${{ inputs.issue-title }}
+        ISSUE_BODY: ${{ steps.issue-body.outputs.issue-body }}
+        ISSUE_LABELS: ${{ inputs.issue-labels }}
       with:
         github-token: ${{ inputs.token }}
         script: |
-          const issueTitle = '${{ inputs.issue-title }}';
-          const issueBody = `${{ steps.issue-body.outputs.issue-body }}`;
-          const labelString = '${{ inputs.issue-labels }}';
+          const issueTitle = process.env.ISSUE_TITLE;
+          const issueBody = process.env.ISSUE_BODY;
+          const labelString = process.env.ISSUE_LABELS || '';
           const labels = labelString.split(',').map(l => l.trim()).filter(l => l);
 
           // Search for existing open issue with the same title
@@ -464,11 +526,12 @@ runs:
 
           if (existingIssue) {
             // Update existing issue with a comment
+            const updateDate = new Date().toISOString().slice(0, 10);
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: existingIssue.number,
-              body: `### 🔄 Update (${new Date().toISOString().slice(0, 10)})\n\n${issueBody}`
+              body: `### 🔄 Update (${updateDate})\n\n${issueBody}`
             });
 
             console.log(`Updated existing issue #${existingIssue.number}`);

@@ -1,10 +1,12 @@
 # Complete uptool configuration example
 # Demonstrates all available options and configurations
+# Compatible with Dependabot features for easy migration
 
 version: 1
 
 integrations:
   # npm - JavaScript/TypeScript package manager
+  # This example shows all Dependabot-compatible features
   - id: npm
     enabled: true        # Controls if integration runs (true = run, false = skip)
     match:
@@ -20,7 +22,85 @@ integrations:
       update: minor      # none | patch | minor | major
       allow_prerelease: false
       pin: false         # Preserve version constraints (^, ~, >=)
-      cadence: weekly    # How often to check for updates
+      cadence: weekly    # How often to check for updates (daily, weekly, monthly)
+
+      # Schedule - Dependabot-compatible scheduling (more granular than cadence)
+      schedule:
+        interval: weekly           # daily | weekly | monthly | quarterly | semiannually | yearly | cron
+        day: monday                # For weekly: monday-sunday
+        time: "09:00"              # Time in HH:MM format (24-hour)
+        timezone: "America/New_York"  # IANA timezone identifier
+        # cron: "0 9 * * 1"        # Cron expression when interval is "cron"
+
+      # Dependency Groups - Combine related updates into single PRs
+      groups:
+        production-deps:
+          patterns:
+            - "express*"
+            - "lodash"
+            - "@company/*"
+          exclude_patterns:
+            - "*-dev"
+          dependency_type: production    # production | development
+          update_types:
+            - minor
+            - patch
+        dev-deps:
+          patterns:
+            - "*"
+          dependency_type: development
+          applies_to: version-updates    # version-updates | security-updates
+
+      # Allow - Specify dependencies to include (allowlist)
+      allow:
+        - dependency_name: "express"     # Exact name or glob pattern
+        - dependency_type: production    # direct | indirect | all | production | development
+
+      # Ignore - Specify dependencies or versions to exclude
+      ignore:
+        - dependency_name: "lodash"
+          versions:
+            - "4.x"                      # Ignore all 4.x versions
+        - dependency_name: "*"
+          update_types:
+            - major                      # Ignore all major updates
+        - dependency_name: "@types/*"
+          update_types:
+            - minor
+            - major
+
+      # Cooldown - Delay updates to avoid buggy releases
+      cooldown:
+        default_days: 3                  # Base cooldown for all dependencies
+        semver_major_days: 7             # Extra caution for major updates
+        semver_minor_days: 3
+        semver_patch_days: 1
+        include:
+          - "express*"                   # Apply cooldown to matching deps
+        exclude:
+          - "security-*"                 # Skip cooldown for security updates
+
+      # Commit Message - Customize commit message format
+      commit_message:
+        prefix: "deps"                   # Prepended to commit messages (max 50 chars)
+        prefix_development: "deps(dev)"  # Used for dev dependency updates
+        include_scope: true              # Add scope (deps or deps-dev)
+
+      # PR Metadata
+      labels:
+        - "dependencies"
+        - "npm"
+        - "automerge"
+      assignees:
+        - "platform-team"
+      reviewers:
+        - "security-team"
+
+      # PR Limits
+      open_pull_requests_limit: 5        # Max concurrent PRs (0-10)
+
+      # Versioning Strategy - How to update manifest versions
+      versioning_strategy: auto          # auto | increase | increase-if-necessary | lockfile-only | widen
 
   # Helm - Kubernetes package manager
   - id: helm
@@ -35,6 +115,12 @@ integrations:
       allow_prerelease: false
       pin: true            # Write exact versions (Helm always uses exact versions)
       cadence: monthly
+      schedule:
+        interval: monthly
+      labels:
+        - "dependencies"
+        - "helm"
+        - "kubernetes"
 
   # Terraform - Infrastructure as Code
   - id: terraform
@@ -52,6 +138,17 @@ integrations:
       allow_prerelease: false
       pin: true            # Write exact versions (Terraform always uses exact versions)
       cadence: monthly
+      # Add cooldown for infrastructure changes
+      cooldown:
+        default_days: 7
+        semver_major_days: 14
+      labels:
+        - "dependencies"
+        - "terraform"
+        - "infrastructure"
+      reviewers:
+        - "platform-team"
+        - "security-team"
 
   # TFLint - Terraform linter plugins
   - id: tflint
@@ -78,6 +175,52 @@ integrations:
       allow_prerelease: false
       pin: false           # Pin setting ignored (pre-commit uses native command)
       cadence: weekly
+      schedule:
+        interval: weekly
+        day: monday
+
+  # GitHub Actions - Workflow dependencies
+  - id: actions
+    enabled: true
+    match:
+      files:
+        - ".github/workflows/*.yml"
+        - ".github/workflows/*.yaml"
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      cadence: weekly
+      # Group all GitHub Actions together
+      groups:
+        github-actions:
+          patterns:
+            - "*"
+      labels:
+        - "dependencies"
+        - "github-actions"
+        - "ci"
+
+  # Docker - Container images
+  - id: docker
+    enabled: true
+    match:
+      files:
+        - "Dockerfile*"
+        - "docker-compose.yml"
+        - "docker-compose.yaml"
+    policy:
+      enabled: true
+      update: minor
+      allow_prerelease: false
+      cadence: weekly
+      # Security-conscious cooldown for base images
+      cooldown:
+        default_days: 3
+        semver_major_days: 7
+      labels:
+        - "dependencies"
+        - "docker"
 
   # asdf - Runtime version manager
   # NOTE: EXPERIMENTAL - Detection only, version resolution not implemented.
