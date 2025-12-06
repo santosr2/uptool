@@ -11,6 +11,10 @@ inputs:
     description: 'Enable caching of mise tools'
     required: false
     default: 'true'
+  cache-ttl-days:
+    description: 'Cache TTL in days (rotates cache weekly by default)'
+    required: false
+    default: '7'
 
 runs:
   using: 'composite'
@@ -19,11 +23,24 @@ runs:
       id: cache-key
       shell: bash
       run: |
-        # Generate cache key based on OS, architecture, and mise.toml hash
-        MISE_TOML_HASH=$(sha256sum mise.toml | cut -d' ' -f1)
-        CACHE_KEY="mise-${{ runner.os }}-${{ runner.arch }}-${MISE_TOML_HASH}"
+        # Generate cache key based on OS, architecture, mise.toml hash, and TTL rotation
+        MISE_TOML_HASH=$(sha256sum mise.toml | cut -d' ' -f1 | head -c 8)
+
+        # Calculate TTL rotation period (default: weekly)
+        # This ensures caches are rotated periodically to avoid unbounded growth
+        TTL_DAYS=${{ inputs.cache-ttl-days }}
+        if [ "$TTL_DAYS" -le 0 ]; then
+          TTL_DAYS=7
+        fi
+
+        # Calculate period number based on days since epoch
+        DAYS_SINCE_EPOCH=$(( $(date +%s) / 86400 ))
+        PERIOD=$(( DAYS_SINCE_EPOCH / TTL_DAYS ))
+
+        CACHE_KEY="mise-${{ runner.os }}-${{ runner.arch }}-${MISE_TOML_HASH}-ttl${PERIOD}"
         echo "key=${CACHE_KEY}" >> $GITHUB_OUTPUT
         echo "Cache key: ${CACHE_KEY}"
+        echo "TTL period: ${PERIOD} (rotates every ${TTL_DAYS} days)"
 
     - name: Cache mise tools
       uses: actions/cache@v4

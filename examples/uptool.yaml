@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/santosr2/uptool/main/schemas/uptool.schema.json
 # Complete uptool configuration example
 # Demonstrates all available options and configurations
 # Compatible with Dependabot features for easy migration

@@ -1,0 +1,414 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/santosr2/uptool/main/schemas/uptool.schema.json",
+  "title": "uptool Configuration",
+  "description": "Configuration schema for uptool - Universal manifest-first dependency updater",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for editor support"
+    },
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Configuration format version. Currently only version 1 is supported."
+    },
+    "integrations": {
+      "type": "array",
+      "description": "Per-integration update policies and configuration",
+      "items": {
+        "$ref": "#/definitions/IntegrationConfig"
+      }
+    },
+    "org_policy": {
+      "$ref": "#/definitions/OrgPolicy",
+      "description": "Organization-level governance policies (signoffs, signing, auto-merge)"
+    }
+  },
+  "definitions": {
+    "IntegrationConfig": {
+      "type": "object",
+      "description": "Configuration for a specific integration (npm, helm, terraform, etc.)",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Integration identifier",
+          "enum": ["npm", "helm", "terraform", "tflint", "precommit", "actions", "docker", "asdf", "mise", "gomod"]
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Controls whether this integration runs during scan/plan/update"
+        },
+        "match": {
+          "$ref": "#/definitions/MatchConfig",
+          "description": "Custom file patterns for this integration"
+        },
+        "policy": {
+          "$ref": "#/definitions/IntegrationPolicy",
+          "description": "Update policy settings for this integration"
+        }
+      }
+    },
+    "MatchConfig": {
+      "type": "object",
+      "description": "File glob patterns for integration detection",
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "description": "Glob patterns matching manifest files",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["package.json", "apps/*/package.json"]]
+        },
+        "exclude": {
+          "type": "array",
+          "description": "Glob patterns to exclude from matches (applied after files matching)",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["node_modules/**/package.json", "dist/**"]]
+        }
+      }
+    },
+    "IntegrationPolicy": {
+      "type": "object",
+      "description": "Update policy configuration controlling which updates are allowed",
+      "additionalProperties": true,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Controls if policy is enforced (false = use defaults)"
+        },
+        "update": {
+          "type": "string",
+          "enum": ["none", "patch", "minor", "major"],
+          "default": "minor",
+          "description": "Maximum update level allowed: none (no updates), patch (x.x.PATCH), minor (x.MINOR.x), major (MAJOR.x.x)"
+        },
+        "allow_prerelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to include pre-release versions (alpha, beta, rc)"
+        },
+        "pin": {
+          "type": "boolean",
+          "default": false,
+          "description": "Write exact versions instead of preserving version constraints (^, ~, >=)"
+        },
+        "cadence": {
+          "type": "string",
+          "enum": ["daily", "weekly", "monthly"],
+          "description": "How often to check for updates"
+        },
+        "schedule": {
+          "$ref": "#/definitions/Schedule",
+          "description": "Detailed scheduling configuration (more granular than cadence)"
+        },
+        "groups": {
+          "type": "object",
+          "description": "Dependency groups for combined PRs",
+          "additionalProperties": {
+            "$ref": "#/definitions/DependencyGroup"
+          }
+        },
+        "allow": {
+          "type": "array",
+          "description": "Allowlist of dependencies to include",
+          "items": {
+            "$ref": "#/definitions/DependencyRule"
+          }
+        },
+        "ignore": {
+          "type": "array",
+          "description": "Dependencies or versions to exclude from updates",
+          "items": {
+            "$ref": "#/definitions/IgnoreRule"
+          }
+        },
+        "cooldown": {
+          "$ref": "#/definitions/CooldownConfig",
+          "description": "Delay updates to avoid buggy releases"
+        },
+        "commit_message": {
+          "$ref": "#/definitions/CommitMessageConfig",
+          "description": "Customize commit message format"
+        },
+        "labels": {
+          "type": "array",
+          "description": "Labels to add to pull requests",
+          "items": {
+            "type": "string"
+          }
+        },
+        "assignees": {
+          "type": "array",
+          "description": "Users to assign to pull requests",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reviewers": {
+          "type": "array",
+          "description": "Users or teams to request review from",
+          "items": {
+            "type": "string"
+          }
+        },
+        "open_pull_requests_limit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Maximum number of concurrent open PRs (0-10)"
+        },
+        "versioning_strategy": {
+          "type": "string",
+          "enum": ["auto", "increase", "increase-if-necessary", "lockfile-only", "widen"],
+          "default": "auto",
+          "description": "How to update manifest versions"
+        }
+      }
+    },
+    "Schedule": {
+      "type": "object",
+      "description": "Detailed schedule configuration for update checks",
+      "additionalProperties": false,
+      "properties": {
+        "interval": {
+          "type": "string",
+          "enum": ["daily", "weekly", "monthly", "quarterly", "semiannually", "yearly", "cron"],
+          "description": "Update frequency"
+        },
+        "day": {
+          "type": "string",
+          "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+          "description": "Day of the week for weekly updates"
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "Time for updates in HH:MM format (24-hour)",
+          "examples": ["09:00", "14:30"]
+        },
+        "timezone": {
+          "type": "string",
+          "description": "IANA timezone identifier",
+          "examples": ["America/New_York", "Europe/London", "UTC"]
+        },
+        "cron": {
+          "type": "string",
+          "description": "Cron expression when interval is 'cron'",
+          "examples": ["0 9 * * 1"]
+        }
+      }
+    },
+    "DependencyGroup": {
+      "type": "object",
+      "description": "Grouping rule for combining related updates into single PRs",
+      "additionalProperties": false,
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "description": "Glob patterns to include dependencies",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["express*", "@types/*", "lodash"]]
+        },
+        "exclude_patterns": {
+          "type": "array",
+          "description": "Glob patterns to exclude dependencies",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dependency_type": {
+          "type": "string",
+          "enum": ["production", "development"],
+          "description": "Filter by dependency type"
+        },
+        "update_types": {
+          "type": "array",
+          "description": "Limit to specific update types",
+          "items": {
+            "type": "string",
+            "enum": ["major", "minor", "patch"]
+          }
+        },
+        "applies_to": {
+          "type": "string",
+          "enum": ["version-updates", "security-updates"],
+          "description": "When this group applies"
+        }
+      }
+    },
+    "DependencyRule": {
+      "type": "object",
+      "description": "Rule for allowing specific dependencies",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_name": {
+          "type": "string",
+          "description": "Dependency name or glob pattern"
+        },
+        "dependency_type": {
+          "type": "string",
+          "enum": ["direct", "indirect", "all", "production", "development"],
+          "description": "Filter by dependency type"
+        }
+      }
+    },
+    "IgnoreRule": {
+      "type": "object",
+      "description": "Rule for ignoring specific dependencies or versions",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_name": {
+          "type": "string",
+          "description": "Dependency name or glob pattern"
+        },
+        "versions": {
+          "type": "array",
+          "description": "Version ranges to ignore (e.g., '4.x', '>= 2.0.0')",
+          "items": {
+            "type": "string"
+          }
+        },
+        "update_types": {
+          "type": "array",
+          "description": "Update types to ignore",
+          "items": {
+            "type": "string",
+            "enum": ["major", "minor", "patch"]
+          }
+        }
+      }
+    },
+    "CooldownConfig": {
+      "type": "object",
+      "description": "Configuration for delaying updates to avoid buggy releases",
+      "additionalProperties": false,
+      "properties": {
+        "default_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Base cooldown period in days for all dependencies"
+        },
+        "semver_major_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cooldown period for major version updates"
+        },
+        "semver_minor_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cooldown period for minor version updates"
+        },
+        "semver_patch_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Cooldown period for patch version updates"
+        },
+        "include": {
+          "type": "array",
+          "description": "Patterns for dependencies to apply cooldown to",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude": {
+          "type": "array",
+          "description": "Patterns for dependencies to skip cooldown (e.g., security updates)",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "CommitMessageConfig": {
+      "type": "object",
+      "description": "Customization for commit message format",
+      "additionalProperties": false,
+      "properties": {
+        "prefix": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Prefix prepended to commit messages",
+          "examples": ["deps", "chore(deps)"]
+        },
+        "prefix_development": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Prefix used for dev dependency updates",
+          "examples": ["deps(dev)", "chore(deps-dev)"]
+        },
+        "include_scope": {
+          "type": "boolean",
+          "description": "Add dependency scope (deps or deps-dev) to commit messages"
+        }
+      }
+    },
+    "OrgPolicy": {
+      "type": "object",
+      "description": "Organization-level governance policies",
+      "additionalProperties": false,
+      "properties": {
+        "require_signoff_from": {
+          "type": "array",
+          "description": "Teams/users required to sign off on changes",
+          "items": {
+            "type": "string"
+          },
+          "examples": [["platform-team@company.com", "security-team@company.com"]]
+        },
+        "signing": {
+          "$ref": "#/definitions/SigningConfig",
+          "description": "Artifact signing verification settings"
+        },
+        "auto_merge": {
+          "$ref": "#/definitions/AutoMergeConfig",
+          "description": "Automatic PR merge settings"
+        }
+      }
+    },
+    "SigningConfig": {
+      "type": "object",
+      "description": "Artifact signing verification using cosign",
+      "additionalProperties": false,
+      "properties": {
+        "cosign_verify": {
+          "type": "boolean",
+          "description": "Enable cosign signature verification (requires cosign binary in PATH)"
+        }
+      }
+    },
+    "AutoMergeConfig": {
+      "type": "object",
+      "description": "Configuration for automatic PR merging",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable automatic merging of PRs"
+        },
+        "guards": {
+          "type": "array",
+          "description": "Required guards that must pass before auto-merge",
+          "items": {
+            "type": "string",
+            "enum": ["ci-green", "codeowners-approve", "security-scan"]
+          },
+          "examples": [["ci-green", "codeowners-approve"]]
+        }
+      }
+    }
+  }
+}

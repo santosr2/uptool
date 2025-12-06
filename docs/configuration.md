@@ -10,11 +10,47 @@ uptool plan --config ./configs/production.yaml
 uptool update --config ../shared-uptool.yaml
 ```
 
+## JSON Schema
+
+uptool provides a JSON Schema for editor validation and autocompletion. Add this comment to the top of your `uptool.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/santosr2/uptool/main/schemas/uptool.schema.json
+version: 1
+# ...
+```
+
+### VS Code Setup
+
+For automatic schema validation in VS Code with the [YAML extension](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml):
+
+1. Install the Red Hat YAML extension
+2. Add to your `.vscode/settings.json`:
+
+```json
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/santosr2/uptool/main/schemas/uptool.schema.json": ["uptool.yaml", "uptool.yml"]
+  }
+}
+```
+
+Or for local development, reference the local schema:
+
+```json
+{
+  "yaml.schemas": {
+    "./schemas/uptool.schema.json": ["uptool.yaml", "uptool.yml"]
+  }
+}
+```
+
 ## Quick Start
 
 Create `uptool.yaml` in your repository root:
 
 ```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/santosr2/uptool/main/schemas/uptool.schema.json
 version: 1
 
 integrations:
