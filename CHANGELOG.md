@@ -105,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix golangci finds and add more tests. by [@santosr2](https://github.com/santosr2) ([2cfdf0c](https://github.com/santosr2/uptool/commit/2cfdf0cefac0c8d6c0bc7c22d1b0ad1a82e15696))
 - Add tests and change configuration to have >80% coverage. by [@santosr2](https://github.com/santosr2) ([87643fb](https://github.com/santosr2/uptool/commit/87643fbc922a4296c7f655f9aa83c6b6dc70feaf))
 - Changes based on golangci-lint. by [@santosr2](https://github.com/santosr2) ([0c49636](https://github.com/santosr2/uptool/commit/0c496362e7e61dbf662facd47ae4986d41394a88))
+- Add configuration schema. by [@santosr2](https://github.com/santosr2) ([6e0c6a3](https://github.com/santosr2/uptool/commit/6e0c6a3e1113ce35e0f970a0a7e7a6f9dee3a356))
 
 ## [0.2.0-alpha20251124] - 2025-11-24
 
